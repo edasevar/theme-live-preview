@@ -1,0 +1,50 @@
+{
+	"name": "theme-live-preview",
+	"displayName": "Theme Live Preview",
+	"description": "",
+	"version": "1.0.0",
+	"publisher": "edasevar",
+	"engines": {
+		"vscode": "^1.102.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:theme-live-preview.open"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "theme-live-preview.open",
+				"title": "Open Theme Live Preview"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src",
+		"test": "vscode-test"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.2.0",
+		"@types/minimatch": "^3.0.5",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "24.1.0",
+		"@types/vscode": "^1.102.0",
+		"@typescript-eslint/eslint-plugin": "^8.38.0",
+		"@typescript-eslint/parser": "^8.38.0",
+		"@vscode/test-cli": "^0.0.11",
+		"@vscode/test-electron": "^2.5.2",
+		"eslint": "^9.32.0",
+		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"glob": "^7.2.3",
+		"minimatch": "^3.1.2"
+	}
+}

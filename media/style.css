@@ -1,0 +1,24 @@
+body {
+	font-family: sans-serif;
+	padding: 10px;
+	background-color: #1e1e1e;
+	color: #fff;
+}
+
+.group {
+	border: 1px solid #333;
+	margin-bottom: 15px;
+	padding: 10px;
+	border-radius: 5px;
+}
+
+.item {
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+}
+
+label {
+	width: 200px;
+	display: inline-block;
+}
