@@ -45,7 +45,8 @@ function initializeEventListeners() {
 
 function initializeSearch() {
   const searchInput = document.getElementById('searchInput');
-  searchInput.addEventListener('input', handleSearchInput);
+  const debouncedSearch = debounceSearch(handleSearchInput, 200);
+  searchInput.addEventListener('input', debouncedSearch);
   
   // Handle search keyboard shortcuts
   searchInput.addEventListener('keydown', function(e) {
@@ -102,19 +103,65 @@ function handleColorInput(e) {
   applyLiveUpdate(name, value);
 }
 
-function applyLiveUpdate(key, value) {
-  // Send to VS Code for live theme update
-  vscode.postMessage({ 
-    type: 'liveUpdate', 
-    key: key, 
-    value: value 
-  });
+// Throttling and batching for better performance
+let updateThrottle;
+let batchUpdateQueue = new Map();
+let searchDebounce;
 
-  // Update local preview
-  updatePreviewColors(key, value);
+function debounceSearch(func, delay) {
+  return function(...args) {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+function throttleUpdate(key, value) {
+  batchUpdateQueue.set(key, value);
   
-  // Visual feedback
-  showColorUpdateFeedback(key);
+  if (updateThrottle) {
+    clearTimeout(updateThrottle);
+  }
+  
+  updateThrottle = setTimeout(() => {
+    const changes = Array.from(batchUpdateQueue.entries()).map(([k, v]) => ({ key: k, value: v }));
+    batchUpdateQueue.clear();
+    
+    if (changes.length === 1) {
+      vscode.postMessage({
+        type: 'liveUpdate',
+        key: changes[0].key,
+        value: changes[0].value
+      });
+    } else {
+      vscode.postMessage({
+        type: 'batchUpdate',
+        changes: changes
+      });
+    }
+    
+    // Update local preview for all changes
+    changes.forEach(change => {
+      updatePreviewColors(change.key, change.value);
+      showColorUpdateFeedback(change.key);
+    });
+  }, 150); // 150ms throttle for UI responsiveness
+}
+
+function applyLiveUpdate(key, value) {
+  // Use throttled update for better performance
+  throttleUpdate(key, value);
+}
+
+function previewColor(key, value) {
+  // Send preview message to VS Code
+  vscode.postMessage({
+    type: 'previewColor',
+    key: key,
+    value: value
+  });
+  
+  // Update local preview immediately
+  updatePreviewColors(key, value);
 }
 
 function updatePreviewColors(key, value) {
@@ -378,3 +425,67 @@ document.addEventListener('input', function(e) {
     scheduleAutoSave();
   }
 });
+
+// Handle messages from the extension
+window.addEventListener('message', event => {
+  const message = event.data;
+  
+  switch (message.type) {
+    case 'updateSuccess':
+      showSuccessFeedback(`Updated ${message.changes.length} colors`);
+      break;
+      
+    case 'updateError':
+      showErrorFeedback(`Update failed: ${message.error}`);
+      break;
+      
+    case 'batchUpdateSuccess':
+      showSuccessFeedback(`Batch updated ${message.changes.length} colors`);
+      break;
+      
+    case 'batchUpdateError':
+      showErrorFeedback(`Batch update failed: ${message.error}`);
+      break;
+      
+    case 'previewSuccess':
+      showPreviewFeedback(message.key, message.value);
+      break;
+      
+    case 'previewError':
+      showErrorFeedback(`Preview failed for ${message.key}: ${message.error}`);
+      break;
+  }
+});
+
+function showSuccessFeedback(message) {
+  const feedback = document.createElement('div');
+  feedback.classList.add('feedback', 'success');
+  feedback.textContent = message;
+  document.body.appendChild(feedback);
+  
+  setTimeout(() => {
+    feedback.remove();
+  }, 2000);
+}
+
+function showErrorFeedback(message) {
+  const feedback = document.createElement('div');
+  feedback.classList.add('feedback', 'error');
+  feedback.textContent = message;
+  document.body.appendChild(feedback);
+  
+  setTimeout(() => {
+    feedback.remove();
+  }, 3000);
+}
+
+function showPreviewFeedback(key, value) {
+  const feedback = document.createElement('div');
+  feedback.classList.add('feedback', 'preview');
+  feedback.textContent = `Previewing ${key}: ${value}`;
+  document.body.appendChild(feedback);
+  
+  setTimeout(() => {
+    feedback.remove();
+  }, 1500);
+}

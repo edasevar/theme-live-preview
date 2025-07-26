@@ -8,6 +8,9 @@ export class ThemeEditorPanel {
 	private readonly extensionUri: vscode.Uri;
 	private readonly themeManager: ThemeManager;
 	private disposables: vscode.Disposable[] = [];
+	private updateThrottle: NodeJS.Timeout | null = null;
+	private pendingUpdates: Map<string, string> = new Map();
+	private isUpdating: boolean = false;
 
 	public static createOrShow(extensionUri: vscode.Uri, themeManager: ThemeManager) {
 		const column = vscode.ViewColumn.Beside;
@@ -39,11 +42,27 @@ export class ThemeEditorPanel {
 		this.update();
 		this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
+		// Listen for theme changes
+		const themeChangeListener = this.themeManager.onThemeChange((key, value) => {
+			this.sendMessageToWebview({
+				type: 'themeChanged',
+				key,
+				value
+			});
+		});
+		this.disposables.push(themeChangeListener);
+
 		this.panel.webview.onDidReceiveMessage(
 			async (message) => {
 				switch (message.type) {
 					case 'liveUpdate':
 						await this.handleLiveUpdate(message.key, message.value);
+						break;
+					case 'batchUpdate':
+						await this.handleBatchUpdate(message.changes);
+						break;
+					case 'previewColor':
+						await this.handlePreviewColor(message.key, message.value);
 						break;
 					case 'resetColors':
 						await this.handleResetColors();
@@ -72,10 +91,99 @@ export class ThemeEditorPanel {
 
 	private async handleLiveUpdate(key: string, value: string) {
 		try {
-			await this.themeManager.applyLiveColor(key, value);
+			// Use throttling for better performance
+			this.pendingUpdates.set(key, value);
+			
+			if (this.updateThrottle) {
+				clearTimeout(this.updateThrottle);
+			}
+			
+			this.updateThrottle = setTimeout(async () => {
+				await this.flushPendingUpdates();
+			}, 100); // 100ms throttle
+			
 		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to apply color: ${error}`);
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to apply color: ${errorMessage}`);
 		}
+	}
+
+	private async flushPendingUpdates() {
+		if (this.isUpdating || this.pendingUpdates.size === 0) {
+			return;
+		}
+
+		this.isUpdating = true;
+		try {
+			const changes: Array<{ key: string, value: string }> = [];
+			for (const [key, value] of this.pendingUpdates) {
+				changes.push({ key, value });
+			}
+			this.pendingUpdates.clear();
+
+			if (changes.length === 1) {
+				// Single update
+				await this.themeManager.applyLiveColor(changes[0].key, changes[0].value);
+			} else {
+				// Batch update for better performance
+				await this.themeManager.applyBatchColors(changes);
+			}
+
+			// Send success feedback
+			this.sendMessageToWebview({
+				type: 'updateSuccess',
+				changes: changes.map(c => c.key)
+			});
+
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to apply colors: ${errorMessage}`);
+			this.sendMessageToWebview({
+				type: 'updateError',
+				error: errorMessage
+			});
+		} finally {
+			this.isUpdating = false;
+		}
+	}
+
+	private async handleBatchUpdate(changes: Array<{ key: string, value: string }>) {
+		try {
+			await this.themeManager.applyBatchColors(changes);
+			this.sendMessageToWebview({
+				type: 'batchUpdateSuccess',
+				changes: changes.map(c => c.key)
+			});
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to apply batch colors: ${errorMessage}`);
+			this.sendMessageToWebview({
+				type: 'batchUpdateError',
+				error: errorMessage
+			});
+		}
+	}
+
+	private async handlePreviewColor(key: string, value: string) {
+		try {
+			await this.themeManager.previewColor(key, value);
+			this.sendMessageToWebview({
+				type: 'previewSuccess',
+				key,
+				value
+			});
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			this.sendMessageToWebview({
+				type: 'previewError',
+				key,
+				error: errorMessage
+			});
+		}
+	}
+
+	private sendMessageToWebview(message: any) {
+		this.panel.webview.postMessage(message);
 	}
 
 	private async handleResetColors() {
@@ -138,8 +246,8 @@ export class ThemeEditorPanel {
 
 	private getHtmlForWebview(webview: vscode.Webview): string {
 		// Get URIs for resources
-		const scriptUri = vscode.Uri.file(path.join(this.extensionUri.fsPath, 'media', 'editor-ui.js')).with({ scheme: 'vscode-resource' });
-		const styleUri = vscode.Uri.file(path.join(this.extensionUri.fsPath, 'media', 'style.css')).with({ scheme: 'vscode-resource' });
+		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'editor-ui.js'));
+		const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'style.css'));
 
 		// Get current theme
 		const currentTheme = this.themeManager.getCurrentTheme();
@@ -222,22 +330,22 @@ export class ThemeEditorPanel {
 <span class="token keyword">import</span> <span class="token operator">*</span> <span class="token keyword">as</span> <span class="token namespace">vscode</span> <span class="token keyword">from</span> <span class="token string">'vscode'</span><span class="token punctuation">;</span>
 
 <span class="token keyword">interface</span> <span class="token class-name">User</span> <span class="token punctuation">{</span>
-    <span class="token property">id</span><span class="token punctuation">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-    <span class="token property">name</span><span class="token punctuation">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-    <span class="token property">email</span><span class="token operator">?</span><span class="token punctuation">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+	<span class="token property">id</span><span class="token punctuation">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+	<span class="token property">name</span><span class="token punctuation">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+	<span class="token property">email</span><span class="token operator">?</span><span class="token punctuation">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
 
 <span class="token keyword">class</span> <span class="token class-name">UserService</span> <span class="token punctuation">{</span>
-    <span class="token keyword">private</span> <span class="token property">users</span><span class="token punctuation">:</span> <span class="token class-name">User</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
-    
-    <span class="token keyword">public</span> <span class="token function">addUser</span><span class="token punctuation">(</span><span class="token parameter">user</span><span class="token punctuation">:</span> <span class="token class-name">User</span><span class="token punctuation">)</span><span class="token punctuation">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
-        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property">users</span><span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token parameter">user</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-        <span class="token namespace">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation">\`</span><span class="token string">Added user: </span><span class="token interpolation"><span class="token interpolation-punctuation">\${</span><span class="token parameter">user</span><span class="token punctuation">.</span><span class="token property">name</span><span class="token interpolation-punctuation">}</span></span><span class="token template-punctuation">\`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-    
-    <span class="token keyword">public</span> <span class="token function">getUserById</span><span class="token punctuation">(</span><span class="token parameter">id</span><span class="token punctuation">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span><span class="token punctuation">:</span> <span class="token class-name">User</span> <span class="token operator">|</span> <span class="token keyword">undefined</span> <span class="token punctuation">{</span>
-        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property">users</span><span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token parameter">u</span> <span class="token operator">=></span> <span class="token parameter">u</span><span class="token punctuation">.</span><span class="token property">id</span> <span class="token operator">===</span> <span class="token parameter">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
+	<span class="token keyword">private</span> <span class="token property">users</span><span class="token punctuation">:</span> <span class="token class-name">User</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+	
+	<span class="token keyword">public</span> <span class="token function">addUser</span><span class="token punctuation">(</span><span class="token parameter">user</span><span class="token punctuation">:</span> <span class="token class-name">User</span><span class="token punctuation">)</span><span class="token punctuation">:</span> <span class="token keyword">void</span> <span class="token punctuation">{</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property">users</span><span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token parameter">user</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token namespace">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation">\`</span><span class="token string">Added user: </span><span class="token interpolation"><span class="token interpolation-punctuation">\${</span><span class="token parameter">user</span><span class="token punctuation">.</span><span class="token property">name</span><span class="token interpolation-punctuation">}</span></span><span class="token template-punctuation">\`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
+	
+	<span class="token keyword">public</span> <span class="token function">getUserById</span><span class="token punctuation">(</span><span class="token parameter">id</span><span class="token punctuation">:</span> <span class="token builtin">number</span><span class="token punctuation">)</span><span class="token punctuation">:</span> <span class="token class-name">User</span> <span class="token operator">|</span> <span class="token keyword">undefined</span> <span class="token punctuation">{</span>
+		<span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token property">users</span><span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token parameter">u</span> <span class="token operator">=></span> <span class="token parameter">u</span><span class="token punctuation">.</span><span class="token property">id</span> <span class="token operator">===</span> <span class="token parameter">id</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 
 <span class="token keyword">const</span> <span class="token constant">MAGIC_NUMBER</span> <span class="token operator">=</span> <span class="token number">42</span><span class="token punctuation">;</span>

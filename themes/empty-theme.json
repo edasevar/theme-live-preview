@@ -1,7 +1,61 @@
 {
+	"$schema": "vscode://schemas/color-theme",
 	"name": "Empty Theme",
-	"type": "dark",
-	"colors": {},
-	"semanticTokenColors": {},
-	"tokenColors": []
+	"type": "light",
+	"colors": {
+		"editor.background": "#ffffff",
+		"editor.foreground": "#ffffff",
+		"editor.lineHighlightBackground": "#ffffff00",
+		"editor.selectionBackground": "#ffffff00",
+		"activityBar.background": "#ffffff",
+		"activityBar.foreground": "#ffffff",
+		"sideBar.background": "#ffffff",
+		"sideBar.foreground": "#ffffff",
+		"statusBar.background": "#ffffff",
+		"statusBar.foreground": "#ffffff",
+		"terminal.background": "#ffffff",
+		"terminal.foreground": "#ffffff"
+	},
+	"semanticTokenColors": {
+		"class": "#ffffff",
+		"function": "#ffffff",
+		"variable": "#ffffff",
+		"keyword": "#ffffff",
+		"string": "#ffffff",
+		"comment": "#ffffff",
+		"type": "#ffffff",
+		"property": "#ffffff"
+	},
+	"tokenColors": [
+		{
+			"scope": ["comment"],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": ["keyword"],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": ["string"],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": ["entity.name.function"],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": ["entity.name.type.class"],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		}
+	]
 }

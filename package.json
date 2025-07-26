@@ -1,50 +1,89 @@
 {
-	"name": "theme-live-preview",
-	"displayName": "Theme Live Preview",
-	"description": "",
+	"name": "theme-editor-live",
+	"displayName": "Theme Editor Live",
+	"description": "Visually edit and preview VS Code themes in real time with comprehensive theme management.",
 	"version": "1.0.0",
-	"publisher": "edasevar",
+	"publisher": "your-publisher-name",
 	"engines": {
-		"vscode": "^1.102.0"
+		"vscode": "^1.74.0"
 	},
 	"categories": [
+		"Themes",
 		"Other"
 	],
-	"activationEvents": [
-		"onCommand:theme-live-preview.open"
+	"keywords": [
+		"theme",
+		"editor",
+		"colors",
+		"customization",
+		"live preview"
 	],
+  "activationEvents": [
+	"onCommand:themeEditor.open",
+	"onCommand:themeEditor.loadTheme",
+	"onCommand:themeEditor.exportTheme",
+	"onCommand:themeEditor.resetTheme",
+	"onLanguage:json",
+	"onLanguage:jsonc"
+  ],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "theme-live-preview.open",
-				"title": "Open Theme Live Preview"
+				"command": "themeEditor.open",
+				"title": "Open Theme Editor Live",
+				"category": "Theme Editor"
+			},
+			{
+				"command": "themeEditor.loadTheme",
+				"title": "Load Theme File",
+				"category": "Theme Editor"
+			},
+			{
+				"command": "themeEditor.exportTheme",
+				"title": "Export Current Theme",
+				"category": "Theme Editor"
+			},
+			{
+				"command": "themeEditor.resetTheme",
+				"title": "Reset Theme to Default",
+				"category": "Theme Editor"
 			}
-		]
+		],
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "themeEditor.open"
+				},
+				{
+					"command": "themeEditor.loadTheme"
+				},
+				{
+					"command": "themeEditor.exportTheme"
+				},
+				{
+					"command": "themeEditor.resetTheme"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile && npm run lint",
-		"lint": "eslint src",
-		"test": "vscode-test"
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
-		"@types/glob": "^7.2.0",
-		"@types/minimatch": "^3.0.5",
-		"@types/mocha": "^10.0.10",
+		"@types/vscode": "^1.74.0",
 		"@types/node": "24.1.0",
-		"@types/vscode": "^1.102.0",
 		"@typescript-eslint/eslint-plugin": "^8.38.0",
 		"@typescript-eslint/parser": "^8.38.0",
-		"@vscode/test-cli": "^0.0.11",
-		"@vscode/test-electron": "^2.5.2",
 		"eslint": "^9.32.0",
 		"typescript": "^5.8.3"
 	},
 	"dependencies": {
-		"glob": "^7.2.3",
-		"minimatch": "^3.1.2"
+		"jsonc-parser": "^3.3.1"
 	}
 }
