@@ -8,10 +8,12 @@ export class ThemeEditorPanel {
 	// Maps loaded from TEMPLATE.jsonc
 	private colorDescriptions: Record<string, string> = {};
 	private semanticDescriptions: Record<string, string> = {};
+	// Map of dynamic TextMate token descriptions
+	private textmateDescriptions: Record<string, string> = {};
 
-	private readonly panel: vscode.WebviewPanel;
-	private readonly extensionUri: vscode.Uri;
-	private readonly themeManager: ThemeManager;
+	private readonly panel!: vscode.WebviewPanel;
+	private readonly extensionUri!: vscode.Uri;
+	private readonly themeManager!: ThemeManager;
 	private disposables: vscode.Disposable[] = [];
 	private updateThrottle: NodeJS.Timeout | null = null;
 	private pendingUpdates: Map<string, string> = new Map();
@@ -43,6 +45,68 @@ export class ThemeEditorPanel {
 		this.panel = panel;
 		this.extensionUri = extensionUri;
 		this.themeManager = themeManager;
+		// Load workbench UI color descriptions from TEMPLATE.jsonc comments
+		try {
+			const templatePath = path.join(this.extensionUri.fsPath, 'TEMPLATE.jsonc');
+			const lines = fs.readFileSync(templatePath, 'utf8').split(/\r?\n/);
+			let inColors = false;
+			for (const line of lines) {
+				if (/"colors"\s*:\s*\{/.test(line)) {
+					inColors = true;
+					continue;
+				}
+				if (inColors) {
+					if (/^\s*\}/.test(line)) {
+						break;
+					}
+					const m = line.match(/"([^"]+)":\s*"#[0-9A-Fa-f]{6,8}"\s*,?\s*\/\/\s*(.+)/);
+					if (m) {
+						this.colorDescriptions[m[1]] = m[2].trim();
+					}
+				}
+			}
+		} catch (e) {
+			// Ignore errors loading descriptions
+		}
+		// Load semantic token descriptions from TEMPLATE.jsonc comments
+		try {
+			const templatePath2 = path.join(this.extensionUri.fsPath, 'TEMPLATE.jsonc');
+			const lines2 = fs.readFileSync(templatePath2, 'utf8').split(/\r?\n/);
+			let inSemantic = false;
+			for (const line of lines2) {
+				if (/"semanticTokenColors"\s*:\s*\{/.test(line)) {
+					inSemantic = true;
+					continue;
+				}
+				if (inSemantic) {
+					if (/^\s*\}/.test(line)) {
+						break;
+					}
+					const m2 = line.match(/"([^"]+)"\s*:\s*(?:"#[0-9A-Fa-f]{6,8}"|\{[^\}]*\})\s*,?\s*\/\/\s*(.+)/);
+					if (m2) {
+						this.semanticDescriptions[m2[1]] = m2[2].trim();
+					}
+				}
+			}
+		} catch (_) {
+			// Ignore errors loading semantic descriptions
+		}
+		// Load TextMate token descriptions from TEMPLATE.jsonc comments
+		try {
+			const templatePath3 = path.join(this.extensionUri.fsPath, 'TEMPLATE.jsonc');
+			const templateContent = fs.readFileSync(templatePath3, 'utf8');
+			const tokenSectionStart = templateContent.indexOf('"tokenColors"');
+			if (tokenSectionStart !== -1) {
+				const tokenSection = templateContent.slice(tokenSectionStart);
+				const regex = /"([^\"]+)"\s*,?\s*\/\/\s*(.+)/g;
+				let match: RegExpExecArray | null;
+				while ((match = regex.exec(tokenSection))) {
+					this.textmateDescriptions[match[1]] = match[2].trim();
+				}
+			}
+		} catch (_) {
+			// Ignore errors loading TextMate descriptions
+		}
 
 		this.update();
 
@@ -554,15 +618,23 @@ export class ThemeEditorPanel {
 				const safeValue = this.ensureValidHexColor(value);
 				const description = this.getColorDescription(key);
 
+				// Determine color picker value (strip alpha if present)
+				const pickerValue = safeValue.length === 9 ? safeValue.slice(0, 7) : safeValue;
+				// Compute alpha percentage for transparency slider (0-100)
+				const alphaPercent = safeValue.length === 9
+					? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
+					: 100;
 				html += `<div class="color-item" data-search="${key.toLowerCase()} ${description.toLowerCase()}">
 					<div class="color-info">
 						<label class="color-label">${key}</label>
 						<p class="color-description">${description}</p>
 					</div>
 					<div class="color-controls">
-						<input type="color" class="color-picker" name="${key}" value="${safeValue}" title="Color picker">
+						<input type="color" class="color-picker" name="${key}" value="${pickerValue}" title="Color picker">
 						<input type="text" class="hex-input" name="${key}" value="${safeValue}" 
 							   pattern="^#[0-9a-fA-F]{6,8}$" title="Hex color value">
+					   <input type="range" class="alpha-slider" min="0" max="100" value="${alphaPercent}" name="alpha_${key}" title="Opacity (%)">
+					   <input type="number" class="alpha-input" min="0" max="100" value="${alphaPercent}" name="alpha_${key}" title="Opacity (%)">
 					</div>
 				</div>`;
 			});
@@ -603,14 +675,22 @@ export class ThemeEditorPanel {
 				const safeValue = this.ensureValidHexColor(colorVal);
 				const fontStyle = isObj ? (raw as any).fontStyle : '';
 				const description = this.getSemanticTokenDescription(key);
+				// Determine color picker value for semantic tokens
+				const semPicker = safeValue.length === 9 ? safeValue.slice(0, 7) : safeValue;
+				// Compute alpha percentage for transparency slider (0-100)
+				const alphaPercent = safeValue.length === 9
+					? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
+					: 100;
 				html += `<div class="color-item" data-search="${key}">
 							<div class="color-info">
 								<label class="color-label">${key}</label>
 								<p class="color-description">${description}</p>
 							</div>
 							<div class="color-controls">
-								<input type="color" class="color-picker" name="semantic_${key}" value="${safeValue}" />
-								<input type="text" class="hex-input" name="semantic_${key}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />`;
+								<input type="color" class="color-picker" name="semantic_${key}" value="${semPicker}" />
+								<input type="text" class="hex-input" name="semantic_${key}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />
+								<input type="range" class="alpha-slider" min="0" max="100" value="${alphaPercent}" name="alpha_semantic_${key}" title="Alpha (%)" />
+								<input type="number" class="alpha-input" min="0" max="100" value="${alphaPercent}" name="alpha_semantic_${key}" title="Alpha (%)" />`;
 				if (isObj) {
 					html += `<select name="semantic_${key}_fontStyle">
 								<option value=""${!fontStyle ? ' selected' : ''}>normal</option>
@@ -706,13 +786,21 @@ export class ThemeEditorPanel {
 				if (typeof fg !== 'string') { return; }
 				const safeValue = this.ensureValidHexColor(fg);
 				const description = this.getTextMateTokenDescription(scope);
+				// Determine color picker value for TextMate tokens
+				const tmPicker = safeValue.length === 9 ? safeValue.slice(0, 7) : safeValue;
+				// Compute alpha percentage for transparency slider (0-100)
+				const alphaPercent = safeValue.length === 9
+					? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
+					: 100;
 				html += `<div class="color-item" data-search="${scope}">` +
-					`<div class="color-info"><label class="color-label">${scope}</label>` +
-					`<p class="color-description">${description}</p></div>` +
-					`<div class="color-controls">` +
-					`<input type="color" class="color-picker" name="textmate_${scope}" value="${safeValue}" />` +
-					`<input type="text" class="hex-input" name="textmate_${scope}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />` +
-					`</div></div>`;
+				   `<div class="color-info"><label class="color-label">${scope}</label>` +
+				   `<p class="color-description">${description}</p></div>` +
+				   `<div class="color-controls">` +
+				   `<input type="color" class="color-picker" name="textmate_${scope}" value="${tmPicker}" />` +
+				   `<input type="text" class="hex-input" name="textmate_${scope}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />` +
+				   `<input type="range" class="alpha-slider" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />` +
+				   `<input type="number" class="alpha-input" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />` +
+				   `</div></div>`;
 			});
 			html += `</div></div>`;
 		}
@@ -740,6 +828,10 @@ export class ThemeEditorPanel {
 	}
 
 	private getTextMateTokenDescription (key: string): string {
+		// Return dynamic description if loaded
+		if (this.textmateDescriptions[key]) {
+			return this.textmateDescriptions[key];
+		}
 		const descriptions: Record<string, string> = {
 			'source': 'Base source text',
 			'support.type.property-name.css': 'CSS property names',
@@ -757,7 +849,73 @@ export class ThemeEditorPanel {
 			'token.info-token': 'Information messages in debug/log output',
 			'token.warn-token': 'Warning messages in debug/log output',
 			'token.error-token': 'Error messages in debug/log output',
-			'token.debug-token': 'Debug-specific messages and output'
+			'token.debug-token': 'Debug-specific messages and output',
+			// Punctuation & Delimiters
+			'punctuation': 'Punctuation characters and delimiters',
+			'punctuation.terminator': 'Statement terminators like semicolons',
+			'punctuation.definition.tag': 'Tag delimiters in markup like < and >',
+			'punctuation.separator': 'Separators like commas and colons',
+			'punctuation.definition.string': 'String delimiters like quotes',
+			'punctuation.section.block': 'Block delimiters like braces and brackets',
+			// Classes & Types
+			'entity.name.type.class': 'Class definition names',
+			'entity.name.type.interface': 'Interface definition names',
+			'entity.name.type': 'Type definition names',
+			'entity.name.type.struct': 'Struct definition names',
+			'entity.name.type.enum': 'Enum definition names',
+			'support.type': 'Built-in type names',
+			// Parameters
+			'variable.type.parameter': 'Parameter type annotations',
+			'variable.parameter.type': 'Parameter type annotations',
+			// Methods & Functions
+			'meta.function.method': 'Method definitions and calls',
+			'entity.name.function.method': 'Method names in classes and objects',
+			'support.function': 'Built-in function names',
+			'variable.function': 'Function variables and references',
+			// Preprocessor & Decorators
+			'entity.name.function.preprocessor': 'Preprocessor function names',
+			'meta.preprocessor': 'Preprocessor directives',
+			'meta.decorator': 'Decorator syntax',
+			'punctuation.decorator': 'Decorator punctuation like @',
+			'entity.name.function.decorator': 'Decorator function names',
+			// Variables & Properties
+			'variable': 'Variable names',
+			'meta.variable': 'Variable declarations',
+			'variable.other.object.property': 'Object property variable names',
+			'variable.other.readwrite.alias': 'Variable read/write aliases',
+			'variable.other.object': 'Object variable references',
+			'variable.other.global': 'Global variable references',
+			'variable.language.this': '"this" keyword references',
+			'variable.other.local': 'Local variable references',
+			'variable.parameter': 'Function parameter names',
+			'meta.parameter': 'Parameter declarations',
+			'variable.other.property': 'Property access in objects',
+			'meta.property': 'Property syntax definitions',
+			'variable.other.constant': 'Constant variable names',
+			'variable.readonly': 'Read-only variable names',
+			'meta.object-literal.key': 'Object literal key names',
+			// Keywords & Operators
+			'keyword.operator': 'Operator keywords',
+			// Strings & Literals
+			'string.other.link': 'Inline link text in markup',
+			'markup.inline.raw.string.markdown': 'Inline code spans in markdown',
+			'constant.character.escape': 'Escape sequences in strings',
+			'constant.other.placeholder': 'Template string placeholders',
+			'constant.numeric': 'Numeric literals',
+			'constant.language.boolean': 'Boolean constants true and false',
+			'constant.language.json': 'JSON constants like null, true, false',
+			// Labels
+			'entity.name.label': 'Label names in code like case labels',
+			'punctuation.definition.label': 'Label declaration punctuation',
+			// Comments & Documentation
+			'comment.documentation': 'Documentation comments like /** */',
+			'comment.line.documentation': 'Line documentation comments like ///',
+			// Namespaces & Modules
+			'entity.name.namespace': 'Namespace declaration names',
+			'storage.modifier.namespace': 'Namespace modifiers',
+			'markup.bold.markdown': 'Bold text in markdown',
+			'entity.name.module': 'Module declaration names',
+			'storage.modifier.module': 'Module modifiers'
 		};
 		return descriptions[key] || key;
 	}

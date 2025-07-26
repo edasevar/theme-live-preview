@@ -107,7 +107,37 @@ function initializeSectionNavigation() {
 
 function handleColorInput(e) {
   const target = e.target;
-  if (!target.name || (!target.classList.contains('color-picker') && !target.classList.contains('hex-input'))) {
+  if (!target.name) {
+    return;
+  }
+  // Handle alpha slider and number input
+  if (target.classList.contains('alpha-slider') || target.classList.contains('alpha-input')) {
+    const name = target.name; // e.g. alpha_key or alpha_semantic_key
+    // Sync paired alpha inputs
+    document.querySelectorAll(`[name="${name}"]`).forEach(input => {
+      if (input instanceof HTMLInputElement) {
+        input.value = target.value;
+      }
+    });
+    // Compute alpha hex
+    const percent = Math.max(0, Math.min(100, parseInt(target.value, 10) || 0));
+    const alphaHex = Math.round(percent / 100 * 255).toString(16).padStart(2, '0');
+    // Determine associated base name (strip 'alpha_')
+    const baseName = name.replace(/^alpha_/, '');
+    // Update hex input value
+    const hexInput = document.querySelector(`input.hex-input[name="${baseName}"]`);
+    const colorPicker = document.querySelector(`input.color-picker[name="${baseName}"]`);
+    if (hexInput && colorPicker) {
+      const baseHex = colorPicker.value; // '#RRGGBB'
+      const newHex = baseHex + alphaHex;
+      hexInput.value = newHex;
+      // Notify extension and preview update
+      applyLiveUpdate(baseName, newHex);
+    }
+    return;
+  }
+  // Process color picker and hex input
+  if (!target.classList.contains('color-picker') && !target.classList.contains('hex-input')) {
     return;
   }
 
@@ -135,6 +165,21 @@ function handleColorInput(e) {
       input.classList.remove('invalid');
     }
   });
+  // Update alpha inputs based on hex value
+  // Determine hex string length
+  let alphaPercent = 100;
+  if (target.classList.contains('hex-input')) {
+    const hexVal = value;
+    if (/^#[0-9a-fA-F]{8}$/.test(hexVal)) {
+      const a = parseInt(hexVal.slice(7, 9), 16);
+      alphaPercent = Math.round(a / 255 * 100);
+    }
+    // Sync alpha controls
+    const alphaName = `alpha_${name}`;
+    document.querySelectorAll(`input.alpha-slider[name="${alphaName}"], input.alpha-input[name="${alphaName}"]`).forEach(inp => {
+      if (inp instanceof HTMLInputElement) inp.value = alphaPercent.toString();
+    });
+  }
 
   // Apply live update to VS Code and preview
   applyLiveUpdate(name, value);
