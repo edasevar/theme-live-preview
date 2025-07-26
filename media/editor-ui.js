@@ -1,9 +1,10 @@
+/* global acquireVsCodeApi */
 const vscode = acquireVsCodeApi();
 
 // Semantic token mapping for live preview
 const semanticMap = {
   "keyword": "--token-keyword",
-  "function": "--token-function", 
+  "function": "--token-function",
   "parameter": "--token-parameter",
   "string": "--token-string",
   "comment": "--token-comment",
@@ -14,6 +15,23 @@ const semanticMap = {
   "number": "--token-number",
   "operator": "--token-operator",
   "punctuation": "--token-punctuation"
+};
+
+// UI color mapping to CSS variables
+const uiMap = {
+  'editor.background': '--bg-primary',
+  'editor.foreground': '--text-primary',
+  'sideBar.background': '--bg-secondary',
+  'sideBar.foreground': '--text-primary',
+  'sideBar.border': '--border-color',
+  'panel.background': '--bg-secondary',
+  'panel.border': '--border-color',
+  'panelInput.border': '--border-color',
+  'descriptionForeground': '--text-secondary',
+  'focusBorder': '--accent-color',
+  'input.background': '--bg-primary',
+  'input.foreground': '--text-primary',
+  'input.border': '--border-color'
 };
 
 // Global state
@@ -32,13 +50,29 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeEventListeners() {
   // Color input synchronization and live updates
   document.addEventListener('input', handleColorInput);
-  
+
   // Button event listeners
-  document.getElementById('resetColors').addEventListener('click', handleResetColors);
-  document.getElementById('loadEmptyTheme').addEventListener('click', handleLoadEmptyTheme);
-  document.getElementById('loadTheme').addEventListener('click', handleLoadTheme);
-  document.getElementById('exportTheme').addEventListener('click', handleExportTheme);
-  
+  const resetColorsButton = document.getElementById('resetColors');
+  if (resetColorsButton) {
+    resetColorsButton.addEventListener('click', handleResetColors);
+  }
+  const loadEmptyButton = document.getElementById('loadEmptyTheme');
+  if (loadEmptyButton) {
+    loadEmptyButton.addEventListener('click', handleLoadEmptyTheme);
+  }
+  const loadCurrentButton = document.getElementById('loadCurrentTheme');
+  if (loadCurrentButton) {
+    loadCurrentButton.addEventListener('click', handleLoadCurrentTheme);
+  }
+  const loadThemeButton = document.getElementById('loadTheme');
+  if (loadThemeButton) {
+    loadThemeButton.addEventListener('click', handleLoadTheme);
+  }
+  const exportThemeButton = document.getElementById('exportTheme');
+  if (exportThemeButton) {
+    exportThemeButton.addEventListener('click', handleExportTheme);
+  }
+
   // Category collapse/expand
   document.addEventListener('click', handleCategoryToggle);
 }
@@ -46,16 +80,19 @@ function initializeEventListeners() {
 function initializeSearch() {
   const searchInput = document.getElementById('searchInput');
   const debouncedSearch = debounceSearch(handleSearchInput, 200);
-  searchInput.addEventListener('input', debouncedSearch);
-  
-  // Handle search keyboard shortcuts
-  searchInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      focusFirstResult();
-    } else if (e.key === 'Escape') {
-      clearSearch();
-    }
-  });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', debouncedSearch);
+
+    // Handle search keyboard shortcuts
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        focusFirstResult();
+      } else if (e.key === 'Escape') {
+        clearSearch();
+      }
+    });
+  }
 }
 
 function initializeSectionNavigation() {
@@ -93,8 +130,8 @@ function handleColorInput(e) {
   // Sync paired inputs (color picker <-> hex input)
   const pairedInputs = document.querySelectorAll(`[name="${name}"]`);
   pairedInputs.forEach(input => {
-    if (input !== target) {
-      input.value = value;
+    if (input !== target && input instanceof HTMLInputElement) {
+      input.value = value; // Ensure input is an HTMLInputElement
       input.classList.remove('invalid');
     }
   });
@@ -117,15 +154,15 @@ function debounceSearch(func, delay) {
 
 function throttleUpdate(key, value) {
   batchUpdateQueue.set(key, value);
-  
+
   if (updateThrottle) {
     clearTimeout(updateThrottle);
   }
-  
+
   updateThrottle = setTimeout(() => {
     const changes = Array.from(batchUpdateQueue.entries()).map(([k, v]) => ({ key: k, value: v }));
     batchUpdateQueue.clear();
-    
+
     if (changes.length === 1) {
       vscode.postMessage({
         type: 'liveUpdate',
@@ -138,7 +175,7 @@ function throttleUpdate(key, value) {
         changes: changes
       });
     }
-    
+
     // Update local preview for all changes
     changes.forEach(change => {
       updatePreviewColors(change.key, change.value);
@@ -159,7 +196,7 @@ function previewColor(key, value) {
     key: key,
     value: value
   });
-  
+
   // Update local preview immediately
   updatePreviewColors(key, value);
 }
@@ -172,13 +209,25 @@ function updatePreviewColors(key, value) {
     if (cssProperty) {
       document.documentElement.style.setProperty(cssProperty, value);
     }
+    return;
   }
-  
-  // Handle workbench colors (could add preview for some elements)
-  if (key === 'editor.background') {
-    const previewElement = document.querySelector('.code-preview');
-    if (previewElement) {
+
+  // Handle UI workbench color changes by mapping to CSS variables
+  if (uiMap[key]) {
+    document.documentElement.style.setProperty(uiMap[key], value);
+  } else if (!key.startsWith('semantic_') && !key.startsWith('token_')) {
+    // Generic mapping for any other workbench color key to VSCode CSS var
+    const varName = `--vscode-${key.replace(/\./g, '-')}`;
+    document.documentElement.style.setProperty(varName, value);
+  }
+  // Handle workbench colors preview specifically for code snippet
+  const previewElement = document.querySelector('.code-preview');
+  if (previewElement instanceof HTMLElement) {
+    if (key === 'editor.background') {
       previewElement.style.backgroundColor = value;
+    }
+    if (key === 'editor.foreground') {
+      previewElement.style.color = value;
     }
   }
 }
@@ -203,29 +252,31 @@ function handleSearchInput(e) {
 function filterColorItems() {
   const colorItems = document.querySelectorAll('.color-item');
   visibleItems = [];
-  
+
   colorItems.forEach(item => {
-    const searchText = item.dataset.search || '';
+    const searchText = (item instanceof HTMLElement ? item.dataset.search : '') || '';
     const isVisible = !searchQuery || searchText.includes(searchQuery);
-    
-    item.style.display = isVisible ? 'flex' : 'none';
-    
+
+    if (item instanceof HTMLElement) {
+      item.style.display = isVisible ? 'flex' : 'none';
+    }
+
     if (isVisible) {
       visibleItems.push(item);
       highlightSearchTerms(item, searchQuery);
     }
   });
-  
+
   // Show/hide categories based on visible items
   updateCategoryVisibility();
 }
 
 function highlightSearchTerms(item, query) {
   if (!query) return;
-  
+
   const label = item.querySelector('.color-label');
   const description = item.querySelector('.color-description');
-  
+
   [label, description].forEach(el => {
     if (el && el.textContent) {
       const text = el.textContent;
@@ -242,17 +293,21 @@ function updateCategoryVisibility() {
   const categories = document.querySelectorAll('.color-category');
   categories.forEach(category => {
     const visibleItems = category.querySelectorAll('.color-item[style*="flex"], .color-item:not([style*="none"])');
-    category.style.display = visibleItems.length > 0 ? 'block' : 'none';
+    if (category instanceof HTMLElement) {
+      category.style.display = visibleItems.length > 0 ? 'block' : 'none';
+    }
   });
 }
 
 function updateSearchCount() {
   const searchCount = document.getElementById('searchCount');
-  if (searchQuery) {
-    searchCount.textContent = `${visibleItems.length} results`;
-    searchCount.style.display = 'inline';
-  } else {
-    searchCount.style.display = 'none';
+  if (searchCount) { // Add null check
+    if (searchQuery) {
+      searchCount.textContent = `${visibleItems.length} results`;
+      searchCount.style.display = 'inline';
+    } else {
+      searchCount.style.display = 'none';
+    }
   }
 }
 
@@ -267,24 +322,26 @@ function focusFirstResult() {
 
 function clearSearch() {
   const searchInput = document.getElementById('searchInput');
-  searchInput.value = '';
-  searchQuery = '';
-  filterColorItems();
-  updateSearchCount();
-  searchInput.focus();
+  if (searchInput instanceof HTMLInputElement) {
+    searchInput.value = '';
+    searchQuery = '';
+    filterColorItems();
+    updateSearchCount();
+    searchInput.focus();
+  }
 }
 
 function switchSection(section) {
   // Update navigation
   document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.section === section);
+    btn.classList.toggle('active', btn instanceof HTMLElement && btn.dataset.section === section);
   });
-  
+
   // Update content sections
   document.querySelectorAll('.color-section').forEach(sect => {
     sect.classList.toggle('active', sect.id === `${section}-section`);
   });
-  
+
   currentSection = section;
   updateVisibleItems();
 }
@@ -297,15 +354,15 @@ function updateVisibleItems() {
 function handleCategoryToggle(e) {
   const categoryTitle = e.target.closest('.category-title');
   if (!categoryTitle) return;
-  
+
   const category = categoryTitle.closest('.color-category');
   const content = category.querySelector('.category-content');
   const icon = categoryTitle.querySelector('.category-icon');
-  
+
   const isCollapsed = content.style.display === 'none';
   content.style.display = isCollapsed ? 'block' : 'none';
   icon.textContent = isCollapsed ? '▼' : '▶';
-  
+
   categoryTitle.classList.toggle('collapsed', !isCollapsed);
 }
 
@@ -325,6 +382,14 @@ function handleLoadEmptyTheme() {
   }
 }
 
+function handleLoadCurrentTheme() {
+  const confirmed = confirm('This will load the current theme. Continue?');
+  if (confirmed) {
+    vscode.postMessage({ type: 'loadCurrentTheme' });
+    showNotification('Current theme loaded', 'info');
+  }
+}
+
 function handleLoadTheme() {
   vscode.postMessage({ type: 'loadTheme' });
 }
@@ -338,13 +403,13 @@ function showNotification(message, type = 'info') {
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
   notification.textContent = message;
-  
+
   // Add to page
   document.body.appendChild(notification);
-  
+
   // Animate in
   setTimeout(() => notification.classList.add('show'), 10);
-  
+
   // Remove after delay
   setTimeout(() => {
     notification.classList.remove('show');
@@ -361,9 +426,44 @@ function escapeRegExp(string) {
 }
 
 // Handle messages from VS Code
+// Handle messages from the extension
 window.addEventListener('message', function(event) {
   const message = event.data;
-  
+  // Handle full theme refresh
+  if (message.type === 'refreshTheme' && message.theme) {
+    const theme = message.theme;
+    // Apply workbench colors
+    if (theme.colors) {
+      Object.entries(theme.colors).forEach(([key, value]) => {
+        updatePreviewColors(key, value);
+      });
+    }
+    // Apply semantic token colors
+    if (theme.semanticTokenColors) {
+      Object.entries(theme.semanticTokenColors).forEach(([key, value]) => {
+        updatePreviewColors(`semantic_${key}`, value);
+      });
+    }
+    // Apply TextMate token colors
+    if (Array.isArray(theme.tokenColors)) {
+      theme.tokenColors.forEach((token, index) => {
+        if (token.settings && token.settings.foreground) {
+          updatePreviewColors(`token_${index}`, token.settings.foreground);
+        }
+      });
+    }
+    return;
+  }
+  // Update specific input values on live edits
+  if (message.type === 'themeChanged') {
+    // set input values and update preview
+    document.querySelectorAll(`[name="${message.key}"]`).forEach(el => {
+      if (el instanceof HTMLInputElement) el.value = message.value;
+    });
+    updatePreviewColors(message.key, message.value);
+    return;
+  }
+
   switch (message.type) {
     case 'searchResults':
       // Handle search results from VS Code
@@ -388,23 +488,26 @@ document.addEventListener('keydown', function(e) {
   // Ctrl/Cmd + F: Focus search
   if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
     e.preventDefault();
-    document.getElementById('searchInput').focus();
+    const searchEl = document.getElementById('searchInput');
+    if (searchEl instanceof HTMLInputElement) {
+      searchEl.focus();
+    }
   }
-  
+
   // Ctrl/Cmd + R: Reset colors
   if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
     e.preventDefault();
     handleResetColors();
   }
-  
+
   // Ctrl/Cmd + E: Export theme
   if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
     e.preventDefault();
     handleExportTheme();
   }
-  
+
   // Tab navigation between sections
-  if (e.key === 'Tab' && e.target.classList.contains('nav-btn')) {
+  if (e.key === 'Tab' && e.target instanceof HTMLElement && e.target.classList.contains('nav-btn')) {
     // Allow normal tab behavior but could enhance
   }
 });
@@ -421,36 +524,49 @@ function scheduleAutoSave() {
 
 // Call scheduleAutoSave on any color change
 document.addEventListener('input', function(e) {
-  if (e.target.classList.contains('color-picker') || e.target.classList.contains('hex-input')) {
+  if (e.target instanceof HTMLElement && (e.target.classList.contains('color-picker') || e.target.classList.contains('hex-input'))) {
     scheduleAutoSave();
   }
 });
 
 // Handle messages from the extension
+// Secondary listener for update and batch messages
 window.addEventListener('message', event => {
   const message = event.data;
-  
   switch (message.type) {
+    case 'refreshTheme':
+      const theme = message.theme;
+      if (theme) {
+        // Apply all workbench colors
+        Object.entries(theme.colors || {}).forEach(([k, v]) => updatePreviewColors(k, v));
+        // Apply semantic tokens
+        Object.entries(theme.semanticTokenColors || {}).forEach(([k, v]) => updatePreviewColors(`semantic_${k}`, v));
+        // Apply TextMate token colors
+        if (Array.isArray(theme.tokenColors)) {
+          theme.tokenColors.forEach((token, i) => token.settings?.foreground && updatePreviewColors(`token_${i}`, token.settings.foreground));
+        }
+      }
+      break;
     case 'updateSuccess':
       showSuccessFeedback(`Updated ${message.changes.length} colors`);
       break;
-      
+
     case 'updateError':
       showErrorFeedback(`Update failed: ${message.error}`);
       break;
-      
+
     case 'batchUpdateSuccess':
       showSuccessFeedback(`Batch updated ${message.changes.length} colors`);
       break;
-      
+
     case 'batchUpdateError':
       showErrorFeedback(`Batch update failed: ${message.error}`);
       break;
-      
+
     case 'previewSuccess':
       showPreviewFeedback(message.key, message.value);
       break;
-      
+
     case 'previewError':
       showErrorFeedback(`Preview failed for ${message.key}: ${message.error}`);
       break;
@@ -462,7 +578,7 @@ function showSuccessFeedback(message) {
   feedback.classList.add('feedback', 'success');
   feedback.textContent = message;
   document.body.appendChild(feedback);
-  
+
   setTimeout(() => {
     feedback.remove();
   }, 2000);
@@ -473,7 +589,7 @@ function showErrorFeedback(message) {
   feedback.classList.add('feedback', 'error');
   feedback.textContent = message;
   document.body.appendChild(feedback);
-  
+
   setTimeout(() => {
     feedback.remove();
   }, 3000);
@@ -484,7 +600,7 @@ function showPreviewFeedback(key, value) {
   feedback.classList.add('feedback', 'preview');
   feedback.textContent = `Previewing ${key}: ${value}`;
   document.body.appendChild(feedback);
-  
+
   setTimeout(() => {
     feedback.remove();
   }, 1500);

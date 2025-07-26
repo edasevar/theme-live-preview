@@ -44,52 +44,57 @@ class ThemeManager {
         this.templateTheme = {};
         this.changeListeners = [];
         this.context = context;
+        // Load TEMPLATE.jsonc for baseline keysets
         this.loadTemplateTheme();
+        // Load active VS Code theme defaults
+        this.loadActiveThemeDefaults();
     }
     loadTemplateTheme() {
         try {
             const templatePath = path.join(this.context.extensionPath, 'TEMPLATE.jsonc');
             if (fs.existsSync(templatePath)) {
-                const templateContent = fs.readFileSync(templatePath, 'utf8');
-                this.templateTheme = (0, jsonc_parser_1.parse)(templateContent);
+                const content = fs.readFileSync(templatePath, 'utf8');
+                this.templateTheme = (0, jsonc_parser_1.parse)(content);
             }
         }
         catch (error) {
-            console.error('Failed to load template theme:', error);
+            console.error('Failed to load TEMPLATE.jsonc:', error);
         }
     }
     /**
-     * Get empty theme with #ffffff and #ffffff00 values
-     */
+      * Get empty theme with #ffffff and #ffffff00 values
+      */
     getEmptyTheme() {
         const emptyTheme = {
             name: "Empty Theme",
             type: "light",
             colors: {},
             semanticTokenColors: {},
-            tokenColors: []
+            tokenColors: [],
         };
         // Populate with template structure but empty values
         if (this.templateTheme.colors) {
             emptyTheme.colors = {};
-            Object.keys(this.templateTheme.colors).forEach(key => {
-                emptyTheme.colors[key] = key.includes('Background') && key !== 'editor.background'
-                    ? '#ffffff00' : '#ffffff';
+            Object.keys(this.templateTheme.colors).forEach((key) => {
+                emptyTheme.colors[key] =
+                    key.includes("Background") && key !== "editor.background"
+                        ? "#ffffff00"
+                        : "#ffffff";
             });
         }
         if (this.templateTheme.semanticTokenColors) {
             emptyTheme.semanticTokenColors = {};
-            Object.keys(this.templateTheme.semanticTokenColors).forEach(key => {
-                emptyTheme.semanticTokenColors[key] = '#ffffff';
+            Object.keys(this.templateTheme.semanticTokenColors).forEach((key) => {
+                emptyTheme.semanticTokenColors[key] = "#ffffff";
             });
         }
         if (this.templateTheme.tokenColors) {
-            emptyTheme.tokenColors = this.templateTheme.tokenColors.map(token => ({
+            emptyTheme.tokenColors = this.templateTheme.tokenColors.map((token) => ({
                 scope: token.scope,
                 settings: {
-                    foreground: '#ffffff',
-                    ...token.settings
-                }
+                    foreground: "#ffffff",
+                    ...token.settings,
+                },
             }));
         }
         return emptyTheme;
@@ -101,12 +106,12 @@ class ThemeManager {
         const ext = path.extname(filePath).toLowerCase();
         try {
             switch (ext) {
-                case '.json':
-                case '.jsonc':
+                case ".json":
+                case ".jsonc":
                     return this.loadJsonTheme(filePath);
-                case '.vsix':
+                case ".vsix":
                     return this.loadVsixTheme(filePath);
-                case '.css':
+                case ".css":
                     return this.loadCssTheme(filePath);
                 default:
                     throw new Error(`Unsupported file format: ${ext}`);
@@ -117,24 +122,24 @@ class ThemeManager {
         }
     }
     loadJsonTheme(filePath) {
-        const content = fs.readFileSync(filePath, 'utf8');
+        const content = fs.readFileSync(filePath, "utf8");
         const theme = (0, jsonc_parser_1.parse)(content);
         this.currentTheme = theme;
         return theme;
     }
     async loadVsixTheme(filePath) {
         // For now, show message that VSIX support is coming
-        vscode.window.showInformationMessage('VSIX theme loading is not yet implemented. Please extract the theme JSON file manually.');
-        throw new Error('VSIX loading not implemented yet');
+        vscode.window.showInformationMessage("VSIX theme loading is not yet implemented. Please extract the theme JSON file manually.");
+        throw new Error("VSIX loading not implemented yet");
     }
     loadCssTheme(filePath) {
-        const content = fs.readFileSync(filePath, 'utf8');
+        const content = fs.readFileSync(filePath, "utf8");
         const theme = {
-            name: path.basename(filePath, '.css'),
-            type: 'dark',
+            name: path.basename(filePath, ".css"),
+            type: "dark",
             colors: {},
             semanticTokenColors: {},
-            tokenColors: []
+            tokenColors: [],
         };
         // Basic CSS parsing for common VS Code color variables
         const cssVarRegex = /--vscode-([^:]+):\s*([^;]+);/g;
@@ -143,8 +148,8 @@ class ThemeManager {
             const [, property, value] = match;
             const cleanValue = value.trim();
             // Map CSS variables back to theme properties
-            if (cleanValue.startsWith('#')) {
-                const themeKey = property.replace(/-/g, '.');
+            if (cleanValue.startsWith("#")) {
+                const themeKey = property.replace(/-/g, ".");
                 if (theme.colors) {
                     theme.colors[themeKey] = cleanValue;
                 }
@@ -158,19 +163,29 @@ class ThemeManager {
      */
     getCurrentTheme() {
         const config = vscode.workspace.getConfiguration();
-        const colorCustomizations = config.get('workbench.colorCustomizations') || {};
-        const tokenColorCustomizations = config.get('editor.tokenColorCustomizations') || {};
-        const currentTheme = {
-            name: this.currentTheme.name || 'Current Theme',
-            type: this.currentTheme.type || 'dark',
-            colors: { ...this.currentTheme.colors, ...colorCustomizations },
-            semanticTokenColors: {
-                ...this.currentTheme.semanticTokenColors,
-                ...tokenColorCustomizations.semanticTokenColors
-            },
-            tokenColors: this.currentTheme.tokenColors || []
+        const colorCustomizations = config.get("workbench.colorCustomizations") || {};
+        const tokenColorCustomizations = config.get("editor.tokenColorCustomizations") || {};
+        // Merge defaults, loaded theme, and user customizations
+        const colors = {
+            ...(this.templateTheme.colors || {}),
+            ...(this.currentTheme.colors || {}),
+            ...colorCustomizations
         };
-        return currentTheme;
+        const semantic = {
+            ...(this.templateTheme.semanticTokenColors || {}),
+            ...(this.currentTheme.semanticTokenColors || {}),
+            ...tokenColorCustomizations.semanticTokenColors
+        };
+        const tokenColors = this.currentTheme.tokenColors && this.currentTheme.tokenColors.length
+            ? this.currentTheme.tokenColors
+            : this.templateTheme.tokenColors || [];
+        return {
+            name: this.currentTheme.name || this.templateTheme.name || 'Current Theme',
+            type: this.currentTheme.type || this.templateTheme.type,
+            colors,
+            semanticTokenColors: semantic,
+            tokenColors
+        };
     }
     /**
      * Apply live color change with enhanced capabilities
@@ -182,30 +197,32 @@ class ThemeManager {
             throw new Error(`Invalid color value: ${value}`);
         }
         try {
-            if (key.startsWith('semantic_')) {
+            if (key.startsWith("semantic_")) {
                 // Handle semantic token colors
-                const semanticKey = key.replace('semantic_', '');
-                const currentSemanticColors = config.get('editor.tokenColorCustomizations') || {};
+                const semanticKey = key.replace("semantic_", "");
+                const currentSemanticColors = config.get("editor.tokenColorCustomizations") ||
+                    {};
                 if (!currentSemanticColors.semanticTokenColors) {
                     currentSemanticColors.semanticTokenColors = {};
                 }
                 currentSemanticColors.semanticTokenColors[semanticKey] = value;
-                await config.update('editor.tokenColorCustomizations', currentSemanticColors, vscode.ConfigurationTarget.Global);
+                await config.update("editor.tokenColorCustomizations", currentSemanticColors, vscode.ConfigurationTarget.Global);
                 // Update internal theme state
                 if (!this.currentTheme.semanticTokenColors) {
                     this.currentTheme.semanticTokenColors = {};
                 }
                 this.currentTheme.semanticTokenColors[semanticKey] = value;
             }
-            else if (key.startsWith('token_')) {
+            else if (key.startsWith("token_")) {
                 // Handle TextMate token colors
                 await this.applyTextMateColor(key, value);
             }
             else {
                 // Handle workbench colors
-                const currentColors = config.get('workbench.colorCustomizations') || {};
+                const currentColors = config.get("workbench.colorCustomizations") ||
+                    {};
                 currentColors[key] = value;
-                await config.update('workbench.colorCustomizations', currentColors, vscode.ConfigurationTarget.Global);
+                await config.update("workbench.colorCustomizations", currentColors, vscode.ConfigurationTarget.Global);
                 // Update internal theme state
                 if (!this.currentTheme.colors) {
                     this.currentTheme.colors = {};
@@ -223,17 +240,18 @@ class ThemeManager {
      * Apply TextMate token color changes
      */
     async applyTextMateColor(key, value) {
-        const tokenIndex = parseInt(key.replace('token_', ''));
+        const tokenIndex = parseInt(key.replace("token_", ""));
         if (isNaN(tokenIndex)) {
             throw new Error(`Invalid token index: ${key}`);
         }
         const config = vscode.workspace.getConfiguration();
-        const currentTokenColors = config.get('editor.tokenColorCustomizations') || {};
+        const currentTokenColors = config.get("editor.tokenColorCustomizations") || {};
         if (!currentTokenColors.textMateRules) {
             currentTokenColors.textMateRules = [];
         }
         // Update or create the token rule
-        if (!this.currentTheme.tokenColors || !this.currentTheme.tokenColors[tokenIndex]) {
+        if (!this.currentTheme.tokenColors ||
+            !this.currentTheme.tokenColors[tokenIndex]) {
             return; // Invalid token index
         }
         const tokenRule = this.currentTheme.tokenColors[tokenIndex];
@@ -242,8 +260,8 @@ class ThemeManager {
             scope: tokenRule.scope,
             settings: {
                 ...tokenRule.settings,
-                foreground: value
-            }
+                foreground: value,
+            },
         };
         if (existingRuleIndex >= 0) {
             currentTokenColors.textMateRules[existingRuleIndex] = newRule;
@@ -251,13 +269,32 @@ class ThemeManager {
         else {
             currentTokenColors.textMateRules.push(newRule);
         }
-        await config.update('editor.tokenColorCustomizations', currentTokenColors, vscode.ConfigurationTarget.Global);
+        await config.update("editor.tokenColorCustomizations", currentTokenColors, vscode.ConfigurationTarget.Global);
         // Update internal theme state
-        if (this.currentTheme.tokenColors && this.currentTheme.tokenColors[tokenIndex]) {
+        if (this.currentTheme.tokenColors &&
+            this.currentTheme.tokenColors[tokenIndex]) {
             this.currentTheme.tokenColors[tokenIndex].settings = {
                 ...this.currentTheme.tokenColors[tokenIndex].settings,
-                foreground: value
+                foreground: value,
             };
+        }
+    }
+    /**
+     * Load a theme JSON/JSONC from disk and apply it
+     */
+    async applyThemeFromFile(filePath) {
+        const content = fs.readFileSync(filePath, 'utf8');
+        const theme = (0, jsonc_parser_1.parse)(content);
+        this.currentTheme = theme;
+        const config = vscode.workspace.getConfiguration();
+        if (theme.colors) {
+            await config.update('workbench.colorCustomizations', theme.colors, vscode.ConfigurationTarget.Global);
+        }
+        if (theme.semanticTokenColors) {
+            await config.update('editor.semanticTokenColorCustomizations', { enabled: true, rules: theme.semanticTokenColors }, vscode.ConfigurationTarget.Global);
+        }
+        if (theme.tokenColors) {
+            await config.update('editor.tokenColorCustomizations', { textMateRules: theme.tokenColors }, vscode.ConfigurationTarget.Global);
         }
     }
     /**
@@ -274,8 +311,8 @@ class ThemeManager {
     async resetTheme() {
         const config = vscode.workspace.getConfiguration();
         await Promise.all([
-            config.update('workbench.colorCustomizations', {}, vscode.ConfigurationTarget.Global),
-            config.update('editor.tokenColorCustomizations', {}, vscode.ConfigurationTarget.Global)
+            config.update("workbench.colorCustomizations", {}, vscode.ConfigurationTarget.Global),
+            config.update("editor.tokenColorCustomizations", {}, vscode.ConfigurationTarget.Global),
         ]);
         this.currentTheme = {};
     }
@@ -291,7 +328,7 @@ class ThemeManager {
     async loadThemeByName(themeName) {
         try {
             // Try to find the theme in VS Code's available themes
-            await vscode.commands.executeCommand('workbench.action.selectTheme');
+            await vscode.commands.executeCommand("workbench.action.selectTheme");
         }
         catch (error) {
             throw new Error(`Failed to load theme "${themeName}": ${error}`);
@@ -305,7 +342,7 @@ class ThemeManager {
         const semantic = Object.keys(this.templateTheme.semanticTokenColors || {});
         const textmate = (this.templateTheme.tokenColors || []).map((token, index) => ({
             scope: token.scope || `token_${index}`,
-            index
+            settings: Object.entries(token.settings || {}).map(([key, value]) => `${key}: ${value}`), // Convert settings to string[]
         }));
         return { workbench, semantic, textmate };
     }
@@ -313,7 +350,7 @@ class ThemeManager {
      * Validate if a color value is valid
      */
     isValidColor(color) {
-        if (typeof color !== 'string')
+        if (typeof color !== "string")
             return false;
         // Check for hex colors (with or without alpha)
         if (/^#[0-9a-fA-F]{3,8}$/.test(color)) {
@@ -328,38 +365,29 @@ class ThemeManager {
             return true;
         }
         // Check for named colors (basic validation)
-        const namedColors = ['transparent', 'inherit', 'initial', 'unset'];
+        const namedColors = ["transparent", "inherit", "initial", "unset"];
         if (namedColors.includes(color.toLowerCase())) {
             return true;
         }
         return false;
     }
     /**
-     * Emit theme change event to listeners
-     */
-    emitThemeChange(key, value) {
-        this.changeListeners.forEach(listener => {
-            try {
-                listener(key, value);
-            }
-            catch (error) {
-                console.error('Error in theme change listener:', error);
-            }
-        });
-    }
-    /**
      * Add a listener for theme changes
      */
     onThemeChange(listener) {
-        this.changeListeners.push(listener);
+        const wrappedListener = (key, value) => listener(key, value);
+        this.changeListeners.push(wrappedListener);
         return {
             dispose: () => {
-                const index = this.changeListeners.indexOf(listener);
-                if (index >= 0) {
+                const index = this.changeListeners.indexOf(wrappedListener);
+                if (index !== -1) {
                     this.changeListeners.splice(index, 1);
                 }
             }
         };
+    }
+    emitThemeChange(key, value) {
+        this.changeListeners.forEach(listener => listener(key, value));
     }
     /**
      * Get live preview of color changes without applying them
@@ -377,16 +405,16 @@ class ThemeManager {
      */
     async applyBatchColors(changes) {
         const config = vscode.workspace.getConfiguration();
-        const workbenchColors = config.get('workbench.colorCustomizations') || {};
-        const tokenCustomizations = config.get('editor.tokenColorCustomizations') || {};
+        const workbenchColors = config.get("workbench.colorCustomizations") || {};
+        const tokenCustomizations = config.get("editor.tokenColorCustomizations") || {};
         let hasWorkbenchChanges = false;
         let hasTokenChanges = false;
         for (const { key, value } of changes) {
             if (!this.isValidColor(value)) {
                 throw new Error(`Invalid color value for ${key}: ${value}`);
             }
-            if (key.startsWith('semantic_')) {
-                const semanticKey = key.replace('semantic_', '');
+            if (key.startsWith("semantic_")) {
+                const semanticKey = key.replace("semantic_", "");
                 if (!tokenCustomizations.semanticTokenColors) {
                     tokenCustomizations.semanticTokenColors = {};
                 }
@@ -398,7 +426,7 @@ class ThemeManager {
                 }
                 this.currentTheme.semanticTokenColors[semanticKey] = value;
             }
-            else if (!key.startsWith('token_')) {
+            else if (!key.startsWith("token_")) {
                 workbenchColors[key] = value;
                 hasWorkbenchChanges = true;
                 // Update internal state
@@ -411,16 +439,50 @@ class ThemeManager {
         // Apply changes in batch
         const promises = [];
         if (hasWorkbenchChanges) {
-            promises.push(config.update('workbench.colorCustomizations', workbenchColors, vscode.ConfigurationTarget.Global));
+            promises.push(config.update("workbench.colorCustomizations", workbenchColors, vscode.ConfigurationTarget.Global));
         }
         if (hasTokenChanges) {
-            promises.push(config.update('editor.tokenColorCustomizations', tokenCustomizations, vscode.ConfigurationTarget.Global));
+            promises.push(config.update("editor.tokenColorCustomizations", tokenCustomizations, vscode.ConfigurationTarget.Global));
         }
         await Promise.all(promises);
         // Emit change events
         changes.forEach(({ key, value }) => {
             this.emitThemeChange(key, value);
         });
+    }
+    /**
+     * Return the raw TEMPLATE.jsonc defaults
+     */
+    getDefaultTheme() {
+        return this.templateTheme;
+    }
+    /**
+     * Load active VS Code theme default values
+     */
+    loadActiveThemeDefaults() {
+        try {
+            const config = vscode.workspace.getConfiguration();
+            const themeName = config.get('workbench.colorTheme') || '';
+            for (const ext of vscode.extensions.all) {
+                const contributes = ext.packageJSON?.contributes;
+                if (contributes && Array.isArray(contributes.themes)) {
+                    for (const theme of contributes.themes) {
+                        if (theme.label === themeName || theme.id === themeName) {
+                            const themePath = path.join(ext.extensionPath, theme.path);
+                            if (fs.existsSync(themePath)) {
+                                const content = fs.readFileSync(themePath, 'utf8');
+                                this.currentTheme = (0, jsonc_parser_1.parse)(content);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            console.warn(`Active theme "${themeName}" not found in extensions`);
+        }
+        catch (error) {
+            console.error('Failed to load active theme defaults:', error);
+        }
     }
 }
 exports.ThemeManager = ThemeManager;

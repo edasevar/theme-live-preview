@@ -62,11 +62,14 @@ function activate(context) {
             const fileUri = await vscode.window.showOpenDialog(options);
             if (fileUri && fileUri[0]) {
                 try {
-                    await themeManager.loadThemeFromFile(fileUri[0].fsPath);
-                    vscode.window.showInformationMessage('Theme loaded successfully!');
+                    // Load and apply theme file to VS Code settings
+                    await themeManager.applyThemeFromFile(fileUri[0].fsPath);
+                    vscode.window.showInformationMessage('Theme applied successfully!');
                     // Refresh the panel if it's open
                     if (ThemeEditorPanel_1.ThemeEditorPanel.currentPanel) {
                         ThemeEditorPanel_1.ThemeEditorPanel.currentPanel.refresh();
+                        // Notify webview UI
+                        ThemeEditorPanel_1.ThemeEditorPanel.currentPanel.postMessage({ type: 'themeLoaded' });
                     }
                 }
                 catch (error) {
@@ -87,6 +90,10 @@ function activate(context) {
                 try {
                     await themeManager.exportTheme(fileUri.fsPath);
                     vscode.window.showInformationMessage(`Theme exported to ${fileUri.fsPath}`);
+                    // Notify webview UI
+                    if (ThemeEditorPanel_1.ThemeEditorPanel.currentPanel) {
+                        ThemeEditorPanel_1.ThemeEditorPanel.currentPanel.postMessage({ type: 'themeExported' });
+                    }
                 }
                 catch (error) {
                     vscode.window.showErrorMessage(`Failed to export theme: ${error}`);

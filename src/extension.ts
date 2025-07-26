@@ -13,8 +13,8 @@ export function activate(context: vscode.ExtensionContext) {
 			ThemeEditorPanel.createOrShow(extensionUri, themeManager);
 8		}),
 		
-		vscode.commands.registerCommand('themeEditor.loadTheme', async () => {
-			const options: vscode.OpenDialogOptions = {
+   vscode.commands.registerCommand('themeEditor.loadTheme', async () => {
+	  const options: vscode.OpenDialogOptions = {
 				canSelectMany: false,
 				openLabel: 'Load Theme',
 				filters: {
@@ -26,15 +26,18 @@ export function activate(context: vscode.ExtensionContext) {
 			};
 
 			const fileUri = await vscode.window.showOpenDialog(options);
-			if (fileUri && fileUri[0]) {
-				try {
-					await themeManager.loadThemeFromFile(fileUri[0].fsPath);
-					vscode.window.showInformationMessage('Theme loaded successfully!');
+	   if (fileUri && fileUri[0]) {
+		  try {
+				// Load and apply theme file to VS Code settings
+				await themeManager.applyThemeFromFile(fileUri[0].fsPath);
+			 vscode.window.showInformationMessage('Theme applied successfully!');
 					
 					// Refresh the panel if it's open
-					if (ThemeEditorPanel.currentPanel) {
-						ThemeEditorPanel.currentPanel.refresh();
-					}
+				if (ThemeEditorPanel.currentPanel) {
+				   ThemeEditorPanel.currentPanel.refresh();
+				   // Notify webview UI
+				   ThemeEditorPanel.currentPanel.postMessage({ type: 'themeLoaded' });
+				}
 				} catch (error) {
 					vscode.window.showErrorMessage(`Failed to load theme: ${error}`);
 				}
@@ -56,8 +59,12 @@ export function activate(context: vscode.ExtensionContext) {
 			const fileUri = await vscode.window.showSaveDialog(options);
 			if (fileUri) {
 				try {
-					await themeManager.exportTheme(fileUri.fsPath);
-					vscode.window.showInformationMessage(`Theme exported to ${fileUri.fsPath}`);
+				   await themeManager.exportTheme(fileUri.fsPath);
+				   vscode.window.showInformationMessage(`Theme exported to ${fileUri.fsPath}`);
+				   // Notify webview UI
+				   if (ThemeEditorPanel.currentPanel) {
+					   ThemeEditorPanel.currentPanel.postMessage({ type: 'themeExported' });
+				   }
 				} catch (error) {
 					vscode.window.showErrorMessage(`Failed to export theme: ${error}`);
 				}

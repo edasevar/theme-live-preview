@@ -1,9 +1,14 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ThemeManager, ThemeDefinition } from '../utils/themeManager';
+import * as fs from 'fs';
 
 export class ThemeEditorPanel {
 	public static currentPanel: ThemeEditorPanel | undefined;
+	// Maps loaded from TEMPLATE.jsonc
+	private colorDescriptions: Record<string, string> = {};
+	private semanticDescriptions: Record<string, string> = {};
+
 	private readonly panel: vscode.WebviewPanel;
 	private readonly extensionUri: vscode.Uri;
 	private readonly themeManager: ThemeManager;
@@ -12,9 +17,9 @@ export class ThemeEditorPanel {
 	private pendingUpdates: Map<string, string> = new Map();
 	private isUpdating: boolean = false;
 
-	public static createOrShow(extensionUri: vscode.Uri, themeManager: ThemeManager) {
+	public static createOrShow (extensionUri: vscode.Uri, themeManager: ThemeManager) {
 		const column = vscode.ViewColumn.Beside;
-		
+
 		if (ThemeEditorPanel.currentPanel) {
 			ThemeEditorPanel.currentPanel.panel.reveal(column);
 			return;
@@ -40,21 +45,22 @@ export class ThemeEditorPanel {
 		this.themeManager = themeManager;
 
 		this.update();
+
 		this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
 		// Listen for theme changes
 		const themeChangeListener = this.themeManager.onThemeChange((key, value) => {
-			this.sendMessageToWebview({
-				type: 'themeChanged',
-				key,
-				value
-			});
+			this.sendMessageToWebview({ type: 'themeChanged', key, value });
 		});
 		this.disposables.push(themeChangeListener);
 
 		this.panel.webview.onDidReceiveMessage(
 			async (message) => {
 				switch (message.type) {
+					case 'webviewReady':
+						// Webview loaded, send full theme state
+						this.sendMessageToWebview({ type: 'refreshTheme', theme: this.themeManager.getCurrentTheme() });
+						break;
 					case 'liveUpdate':
 						await this.handleLiveUpdate(message.key, message.value);
 						break;
@@ -70,11 +76,14 @@ export class ThemeEditorPanel {
 					case 'loadEmptyTheme':
 						await this.handleLoadEmptyTheme();
 						break;
-					case 'exportTheme':
-						await this.handleExportTheme();
+					case 'loadCurrentTheme':
+						await this.handleLoadCurrentTheme();
 						break;
 					case 'loadTheme':
 						await this.handleLoadTheme();
+						break;
+					case 'exportTheme':
+						await this.handleExportTheme();
 						break;
 					case 'searchColors':
 						this.handleSearchColors(message.query);
@@ -89,26 +98,26 @@ export class ThemeEditorPanel {
 		);
 	}
 
-	private async handleLiveUpdate(key: string, value: string) {
+	private async handleLiveUpdate (key: string, value: string) {
 		try {
 			// Use throttling for better performance
 			this.pendingUpdates.set(key, value);
-			
+
 			if (this.updateThrottle) {
 				clearTimeout(this.updateThrottle);
 			}
-			
+
 			this.updateThrottle = setTimeout(async () => {
 				await this.flushPendingUpdates();
 			}, 100); // 100ms throttle
-			
+
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			vscode.window.showErrorMessage(`Failed to apply color: ${errorMessage}`);
 		}
 	}
 
-	private async flushPendingUpdates() {
+	private async flushPendingUpdates () {
 		if (this.isUpdating || this.pendingUpdates.size === 0) {
 			return;
 		}
@@ -147,7 +156,7 @@ export class ThemeEditorPanel {
 		}
 	}
 
-	private async handleBatchUpdate(changes: Array<{ key: string, value: string }>) {
+	private async handleBatchUpdate (changes: Array<{ key: string, value: string }>) {
 		try {
 			await this.themeManager.applyBatchColors(changes);
 			this.sendMessageToWebview({
@@ -164,7 +173,7 @@ export class ThemeEditorPanel {
 		}
 	}
 
-	private async handlePreviewColor(key: string, value: string) {
+	private async handlePreviewColor (key: string, value: string) {
 		try {
 			await this.themeManager.previewColor(key, value);
 			this.sendMessageToWebview({
@@ -182,11 +191,20 @@ export class ThemeEditorPanel {
 		}
 	}
 
-	private sendMessageToWebview(message: any) {
+	/**
+	 * Post a message to the webview UI
+	 */
+	private sendMessageToWebview (message: any): void {
+		this.panel.webview.postMessage(message);
+	}
+	/**
+	 * Allow external callers to post messages to webview
+	 */
+	public postMessage (message: any): void {
 		this.panel.webview.postMessage(message);
 	}
 
-	private async handleResetColors() {
+	private async handleResetColors () {
 		try {
 			await this.themeManager.resetTheme();
 			this.update(); // Refresh the UI
@@ -196,7 +214,7 @@ export class ThemeEditorPanel {
 		}
 	}
 
-	private async handleLoadEmptyTheme() {
+	private async handleLoadEmptyTheme (): Promise<void> {
 		try {
 			const emptyTheme = this.themeManager.getEmptyTheme();
 			// Apply empty theme colors
@@ -208,55 +226,115 @@ export class ThemeEditorPanel {
 			}
 			this.update(); // Refresh the UI
 			vscode.window.showInformationMessage('Empty theme loaded');
+			// Notify webview and refresh all CSS variables
+			this.sendMessageToWebview({ type: 'refreshTheme' });
+			this.sendMessageToWebview({ type: 'themeLoaded' });
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to load empty theme: ${error}`);
 		}
 	}
 
-	private async handleExportTheme() {
-		vscode.commands.executeCommand('themeEditor.exportTheme');
+	/**
+	 * Load a theme file and apply it
+	 */
+	private async handleLoadTheme (): Promise<void> {
+		const options: vscode.OpenDialogOptions = {
+			canSelectMany: false,
+			openLabel: 'Load Theme',
+			filters: {
+				'Theme Files': ['json', 'jsonc'],
+				'VSIX Packages': ['vsix'],
+				'CSS Files': ['css'],
+				'All Files': ['*']
+			}
+		};
+		const uris = await vscode.window.showOpenDialog(options);
+		if (!uris || !uris[0]) {
+			return;
+		}
+		try {
+			await this.themeManager.loadThemeFromFile(uris[0].fsPath);
+			this.update(); // Refresh UI to show loaded theme values
+			vscode.window.showInformationMessage('Theme loaded successfully');
+			// Refresh preview of all theme values
+			this.sendMessageToWebview({ type: 'refreshTheme' });
+			this.sendMessageToWebview({ type: 'themeLoaded' });
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to load theme: ${error}`);
+		}
+	}
+	/**
+	 * Handle loading the active VS Code theme defaults into the editor
+	 */
+	private async handleLoadCurrentTheme (): Promise<void> {
+		try {
+			this.themeManager.loadActiveThemeDefaults();
+			this.update(); // Refresh the UI
+			vscode.window.showInformationMessage('Current theme loaded for editing');
+			this.sendMessageToWebview({ type: 'refreshTheme' });
+			this.sendMessageToWebview({ type: 'themeLoaded' });
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to load current theme: ${error}`);
+		}
 	}
 
-	private async handleLoadTheme() {
-		vscode.commands.executeCommand('themeEditor.loadTheme');
+	private async handleExportTheme (): Promise<void> {
+		try {
+			const currentTheme = this.themeManager.getCurrentTheme();
+			const defaultFileName = `${currentTheme.name || 'theme'}.json`;
+			const options: vscode.SaveDialogOptions = {
+				defaultUri: vscode.Uri.file(path.join(vscode.workspace.rootPath || '', defaultFileName)),
+				filters: { 'Theme Files': ['json', 'jsonc'] }
+			};
+			const uri = await vscode.window.showSaveDialog(options);
+			if (!uri) { return; }
+			const themeContent = JSON.stringify(currentTheme, null, 2);
+			await fs.promises.writeFile(uri.fsPath, themeContent, 'utf8');
+			vscode.window.showInformationMessage(`Theme exported to ${uri.fsPath}`);
+			this.sendMessageToWebview({ type: 'themeExported' });
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to export theme: ${msg}`);
+		}
 	}
 
-	private handleSearchColors(query: string) {
+	private handleSearchColors (query: string) {
 		this.panel.webview.postMessage({
 			type: 'searchResults',
 			query: query.toLowerCase()
 		});
 	}
 
-	private handleToggleSection(section: string) {
+	private handleToggleSection (section: string) {
 		this.panel.webview.postMessage({
 			type: 'toggleSectionResult',
 			section
 		});
 	}
 
-	public refresh() {
+	public refresh () {
 		this.update();
 	}
 
-	private update() {
+	private update () {
 		const webview = this.panel.webview;
 		this.panel.webview.html = this.getHtmlForWebview(webview);
 	}
 
-	private getHtmlForWebview(webview: vscode.Webview): string {
+	private getHtmlForWebview (webview: vscode.Webview): string {
 		// Get URIs for resources
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'editor-ui.js'));
 		const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'style.css'));
 
 		// Get current theme
 		const currentTheme = this.themeManager.getCurrentTheme();
-		const templateTheme = this.themeManager.getTemplateTheme();
+		// Use active theme defaults for sections
+		const defaultTheme = this.themeManager.getDefaultTheme();
 
 		// Generate HTML sections
-		const workbenchSection = this.generateWorkbenchColorsSection(currentTheme, templateTheme);
-		const semanticSection = this.generateSemanticTokensSection(currentTheme, templateTheme);
-		const textmateSection = this.generateTextMateTokensSection(currentTheme, templateTheme);
+		const workbenchSection = this.generateWorkbenchColorsSection(currentTheme, defaultTheme);
+		const semanticSection = this.generateSemanticTokensSection(currentTheme, defaultTheme);
+		const textmateSection = this.generateTextMateTokensSection(currentTheme, defaultTheme);
 
 		return `<!DOCTYPE html>
 		<html lang="en">
@@ -270,7 +348,8 @@ export class ThemeEditorPanel {
 			<div class="header">
 				<h1>🎨 Theme Editor Live</h1>
 				<div class="header-actions">
-					<button type="button" id="loadEmptyTheme" class="btn btn-secondary">Load Empty Theme</button>
+				<button type="button" id="loadEmptyTheme" class="btn btn-secondary">Load Empty Theme</button>
+				<button type="button" id="loadCurrentTheme" class="btn btn-secondary">Load Current Theme</button>
 					<button type="button" id="loadTheme" class="btn btn-secondary">Load Theme File</button>
 					<button type="button" id="exportTheme" class="btn btn-primary">Export Theme</button>
 					<button type="button" id="resetColors" class="btn btn-danger">Reset All</button>
@@ -355,38 +434,97 @@ export class ThemeEditorPanel {
 			</div>
 
 			<script src="${scriptUri}"></script>
-		</body>
-		</html>`;
++            <script>
++              // Notify extension when webview is ready
++              vscode.postMessage({ type: 'webviewReady' });
++            </script>
+		 </body>
+		 </html>`;
 	}
 
-	private generateWorkbenchColorsSection(currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
+	private generateWorkbenchColorsSection (currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
+		// Merge template keys with current theme values so all colors show
 		const colors = { ...templateTheme.colors, ...currentTheme.colors };
-		
+
 		// Group colors by category
 		const categories: Record<string, string[]> = {
 			'Editor Core': [
 				'editor.background', 'editor.foreground', 'editor.lineHighlightBackground',
-				'editor.selectionBackground', 'editorCursor.foreground', 'editorWhitespace.foreground'
+				'editor.lineHighlightBorder', 'editor.selectionBackground',
+				'editor.selectionHighlightBackground', 'editor.inactiveSelectionBackground',
+				'editor.wordHighlightBackground', 'editor.wordHighlightStrongBackground',
+				'editor.wordHighlightTextBackground', 'editor.rangeHighlightBackground',
+				'editor.hoverHighlightBackground', 'editor.findMatchBackground',
+				'editor.findMatchHighlightBackground', 'editor.findRangeHighlightBackground',
+				'editor.foldBackground', 'editorCursor.foreground', 'editorLink.activeForeground',
+				'editorWhitespace.foreground', 'editorIndentGuide.background1',
+				'editorIndentGuide.activeBackground1', 'editorRuler.foreground',
+				'editorBracketMatch.background', 'editorBracketMatch.border',
+				'editorBracketHighlight.foreground1', 'editorBracketHighlight.foreground2',
+				'editorBracketHighlight.foreground3', 'editorOverviewRuler.border'
 			],
 			'Editor Widgets': [
-				'editorWidget.background', 'editorWidget.border', 'editorSuggestWidget.background',
-				'editorHoverWidget.background', 'editorError.foreground', 'editorWarning.foreground'
+				'editorWidget.background', 'editorWidget.border', 'editorSuggestWidget.background', 'editorSuggestWidget.border', 'editorSuggestWidget.foreground', 'editorSuggestWidget.highlightForeground', 'editorSuggestWidget.selectedBackground', 'editorHoverWidget.background', 'editorHoverWidget.border', 'editorGhostText.foreground', 'editorHint.foreground', 'editorInfo.foreground', 'editorWarning.foreground', 'editorError.foreground'
+			],
+			'Editor Gutter': [
+				'editorGutter.background', 'editorGutter.addedBackground', 'editorGutter.modifiedBackground', 'editorGutter.deletedBackground', 'editorGutter.foldingControlForeground', 'editorLineNumber.foreground', 'editorLineNumber.activeForeground'
+			],
+			'Editor Inlay Hints': [
+				'editorInlayHint.background', 'editorInlayHint.foreground', 'editorInlayHint.typeBackground', 'editorInlayHint.typeForeground', 'editorInlayHint.parameterBackground', 'editorInlayHint.parameterForeground'
+			],
+			'Editor Groups & Tabs': [
+				'editorGroup.border', 'editorGroup.dropBackground', 'editorGroupHeader.tabsBackground', 'editorGroupHeader.noTabsBackground', 'tab.activeBackground', 'tab.activeForeground', 'tab.activeModifiedBorder', 'tab.inactiveBackground', 'tab.inactiveForeground', 'tab.inactiveModifiedBorder', 'tab.border', 'tab.hoverBackground', 'tab.unfocusedActiveModifiedBorder', 'tab.unfocusedHoverBackground', 'tab.unfocusedInactiveModifiedBorder', 'tab.lastPinnedBorder'
 			],
 			'Activity Bar': [
-				'activityBar.background', 'activityBar.foreground', 'activityBar.activeBorder',
-				'activityBarBadge.background', 'activityBarBadge.foreground'
+				'activityBar.background', 'activityBar.foreground', 'activityBar.inactiveForeground', 'activityBar.border', 'activityBar.activeBorder', 'activityBarBadge.background', 'activityBarBadge.foreground', 'activityBar.dropBorder', 'activityErrorBadge.background', 'activityErrorBadge.foreground', 'activityWarningBadge.background', 'activityWarningBadge.foreground',
 			],
 			'Sidebar': [
-				'sideBar.background', 'sideBar.foreground', 'sideBar.border',
-				'sideBarTitle.foreground', 'sideBarSectionHeader.background'
+				'sideBar.background', 'sideBar.foreground', 'sideBar.border', 'sideBarTitle.foreground', 'sideBarSectionHeader.background', 'sideBarSectionHeader.foreground', 'sideBarSectionHeader.border', 'sideBar.dropBackground'
 			],
 			'Status Bar': [
-				'statusBar.background', 'statusBar.foreground', 'statusBar.border',
-				'statusBar.debuggingBackground', 'statusBarItem.hoverBackground'
+				'statusBar.background', 'statusBar.foreground', 'statusBar.border', 'statusBar.debuggingBackground', 'statusBar.debuggingForeground', 'statusBar.noFolderBackground', 'statusBar.noFolderForeground', 'statusBarItem.activeBackground', 'statusBarItem.hoverBackground', 'statusBarItem.remoteBackground', 'statusBarItem.remoteForeground', 'statusBarItem.errorBackgroun', 'statusBarItem.errorForeground'
+			],
+			'Title Bar': [
+				'titleBar.activeBackground', 'titleBar.activeForeground', 'titleBar.inactiveBackground', 'titleBar.inactiveForeground', 'titleBar.border',
+			],
+			'Panel': [
+				'panel.background', 'panel.border', 'panel.dropBorder', 'panelTitle.activeBorder', 'panelTitle.activeForeground', 'panelTitle.inactiveForeground', 'panelInput.border',
 			],
 			'Terminal': [
-				'terminal.background', 'terminal.foreground', 'terminal.ansiBlack',
-				'terminal.ansiRed', 'terminal.ansiGreen', 'terminal.ansiBlue'
+				'terminal.background', 'terminal.foreground', 'terminal.border', 'terminalCursor.background', 'terminalCursor.foreground', 'terminal.ansiBlack', 'terminal.ansiBlue', 'terminal.ansiCyan', 'terminal.ansiGreen', 'terminal.ansiMagenta', 'terminal.ansiRed', 'terminal.ansiWhite', 'terminal.ansiYellow', 'terminal.ansiBrightBlack', 'terminal.ansiBrightBlue', 'terminal.ansiBrightCyan', 'terminal.ansiBrightGreen', 'terminal.ansiBrightMagenta', 'terminal.ansiBrightRed', 'terminal.ansiBrightWhite', 'terminal.ansiBrightYellow', 'terminal.selectionBackground',
+			],
+			'Lists & Trees': [
+				'list.activeSelectionBackground', 'list.activeSelectionForeground', 'list.inactiveSelectionBackground', 'list.inactiveSelectionForeground', 'list.hoverBackground', 'list.hoverForeground', 'list.focusOutline', 'list.inactiveFocusOutline', 'list.errorForeground', 'list.warningForeground', 'list.filterMatchBackground', 'list.highlightForeground'
+			],
+			'Input Controls': [
+				'input.background', 'input.foreground', 'input.border', 'input.placeholderForeground', 'inputOption.activeBackground', 'inputOption.activeBorder', 'inputOption.activeForeground', 'inputOption.hoverBackground'
+			],
+			'Buttons & Badges': [
+				'button.background', 'button.foreground', 'button.hoverBackground', 'button.secondaryBackground', 'button.secondaryForeground', 'button.secondaryHoverBackground', 'badge.background', 'badge.foreground'
+			],
+			'Dropdown': [
+				'dropdown.background', 'peekViewTitle.background', 'peekViewTitleDescription.foreground', 'peekViewTitleLabel.foreground'
+			],
+			'Merge Conflicts': [
+				'merge.border', 'merge.commonContentBackground', 'merge.commonHeaderBackground', 'merge.currentContentBackground', 'merge.currentHeaderBackground', 'merge.incomingContentBackground', 'merge.incomingHeaderBackground'
+			],
+			'Notifications & Settings': [
+				'notifications.background', 'notifications.border', 'notifications.foreground', 'notificationLink.foreground', 'notificationsErrorIcon.foreground', 'notificationsInfoIcon.foreground', 'notificationsWarningIcon.foreground', 'settings.headerForeground', 'settings.textInputForeground', 'settings.modifiedItemIndicator'
+			],
+			'Git Decorations': [
+				'gitDecoration.addedResourceForeground', 'gitDecoration.modifiedResourceForeground', 'gitDecoration.deletedResourceForeground', 'gitDecoration.untrackedResourceForeground', 'gitDecoration.ignoredResourceForeground', 'gitDecoration.conflictingResourceForeground', 'gitDecoration.submoduleResourceForeground'
+			],
+			'Text Links': [
+				'textLink.foreground', 'textLink.activeForeground', 'descriptionForeground'
+			],
+			'Debug': [
+				'debugToolBar.background', 'debugIcon.breakpointForeground', 'debugIcon.startForeground', 'debugIcon.pauseForeground', 'debugIcon.stopForeground', 'debugIcon.disconnectForeground', 'debugIcon.restartForeground', 'debugIcon.stepOverForeground', 'debugIcon.stepIntoForeground', 'debugIcon.stepOutForeground', 'debugIcon.continueForeground'
+			],
+			'Charts': [
+				'charts.foreground', 'charts.lines', 'charts.red', 'charts.blue', 'charts.yellow', 'charts.orange', 'charts.green', 'charts.purple'
+			],
+			'Extensions & Welcome Page': [
+				'extensionButton.prominentBackground', 'extensionButton.prominentForeground', 'extensionButton.prominentHoverBackground', 'extensionBadge.remoteBackground', 'extensionBadge.remoteForeground', 'welcomePage.progress.background', 'welcomePage.progress.foreground', 'welcomePage.tileBackground', 'welcomePage.tileBorder', 'welcomePage.tileHoverBackground'
 			],
 			'Other UI Elements': []
 		};
@@ -402,7 +540,7 @@ export class ThemeEditorPanel {
 		let html = '';
 		for (const [categoryName, keys] of Object.entries(categories)) {
 			if (keys.length === 0) continue;
-			
+
 			html += `<div class="color-category">
 				<h3 class="category-title" data-category="${categoryName}">
 					<span class="category-icon">▼</span>
@@ -435,120 +573,200 @@ export class ThemeEditorPanel {
 		return html;
 	}
 
-	private generateSemanticTokensSection(currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
+	private generateSemanticTokensSection (currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
+		// Merge template semantic tokens with current theme values
 		const semanticColors = { ...templateTheme.semanticTokenColors, ...currentTheme.semanticTokenColors };
-		
-		let html = `<div class="color-category">
-			<h3 class="category-title">Semantic Token Colors</h3>
-			<div class="category-content">
-				<p class="section-description">
-					Semantic tokens provide rich syntax highlighting based on language understanding.
-				</p>`;
 
-		Object.entries(semanticColors).forEach(([key, value]) => {
-			const colorValue = typeof value === 'string' ? value : (value as any)?.foreground || '#ffffff';
-			const safeValue = this.ensureValidHexColor(colorValue);
-			const description = this.getSemanticTokenDescription(key);
+		// Define semantic groups matching TEMPLATE.jsonc comments
+		const semanticGroups: Record<string, string[]> = {
+			'Types': ['class', 'interface', 'enum', 'struct', 'type', 'typeParameter'],
+			'Variables': ['variable', 'parameter', 'property', 'enumMember'],
+			'Values & Literals': ['string', 'number', 'boolean', 'regexp'],
+			'Functions': ['function', 'method'],
+			'Keywords': ['keyword', 'modifier', 'namespace'],
+			'Comments': ['comment'],
+			'Special Modifiers': ['*.static', '*.readonly', '*.decorator', '*.abstract']
+		};
 
-			html += `<div class="color-item" data-search="${key.toLowerCase()} ${description.toLowerCase()}">
-				<div class="color-info">
-					<label class="color-label">${key}</label>
-					<p class="color-description">${description}</p>
-				</div>
-				<div class="color-controls">
-					<input type="color" class="color-picker" name="semantic_${key}" value="${safeValue}">
-					<input type="text" class="hex-input" name="semantic_${key}" value="${safeValue}" 
-						   pattern="^#[0-9a-fA-F]{6,8}$">
-				</div>
-			</div>`;
-		});
+		let html = '';
+		// Render each semantic group
+		for (const [groupName, keys] of Object.entries(semanticGroups)) {
+			html += `<div class="color-category">
+						<h3 class="category-title">${groupName}</h3>
+						<div class="category-content">`;
 
-		html += `</div></div>`;
+			keys.forEach(key => {
+				const raw = semanticColors[key];
+				if (!raw) return;
+				const isObj = typeof raw !== 'string';
+				const colorVal = isObj ? (raw as any).foreground || '' : raw as string;
+				const safeValue = this.ensureValidHexColor(colorVal);
+				const fontStyle = isObj ? (raw as any).fontStyle : '';
+				const description = this.getSemanticTokenDescription(key);
+				html += `<div class="color-item" data-search="${key}">
+							<div class="color-info">
+								<label class="color-label">${key}</label>
+								<p class="color-description">${description}</p>
+							</div>
+							<div class="color-controls">
+								<input type="color" class="color-picker" name="semantic_${key}" value="${safeValue}" />
+								<input type="text" class="hex-input" name="semantic_${key}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />`;
+				if (isObj) {
+					html += `<select name="semantic_${key}_fontStyle">
+								<option value=""${!fontStyle ? ' selected' : ''}>normal</option>
+								<option value="italic"${fontStyle === 'italic' ? ' selected' : ''}>italic</option>
+								<option value="bold"${fontStyle === 'bold' ? ' selected' : ''}>bold</option>
+								<option value="underline"${fontStyle === 'underline' ? ' selected' : ''}>underline</option>
+							</select>`;
+				}
+				html += `      </div>
+						</div>`;
+			});
+
+			html += `</div></div>`;
+		}
+
 		return html;
 	}
 
-	private generateTextMateTokensSection(currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
-		const tokenColors = currentTheme.tokenColors || templateTheme.tokenColors || [];
-		
-		let html = `<div class="color-category">
-			<h3 class="category-title">TextMate Token Colors</h3>
-			<div class="category-content">
-				<p class="section-description">
-					TextMate tokens provide detailed syntax highlighting control. 
-					<em>Note: These are currently read-only in this version.</em>
-				</p>`;
-
-		tokenColors.forEach((token, index) => {
-			if (!token.settings?.foreground) return;
-			
-			const scope = Array.isArray(token.scope) ? token.scope.join(', ') : token.scope || `token_${index}`;
-			const value = token.settings.foreground;
-			const safeValue = this.ensureValidHexColor(value);
-
-			html += `<div class="color-item textmate-readonly" data-search="${scope.toLowerCase()}">
-				<div class="color-info">
-					<label class="color-label">${scope}</label>
-					<p class="color-description">TextMate scope: ${scope}</p>
-				</div>
-				<div class="color-controls">
-					<input type="color" class="color-picker" value="${safeValue}" disabled>
-					<input type="text" class="hex-input" value="${safeValue}" disabled>
-				</div>
-			</div>`;
-		});
-
-		html += `</div></div>`;
+	private generateTextMateTokensSection (currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
+		// Render TextMate tokens by grouping each defined scope under its category
+		const tokenColors = (currentTheme.tokenColors && currentTheme.tokenColors.length > 0)
+			? currentTheme.tokenColors : templateTheme.tokenColors || [];
+		const textmateGroups: Record<string, string[]> = {
+			'Base Text & Structure': [
+				'source',
+				'support.type.property-name.css'
+			],
+			'Punctuation & Delimiters': [
+				'punctuation',
+				'punctuation.terminator',
+				'punctuation.definition.tag',
+				'punctuation.separator',
+				'punctuation.definition.string',
+				'punctuation.section.block'
+			],
+			'Class Definitions': ['entity.name.type.class'],
+			'Interface Definitions': ['entity.name.type.interface', 'entity.name.type'],
+			'Struct Definitions': ['entity.name.type.struct'],
+			'Enum Definitions': ['entity.name.type.enum'],
+			'Built-in Types': ['support.type'],
+			'Parameter Types': ['variable.type.parameter', 'variable.parameter.type'],
+			'Method Definitions': ['entity.name.function.method', 'meta.function.method'],
+			'Function Names': ['entity.name.function', 'support.function', 'meta.function-call.generic'],
+			'Function Variables': ['variable.function'],
+			'Preprocessor Functions': ['entity.name.function.preprocessor', 'meta.preprocessor'],
+			'Additional Preprocessor': ['meta.preprocessor'],
+			'Decorators': ['meta.decorator', 'punctuation.decorator', 'entity.name.function.decorator'],
+			'Variable Names': ['variable', 'meta.variable', 'variable.other.object.property', 'variable.other.readwrite.alias'],
+			'Object Variables': ['variable.other.object'],
+			'Global Variables': ['variable.other.global', 'variable.language.this'],
+			'Local Variables': ['variable.other.local'],
+			'Function Parameters': ['variable.parameter', 'meta.parameter'],
+			'Property Access': ['variable.other.property', 'meta.property'],
+			'Constants & Readonly': ['variable.other.constant', 'variable.readonly'],
+			'Object Literal Keys': ['meta.object-literal.key'],
+			'Language Keywords': ['keyword'],
+			'Import Keywords': ['keyword.control.import', 'keyword.control.from', 'keyword.import'],
+			'Exception Keywords': ['keyword.control.exception', 'keyword.control.trycatch'],
+			'Modifiers & Types': ['storage.modifier', 'keyword.modifier', 'storage.type'],
+			'Operators': ['keyword.operator'],
+			'String Literals': ['string', 'string.other.link', 'markup.inline.raw.string.markdown'],
+			'Escape Sequences & Placeholders': ['constant.character.escape', 'constant.other.placeholder'],
+			'Numeric Literals': ['constant.numeric'],
+			'Boolean & JSON Constants': ['constant.language.boolean', 'constant.language.json'],
+			'Labels': ['entity.name.label', 'punctuation.definition.label'],
+			'Comments': ['comment', 'punctuation.definition.comment'],
+			'Documentation Comments': ['comment.documentation', 'comment.line.documentation'],
+			'Namespaces': [
+				'entity.name.namespace', 'storage.modifier.namespace', 'markup.bold.markdown'
+			],
+			'Modules': [
+				'entity.name.module', 'storage.modifier.module'
+			],
+			'Underlined Links': ['markup.underline.link'],
+			'HTML/XML Tag Names': ['entity.name.tag'],
+			'Component Class Names': ['support.class.component'],
+			'HTML Attributes & Values': ['entity.other.attribute-name', 'meta.attribute'],
+			'Information Tokens': ['token.info-token'],
+			'Warning Tokens': ['token.warn-token'],
+			'Error Tokens': ['token.error-token'],
+			'Debug Output Tokens': ['token.debug-token']
+		};
+		let html = '';
+		for (const [groupName, scopes] of Object.entries(textmateGroups)) {
+			html += `<div class="color-category"><h3 class="category-title">${groupName}</h3><div class="category-content">`;
+			scopes.forEach(scope => {
+				// find matching token entry
+				const token = tokenColors.find(t => {
+					const tScopes = Array.isArray(t.scope) ? t.scope : [t.scope as string];
+					return tScopes.includes(scope);
+				});
+				const fg = token?.settings?.foreground;
+				if (typeof fg !== 'string') { return; }
+				const safeValue = this.ensureValidHexColor(fg);
+				const description = this.getTextMateTokenDescription(scope);
+				html += `<div class="color-item" data-search="${scope}">` +
+					`<div class="color-info"><label class="color-label">${scope}</label>` +
+					`<p class="color-description">${description}</p></div>` +
+					`<div class="color-controls">` +
+					`<input type="color" class="color-picker" name="textmate_${scope}" value="${safeValue}" />` +
+					`<input type="text" class="hex-input" name="textmate_${scope}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />` +
+					`</div></div>`;
+			});
+			html += `</div></div>`;
+		}
 		return html;
 	}
 
-	private ensureValidHexColor(color: string): string {
+	private ensureValidHexColor (color: string): string {
 		if (typeof color !== 'string') return '#ffffff';
-		
+
 		// Handle transparent colors
 		if (color.endsWith('00') && color.length === 9) {
 			return color; // Keep transparent colors as-is
 		}
-		
+
 		// Validate hex color
 		if (/^#[0-9a-fA-F]{6,8}$/.test(color)) {
 			return color;
 		}
-		
+
 		return '#ffffff'; // Default fallback
 	}
 
-	private getColorDescription(key: string): string {
-		const descriptions: Record<string, string> = {
-			'editor.background': 'Main editor workspace background',
-			'editor.foreground': 'Default text color for all content in the editor',
-			'editor.selectionBackground': 'Background color for selected text',
-			'activityBar.background': 'Background of the vertical icon bar on the far left',
-			'sideBar.background': 'Background of the sidebar containing file explorer',
-			'statusBar.background': 'Background of the status bar at the bottom',
-			'terminal.background': 'Background of terminal panels',
-			// Add more descriptions as needed
-		};
-		
-		return descriptions[key] || 'Theme color property';
+	private getColorDescription (key: string): string {
+		return this.colorDescriptions[key] || key;
 	}
 
-	private getSemanticTokenDescription(key: string): string {
+	private getTextMateTokenDescription (key: string): string {
 		const descriptions: Record<string, string> = {
-			'class': 'Class names and definitions',
-			'function': 'Function names and calls',
-			'variable': 'Variable names and references',
-			'keyword': 'Language keywords (if, for, return, etc.)',
-			'string': 'String literals and text content',
-			'comment': 'Code comments',
-			'type': 'Type names and annotations',
-			'property': 'Object properties and members',
-			// Add more descriptions as needed
+			'source': 'Base source text',
+			'support.type.property-name.css': 'CSS property names',
+			'entity.name.function': 'Function names and declarations',
+			'keyword': 'Language keywords',
+			'string': 'String literals',
+			'comment': 'Comments',
+			// Markup & HTML descriptions
+			'markup.underline.link': 'Underlined links in markup languages',
+			'entity.name.tag': 'HTML/XML tag names: <div>, <span>, <component>',
+			'support.class.component': 'Component class names in frameworks like React, Vue',
+			'entity.other.attribute-name': 'HTML attributes: class, id, src, href',
+			'meta.attribute': 'HTML attributes: class, id, src, href',
+			// Debug Token descriptions
+			'token.info-token': 'Information messages in debug/log output',
+			'token.warn-token': 'Warning messages in debug/log output',
+			'token.error-token': 'Error messages in debug/log output',
+			'token.debug-token': 'Debug-specific messages and output'
 		};
-		
-		return descriptions[key] || 'Semantic token type';
+		return descriptions[key] || key;
 	}
 
-	public dispose() {
+	private getSemanticTokenDescription (key: string): string {
+		return this.semanticDescriptions[key] || key;
+	}
+
+	public dispose () {
 		ThemeEditorPanel.currentPanel = undefined;
 
 		this.panel.dispose();
