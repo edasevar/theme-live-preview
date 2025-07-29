@@ -331,15 +331,22 @@ class ThemeEditorPanel {
                 semanticTokenColors: Object.keys(emptyTheme.semanticTokenColors || {}).length,
                 tokenColors: (emptyTheme.tokenColors || []).length
             });
+            // Debug: Log first few entries from each section
+            console.log('[ThemeEditorPanel] Sample colors:', Object.entries(emptyTheme.colors || {}).slice(0, 3));
+            console.log('[ThemeEditorPanel] Sample semantic tokens:', Object.entries(emptyTheme.semanticTokenColors || {}).slice(0, 3));
+            console.log('[ThemeEditorPanel] Sample TextMate tokens:', (emptyTheme.tokenColors || []).slice(0, 3));
             // Apply empty theme workbench colors
             console.log('[ThemeEditorPanel] Applying workbench colors...');
             for (const [key, value] of Object.entries(emptyTheme.colors || {})) {
+                console.log(`[ThemeEditorPanel] Applying color: ${key} = ${value}`);
                 await this.themeManager.applyLiveColor(key, value);
             }
             // Apply empty theme semantic tokens
             console.log('[ThemeEditorPanel] Applying semantic tokens...');
             for (const [key, value] of Object.entries(emptyTheme.semanticTokenColors || {})) {
-                await this.themeManager.applyLiveColor(`semantic_${key}`, typeof value === 'string' ? value : value.foreground || '#ffffff');
+                const colorValue = typeof value === 'string' ? value : value.foreground || '#ffffff';
+                console.log(`[ThemeEditorPanel] Applying semantic: semantic_${key} = ${colorValue}`);
+                await this.themeManager.applyLiveColor(`semantic_${key}`, colorValue);
             }
             // Apply empty theme TextMate tokens
             console.log('[ThemeEditorPanel] Applying TextMate tokens...');
@@ -348,15 +355,18 @@ class ThemeEditorPanel {
                     const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
                     for (const scope of scopes) {
                         if (token.settings.foreground) {
+                            console.log(`[ThemeEditorPanel] Applying TextMate: textmate_${scope} = ${token.settings.foreground}`);
                             await this.themeManager.applyLiveColor(`textmate_${scope}`, token.settings.foreground);
                         }
                     }
                 }
             }
-            this.update(); // Refresh the UI
+            // Force refresh the UI
+            this.update();
             console.log('[ThemeEditorPanel] Empty theme load complete');
             vscode.window.showInformationMessage('Empty theme loaded successfully');
-            // Notify webview and refresh all CSS variables with the actual theme data
+            // Send theme data to webview for immediate visual update
+            console.log('[ThemeEditorPanel] Sending theme to webview...');
             this.sendMessageToWebview({
                 type: 'refreshTheme',
                 theme: emptyTheme
@@ -416,7 +426,9 @@ class ThemeEditorPanel {
     async handleExportTheme() {
         try {
             const currentTheme = this.themeManager.getCurrentTheme();
-            const defaultFileName = `${currentTheme.name || 'theme'}.json`;
+            // Expand TextMate tokens to individual scope entries
+            const expandedTheme = this.expandTextMateTokens(currentTheme);
+            const defaultFileName = `${expandedTheme.name || 'theme'}.json`;
             const options = {
                 defaultUri: vscode.Uri.file(path.join(vscode.workspace.rootPath || '', defaultFileName)),
                 filters: { 'Theme Files': ['json', 'jsonc'] }
@@ -425,7 +437,7 @@ class ThemeEditorPanel {
             if (!uri) {
                 return;
             }
-            const themeContent = JSON.stringify(currentTheme, null, 2);
+            const themeContent = JSON.stringify(expandedTheme, null, 2);
             await fs.promises.writeFile(uri.fsPath, themeContent, 'utf8');
             vscode.window.showInformationMessage(`Theme exported to ${uri.fsPath}`);
             this.sendMessageToWebview({ type: 'themeExported' });
@@ -434,6 +446,37 @@ class ThemeEditorPanel {
             const msg = error instanceof Error ? error.message : String(error);
             vscode.window.showErrorMessage(`Failed to export theme: ${msg}`);
         }
+    }
+    /**
+     * Expand TextMate tokens so each scope gets its own individual entry
+     * This matches how the UI displays them as separate items
+     */
+    expandTextMateTokens(theme) {
+        const expandedTheme = { ...theme };
+        if (!theme.tokenColors || !Array.isArray(theme.tokenColors)) {
+            return expandedTheme;
+        }
+        const expandedTokenColors = [];
+        theme.tokenColors.forEach((tokenRule) => {
+            if (!tokenRule.scope) {
+                // Keep rules without scope as-is
+                expandedTokenColors.push(tokenRule);
+                return;
+            }
+            // Handle both single scope strings and scope arrays
+            const scopes = Array.isArray(tokenRule.scope) ? tokenRule.scope : [tokenRule.scope];
+            // Create individual entry for each scope
+            scopes.forEach((scope) => {
+                if (scope && scope.trim()) {
+                    expandedTokenColors.push({
+                        scope: scope.trim(), // Single scope as string, not array
+                        settings: { ...tokenRule.settings } // Copy settings object
+                    });
+                }
+            });
+        });
+        expandedTheme.tokenColors = expandedTokenColors;
+        return expandedTheme;
     }
     handleSearchColors(query) {
         this.panel.webview.postMessage({

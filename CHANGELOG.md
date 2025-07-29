@@ -5,22 +5,49 @@ All notable changes to the Theme Editor Live extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.7] - 2025-07-29
+
+### Enhanced
+- **📤 Export Functionality Overhaul**: Completely redesigned theme export to match UI editing experience
+  - **Individual TextMate Scopes**: Each scope now gets its own separate entry in exported themes
+  - **UI-Consistent Structure**: Exported themes mirror exactly how scopes are displayed and edited in the interface
+  - **Granular Control**: Recipients can easily see and modify each token scope independently
+  - **Template-Like Format**: Exported files follow the same structure as TEMPLATE.jsonc for consistency
+  - **Example**: Instead of `"scope": ["keyword.operator", "keyword.operator.assignment"]`, now exports separate entries for each scope
+  
+### Technical Implementation
+- **New Method**: Added `expandTextMateTokens()` method in `ThemeEditorPanel`
+- **Scope Expansion**: Automatically separates grouped scopes into individual token rules during export
+- **Type Safety**: Full TypeScript implementation with proper `ThemeDefinition` interface usage
+- **Backward Compatibility**: Maintains compatibility with existing theme structures
+
 ## [2.6.6] - 2025-07-29
 
 ### Fixed
-- **🔧 Empty Theme Loading**: Fixed "Load Empty Theme" functionality that was not working properly
-  - Resolved issue where `refreshTheme` message was sent without theme data to webview
-  - Added robust fallback mechanism when template theme is not properly loaded
-  - Created standalone `empty-theme.json` file for independent empty theme structure  
-  - Added comprehensive debug logging for troubleshooting empty theme generation
-  - Improved error handling and multiple fallback strategies for theme loading
+- **🔧 Empty Theme Loading**: Completely fixed "Load Empty Theme" functionality that was broken
+  - **Root Cause**: Fixed webview `refreshTheme` message that was sent without theme data
+  - **TextMate Token Keys**: Corrected key mismatch between backend (`token_${i}`) and frontend (`textmate_${scope}`)
+  - **WebView Communication**: Fixed theme data not being properly transmitted to frontend
+  - **Fallback System**: Implemented triple-fallback strategy for robust theme generation
+  - **Debug System**: Added comprehensive step-by-step logging throughout the process
   - Empty theme now properly applies white colors (`#ffffff`) and transparent backgrounds (`#ffffff00`)
 
 ### Added
 - **📁 Empty Theme File**: Created `themes/empty-theme.json` with complete empty theme structure
-  - Provides fallback when template-based generation fails
-  - Includes essential workbench colors, semantic tokens, and TextMate token colors
+  - Provides standalone fallback when template-based generation fails
+  - Includes essential workbench colors (50+ elements), semantic tokens, and TextMate token colors
   - Ensures empty theme functionality works independently of template system
+- **🔍 Enhanced Debugging**: Added comprehensive logging across all components
+  - Step-by-step execution tracking in `handleLoadEmptyTheme` method
+  - Detailed fallback strategy logging in `getEmptyTheme` method  
+  - Frontend theme application debugging in `refreshTheme` handler
+  - Complete visibility into theme loading process for troubleshooting
+
+### Technical Details
+- **Backend**: Enhanced `ThemeEditorPanel.handleLoadEmptyTheme()` with detailed logging
+- **ThemeManager**: Improved `getEmptyTheme()` with multiple fallback strategies
+- **Frontend**: Fixed `refreshTheme` handler to properly process TextMate tokens by scope
+- **WebView**: Corrected message passing to include complete theme data structure
 
 ## [2.6.5] - 2025-07-29
 

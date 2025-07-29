@@ -68,8 +68,17 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 
 ### 📁 Theme Management
 - **Load Current Theme**: Import your existing VS Code theme settings
-- **Load Empty Theme**: ✅ **Now Working!** Start with clean white theme using `#ffffff` and `#ffffff00` (transparent) values
-- **Export Custom Themes**: Save your themes as JSON files for sharing or backup
+- **Load Empty Theme**: ✅ **Fully Fixed (v2.6.6)!** Start with clean white theme using `#ffffff` and `#ffffff00` (transparent) values
+  - Complete overhaul of empty theme generation with robust fallback mechanisms
+  - Fixed webview communication issues that prevented theme application
+  - Added comprehensive debugging system for troubleshooting
+  - Created standalone `themes/empty-theme.json` for independent operation
+  - Implemented triple-fallback strategy: template → file-based → manual generation
+- **Export Custom Themes**: 🎯 **Enhanced (v2.6.7)!** Save themes with expanded TextMate token structure
+  - **Individual Scope Export**: Each TextMate scope now gets its own separate entry (matches UI editing experience)
+  - **Template-Like Structure**: Exported themes mirror how scopes are individually editable in the interface
+  - **Perfect for Sharing**: Recipients can easily see and modify each token scope independently
+  - Example: Instead of grouped scopes, each `keyword.operator`, `keyword.operator.assignment`, etc. gets separate entries
 - **Reset to Default**: Clear all customizations and restore original settings
 - **Legacy Settings Cleanup**: Automatic cleanup of duplicate or incorrectly placed theme settings
 - **Multiple Format Support**: JSON/JSONC theme files (with future support for .vsix and .css files)

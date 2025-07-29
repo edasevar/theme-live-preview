@@ -177,11 +177,13 @@ export class ThemeManager {
 	  * Get empty theme with #ffffff and #ffffff00 values
 	  */
 	getEmptyTheme (): ThemeDefinition {
-		console.log('[ThemeManager] Generating empty theme...');
+		console.log('[ThemeManager] === EMPTY THEME GENERATION START ===');
 		console.log('[ThemeManager] Template theme status:', {
 			colors: Object.keys(this.templateTheme.colors || {}).length,
 			semanticTokenColors: Object.keys(this.templateTheme.semanticTokenColors || {}).length,
-			tokenColors: (this.templateTheme.tokenColors || []).length
+			tokenColors: (this.templateTheme.tokenColors || []).length,
+			templateThemeExists: !!this.templateTheme,
+			templateThemeKeys: Object.keys(this.templateTheme)
 		});
 		
 		const emptyTheme: ThemeDefinition = {
@@ -194,22 +196,33 @@ export class ThemeManager {
 
 		// Try to load from the empty-theme.json file as fallback
 		const hasTemplateData = this.templateTheme.colors && Object.keys(this.templateTheme.colors).length > 0;
+		console.log('[ThemeManager] Has template data:', hasTemplateData);
 		
 		if (!hasTemplateData) {
-			console.log('[ThemeManager] Template theme is empty, using fallback structure');
+			console.log('[ThemeManager] Template theme is empty or missing, using fallback...');
 			try {
 				const emptyThemePath = path.join(this.context.extensionPath, 'themes', 'empty-theme.json');
+				console.log('[ThemeManager] Looking for fallback at:', emptyThemePath);
+				
 				if (fs.existsSync(emptyThemePath)) {
+					console.log('[ThemeManager] Fallback file exists, loading...');
 					const fallbackContent = fs.readFileSync(emptyThemePath, 'utf8');
 					const fallbackTheme = JSON.parse(fallbackContent);
-					console.log('[ThemeManager] Using empty-theme.json fallback');
+					console.log('[ThemeManager] Successfully loaded empty-theme.json fallback with:', {
+						colors: Object.keys(fallbackTheme.colors || {}).length,
+						semanticTokenColors: Object.keys(fallbackTheme.semanticTokenColors || {}).length,
+						tokenColors: (fallbackTheme.tokenColors || []).length
+					});
 					return fallbackTheme;
+				} else {
+					console.log('[ThemeManager] Fallback file does not exist');
 				}
 			} catch (error) {
 				console.warn('[ThemeManager] Could not load empty-theme.json fallback:', error);
 			}
 			
 			// Ultimate fallback - create a basic structure manually
+			console.log('[ThemeManager] Using manual fallback structure...');
 			emptyTheme.colors = {
 				"editor.background": "#ffffff",
 				"editor.foreground": "#ffffff",
@@ -242,11 +255,16 @@ export class ThemeManager {
 				}
 			];
 			
-			console.log('[ThemeManager] Using manual fallback structure');
+			console.log('[ThemeManager] Manual fallback complete with:', {
+				colors: Object.keys(emptyTheme.colors).length,
+				semanticTokenColors: Object.keys(emptyTheme.semanticTokenColors).length,
+				tokenColors: emptyTheme.tokenColors.length
+			});
 			return emptyTheme;
 		}
 
 		// Populate with template structure but empty values
+		console.log('[ThemeManager] Using template-based generation...');
 		if (this.templateTheme.colors) {
 			emptyTheme.colors = {};
 			Object.keys(this.templateTheme.colors).forEach((key) => {
@@ -255,7 +273,7 @@ export class ThemeManager {
 						? "#ffffff00"
 						: "#ffffff";
 			});
-			console.log(`[ThemeManager] Generated ${Object.keys(emptyTheme.colors).length} color entries`);
+			console.log(`[ThemeManager] Generated ${Object.keys(emptyTheme.colors).length} color entries from template`);
 		}
 
 		if (this.templateTheme.semanticTokenColors) {
@@ -263,7 +281,7 @@ export class ThemeManager {
 			Object.keys(this.templateTheme.semanticTokenColors).forEach((key) => {
 				emptyTheme.semanticTokenColors![key] = "#ffffff";
 			});
-			console.log(`[ThemeManager] Generated ${Object.keys(emptyTheme.semanticTokenColors).length} semantic token entries`);
+			console.log(`[ThemeManager] Generated ${Object.keys(emptyTheme.semanticTokenColors).length} semantic token entries from template`);
 		}
 
 		if (this.templateTheme.tokenColors) {
@@ -275,10 +293,10 @@ export class ThemeManager {
 					fontStyle: token.settings?.fontStyle
 				}
 			}));
-			console.log(`[ThemeManager] Generated ${emptyTheme.tokenColors.length} TextMate token entries`);
+			console.log(`[ThemeManager] Generated ${emptyTheme.tokenColors.length} TextMate token entries from template`);
 		}
 
-		console.log('[ThemeManager] Empty theme generation complete');
+		console.log('[ThemeManager] === EMPTY THEME GENERATION COMPLETE ===');
 		return emptyTheme;
 	}
 

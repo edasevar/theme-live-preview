@@ -676,10 +676,13 @@ function previewColor(key, value) {
 }
 
 function updatePreviewColors(key, value) {
+  console.log(`[WebView] updatePreviewColors: ${key} = ${value}`);
+  
   // Handle semantic token colors for preview
   if (key.startsWith('semantic_')) {
     const semanticKey = key.replace('semantic_', '');
     const cssProperty = semanticMap[semanticKey];
+    console.log(`[WebView] Semantic: ${semanticKey} -> ${cssProperty}`);
     if (cssProperty) {
       document.documentElement.style.setProperty(cssProperty, value);
     }
@@ -689,25 +692,30 @@ function updatePreviewColors(key, value) {
   // Handle TextMate token colors for preview with enhanced mapping
   if (key.startsWith('textmate_')) {
     const scope = key.replace('textmate_', '');
+    console.log(`[WebView] TextMate: ${scope}`);
     
     // Try exact match first
     if (textMateMap[scope]) {
+      console.log(`[WebView] TextMate exact match: ${scope} -> ${textMateMap[scope]}`);
       document.documentElement.style.setProperty(textMateMap[scope], value);
       return;
     }
     
     // Fallback to generic CSS variable for unmapped scopes
     const cssVar = `--textmate-${scope.replace(/\./g, '-').replace(/:/g, '-')}`;
+    console.log(`[WebView] TextMate fallback: ${cssVar}`);
     document.documentElement.style.setProperty(cssVar, value);
     return;
   }
 
   // Handle UI workbench color changes by mapping to CSS variables
   if (uiMap[key]) {
+    console.log(`[WebView] Workbench UI: ${key} -> ${uiMap[key]}`);
     document.documentElement.style.setProperty(uiMap[key], value);
   } else if (!key.startsWith('semantic_') && !key.startsWith('textmate_') && !key.startsWith('token_')) {
     // Generic mapping for any other workbench color key to VSCode CSS var
     const varName = `--vscode-${key.replace(/\./g, '-')}`;
+    console.log(`[WebView] Workbench generic: ${key} -> ${varName}`);
     document.documentElement.style.setProperty(varName, value);
   }
   // Handle workbench colors preview specifically for code snippet
@@ -1052,16 +1060,44 @@ window.addEventListener('message', event => {
   const message = event.data;
   switch (message.type) {
     case 'refreshTheme':
+      console.log('[WebView] Received refreshTheme message:', message);
       const theme = message.theme;
       if (theme) {
+        console.log('[WebView] Applying theme with structure:', {
+          colors: Object.keys(theme.colors || {}).length,
+          semanticTokenColors: Object.keys(theme.semanticTokenColors || {}).length,
+          tokenColors: (theme.tokenColors || []).length
+        });
+        
         // Apply all workbench colors
-        Object.entries(theme.colors || {}).forEach(([k, v]) => updatePreviewColors(k, v));
+        Object.entries(theme.colors || {}).forEach(([k, v]) => {
+          console.log(`[WebView] Applying color: ${k} = ${v}`);
+          updatePreviewColors(k, v);
+        });
+        
         // Apply semantic tokens
-        Object.entries(theme.semanticTokenColors || {}).forEach(([k, v]) => updatePreviewColors(`semantic_${k}`, v));
-        // Apply TextMate token colors
+        Object.entries(theme.semanticTokenColors || {}).forEach(([k, v]) => {
+          console.log(`[WebView] Applying semantic: semantic_${k} = ${v}`);
+          updatePreviewColors(`semantic_${k}`, v);
+        });
+        
+        // Apply TextMate token colors - Fixed to use scope-based keys
         if (Array.isArray(theme.tokenColors)) {
-          theme.tokenColors.forEach((token, i) => token.settings?.foreground && updatePreviewColors(`token_${i}`, token.settings.foreground));
+          theme.tokenColors.forEach((token, i) => {
+            if (token.settings?.foreground) {
+              const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
+              scopes.forEach(scope => {
+                if (scope) {
+                  console.log(`[WebView] Applying TextMate: textmate_${scope} = ${token.settings.foreground}`);
+                  updatePreviewColors(`textmate_${scope}`, token.settings.foreground);
+                }
+              });
+            }
+          });
         }
+        console.log('[WebView] Theme refresh complete');
+      } else {
+        console.warn('[WebView] refreshTheme message received but no theme data provided');
       }
       break;
     case 'updateSuccess':
