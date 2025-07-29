@@ -216,7 +216,9 @@ Fine-grained syntax highlighting control with complete scope coverage:
   - `Ctrl/Cmd + E`: Export theme
 - **Visual Feedback**: Color change animations and notifications
 - **Responsive Design**: Works on different screen sizes
-- **Accessibility**: Full keyboard navigation support
+- **Accessibility**: Full keyboard navigation support with no disabled elements
+- **Smart Warnings**: Visual indicators show setting requirements without blocking access
+- **Direct Setting Navigation**: One-click access to required VS Code settings with exact paths
 
 ## 📖 Usage Examples
 
@@ -258,7 +260,16 @@ Fine-grained syntax highlighting control with complete scope coverage:
 
 ## 🔧 Technical Details
 
-### Recent Improvements (v1.0.0)
+### Recent Improvements (v2.5.1)
+- **Enhanced User Experience**: Removed all disabled UI elements - items requiring settings now show clear warnings instead of being disabled
+- **Smart Setting Requirements**: Visual indicators show which items require specific VS Code settings to be enabled
+- **Direct Setting Navigation**: Click warning icons to navigate directly to the required VS Code setting with exact path shown
+- **Comprehensive Warning System**: Color-coded warnings (yellow triangles) identify setting-dependent colors with detailed explanations
+- **Expanded Setting Coverage**: Added detection for additional settings like editor line numbers, minimap, breadcrumbs, and more
+- **Improved Accessibility**: Full keyboard navigation with no disabled elements blocking user interaction
+- **Enhanced Visual Feedback**: Clear visual indicators and tooltips explain setting requirements without preventing access
+
+### Previous Improvements (v1.0.0)
 - **Fixed TextMate Token Routing**: Resolved issues where TextMate tokens weren't properly routing to `editor.tokenColorCustomizations`
 - **Complete Token Coverage**: All missing TextMate tokens now display in the UI with proper default values
 - **Settings Management**: Improved routing logic to ensure colors go to correct VS Code settings sections
@@ -289,6 +300,13 @@ Fine-grained syntax highlighting control with complete scope coverage:
 - **Settings Integration**: Direct VS Code configuration API with legacy cleanup support
 
 ## 🐛 Known Issues Fixed
+
+### v2.5.1 Fixes
+- ✅ **Disabled Items Removed**: Eliminated all disabled UI elements that prevented user interaction - now shows warnings instead
+- ✅ **Setting Requirements**: Clear visual indicators show exactly which VS Code settings need to be enabled for specific colors
+- ✅ **Direct Navigation**: Added one-click navigation to required settings with exact setting paths displayed
+- ✅ **Enhanced Accessibility**: Removed barriers preventing users from accessing any theme customization options
+- ✅ **Visual Warning System**: Implemented color-coded warning triangles with detailed requirement explanations
 
 ### v1.0.0 Fixes
 - ✅ **TextMate Token Visibility**: Fixed missing tokens like `entity.name.type`, `support.type`, `entity.name.function` not appearing in UI

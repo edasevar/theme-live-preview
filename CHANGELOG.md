@@ -5,6 +5,54 @@ All notable changes to the Theme Editor Live extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.1] - 2025-07-29
+
+### 🚀 Major UX Overhaul: No More Disabled Items!
+This release completely transforms how setting-dependent colors are handled, moving from a confusing "disabled" approach to helpful guidance that keeps all functionality accessible.
+
+### Fixed
+- **❌ Removed Item Disabling**: Items that require specific VS Code settings are no longer disabled
+  - Removed `opacity: 0.4`, `pointer-events: none`, and `filter: grayscale(0.8)` from setting-dependent items
+  - Removed control blurring with `filter: blur(1px)` that made controls unusable
+  - All color controls are now fully interactive regardless of setting requirements
+- **🎯 Clear Setting Requirements**: Dramatically improved visibility of which settings are needed
+  - Setting badges now show gear icon (⚙️) plus exact setting name (e.g., "⚙️ editor.selectionHighlight")
+  - Added prominent warning messages: "⚠️ Requires 'editor.selectionHighlight' to be enabled to take effect"
+  - Enhanced setting mapping for common cases like breadcrumbs, minimap, title bar, and peek view settings
+
+### Enhanced
+- **🔗 Better Setting Navigation**: Improved clickable setting badges for direct access
+  - Click setting badges to open VS Code settings and search for the specific setting
+  - Enhanced navigation mapping with more comprehensive setting relationships
+  - Updated legend to reflect new "advisory" approach instead of "disabled" approach
+- **⚠️ Visual Warning System**: Replaced disabling with helpful visual indicators
+  - Orange left border on items that require settings (instead of graying out)
+  - Styled warning messages with background highlights and clear typography
+  - Normal hover states maintained for better interaction feedback
+- **📋 Expanded Setting Coverage**: Added support for more setting-dependent features
+  - Minimap colors: requires `editor.minimap.enabled`
+  - Peek view colors: requires `editor.peekWidgetDefaultFocus`
+  - Breadcrumb colors: requires `breadcrumbs.enabled`
+  - Title bar colors: requires `window.titleBarStyle`
+  - And many more comprehensive mappings
+
+### Technical Improvements
+- **🎨 CSS Architecture**: Complete overhaul of setting-dependent styling
+  - Removed all disabling CSS rules that blocked user interaction
+  - Added `.setting-warning` class for consistent warning display
+  - Enhanced hover states with warning-colored borders instead of blocking interaction
+- **🔧 Enhanced Functionality**: All features remain accessible with better guidance
+  - Users can modify colors even if the setting isn't enabled yet
+  - Clear guidance on exactly which setting to enable
+  - Direct navigation to settings with one click
+  - No more confusion about why items are disabled
+
+### Benefits
+- **🎯 Zero Functionality Loss**: Users can now modify any color regardless of setting state
+- **📖 Clear Guidance**: Exact setting names and requirements are always visible
+- **🚀 Better UX**: No more frustrating disabled controls - everything is accessible
+- **🔍 Enhanced Discovery**: Users learn about VS Code settings through helpful warnings instead of blocks
+
 ## [2.1.0] - 2025-07-29
 
 ### 🎯 Major User Experience Improvement
