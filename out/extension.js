@@ -38,92 +38,62 @@ exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const ThemeEditorPanel_1 = require("./panel/ThemeEditorPanel");
 const themeManager_1 = require("./utils/themeManager");
-const path = __importStar(require("path"));
 function activate(context) {
-    const extensionUri = vscode.Uri.file(context.extensionPath);
-    const themeManager = new themeManager_1.ThemeManager(context);
-    // Register all commands
-    const commands = [
-        vscode.commands.registerCommand('themeEditor.open', () => {
-            ThemeEditorPanel_1.ThemeEditorPanel.createOrShow(extensionUri, themeManager);
-            8;
-        }),
-        vscode.commands.registerCommand('themeEditor.loadTheme', async () => {
-            const options = {
-                canSelectMany: false,
-                openLabel: 'Load Theme',
-                filters: {
-                    'Theme Files': ['json', 'jsonc'],
-                    'VS Code Extension': ['vsix'],
-                    'CSS Files': ['css'],
-                    'All Files': ['*']
-                }
-            };
-            const fileUri = await vscode.window.showOpenDialog(options);
-            if (fileUri && fileUri[0]) {
-                try {
-                    // Load and apply theme file to VS Code settings
-                    await themeManager.applyThemeFromFile(fileUri[0].fsPath);
-                    vscode.window.showInformationMessage('Theme applied successfully!');
-                    // Refresh the panel if it's open
-                    if (ThemeEditorPanel_1.ThemeEditorPanel.currentPanel) {
-                        ThemeEditorPanel_1.ThemeEditorPanel.currentPanel.refresh();
-                        // Notify webview UI
-                        ThemeEditorPanel_1.ThemeEditorPanel.currentPanel.postMessage({ type: 'themeLoaded' });
-                    }
-                }
-                catch (error) {
-                    vscode.window.showErrorMessage(`Failed to load theme: ${error}`);
-                }
-            }
-        }),
-        vscode.commands.registerCommand('themeEditor.exportTheme', async () => {
-            const options = {
-                saveLabel: 'Export Theme',
-                filters: {
-                    'JSON Files': ['json']
-                },
-                defaultUri: vscode.Uri.file(path.join(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '', 'my-custom-theme.json'))
-            };
-            const fileUri = await vscode.window.showSaveDialog(options);
-            if (fileUri) {
-                try {
-                    await themeManager.exportTheme(fileUri.fsPath);
-                    vscode.window.showInformationMessage(`Theme exported to ${fileUri.fsPath}`);
-                    // Notify webview UI
-                    if (ThemeEditorPanel_1.ThemeEditorPanel.currentPanel) {
-                        ThemeEditorPanel_1.ThemeEditorPanel.currentPanel.postMessage({ type: 'themeExported' });
-                    }
-                }
-                catch (error) {
-                    vscode.window.showErrorMessage(`Failed to export theme: ${error}`);
-                }
-            }
-        }),
-        vscode.commands.registerCommand('themeEditor.resetTheme', async () => {
-            const result = await vscode.window.showWarningMessage('This will reset all custom colors to default. Continue?', 'Yes', 'Cancel');
-            if (result === 'Yes') {
-                await themeManager.resetTheme();
-                vscode.window.showInformationMessage('Theme reset to default!');
-                // Refresh the panel if it's open
-                if (ThemeEditorPanel_1.ThemeEditorPanel.currentPanel) {
-                    ThemeEditorPanel_1.ThemeEditorPanel.currentPanel.refresh();
-                }
-            }
-        })
-    ];
-    // Add all commands to subscriptions
-    commands.forEach(command => context.subscriptions.push(command));
-    // Show welcome message on first activation
-    const hasShownWelcome = context.globalState.get('themeEditor.hasShownWelcome', false);
-    if (!hasShownWelcome) {
-        vscode.window.showInformationMessage('Theme Editor Live is now active! Use "Open Theme Editor Live" command to start editing.', 'Open Editor').then(selection => {
-            if (selection === 'Open Editor') {
-                vscode.commands.executeCommand('themeEditor.open');
-            }
-        });
-        context.globalState.update('themeEditor.hasShownWelcome', true);
+    console.log('Theme Editor Live: Starting activation');
+    let extensionUri;
+    let themeManager;
+    try {
+        extensionUri = vscode.Uri.file(context.extensionPath);
+        console.log('Theme Editor Live: Extension URI created:', extensionUri.fsPath);
+        themeManager = new themeManager_1.ThemeManager(context);
+        console.log('Theme Editor Live: ThemeManager created');
     }
+    catch (error) {
+        console.error('Theme Editor Live: Failed to initialize basic components:', error);
+        vscode.window.showErrorMessage(`Failed to initialize Theme Editor: ${error instanceof Error ? error.message : String(error)}`);
+        return;
+    }
+    // Register open command
+    const openCommand = vscode.commands.registerCommand('themeEditor.open', () => {
+        console.log('Theme Editor Live: Opening theme editor');
+        try {
+            ThemeEditorPanel_1.ThemeEditorPanel.createOrShow(extensionUri, themeManager);
+        }
+        catch (error) {
+            console.error('Failed to open Theme Editor:', error);
+            vscode.window.showErrorMessage(`Failed to open Theme Editor: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+    // Register cleanup command
+    const cleanupCommand = vscode.commands.registerCommand('themeEditor.cleanupSettings', async () => {
+        console.log('Theme Editor Live: Running settings cleanup');
+        try {
+            await themeManager.cleanupLegacySettings();
+            vscode.window.showInformationMessage('Theme Editor: Legacy settings cleaned up successfully!');
+        }
+        catch (error) {
+            console.error('Failed to cleanup settings:', error);
+            vscode.window.showErrorMessage(`Failed to cleanup settings: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+    context.subscriptions.push(openCommand, cleanupCommand);
+    console.log('Theme Editor Live: Commands registered successfully');
+    // Show welcome message on first activation
+    try {
+        const hasShownWelcome = context.globalState.get('themeEditor.hasShownWelcome', false);
+        if (!hasShownWelcome) {
+            vscode.window.showInformationMessage('Theme Editor Live is now active! Use "Theme Editor Live: Open" command to start editing.', 'Open Editor').then(selection => {
+                if (selection === 'Open Editor') {
+                    vscode.commands.executeCommand('themeEditor.open');
+                }
+            });
+            context.globalState.update('themeEditor.hasShownWelcome', true);
+        }
+    }
+    catch (error) {
+        console.error('Theme Editor Live: Failed to show welcome message:', error);
+    }
+    console.log('Theme Editor Live: Extension activated successfully');
 }
 function deactivate() {
     // Clean up resources if needed

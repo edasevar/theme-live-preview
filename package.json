@@ -48,6 +48,11 @@
 				"command": "themeEditor.resetTheme",
 				"title": "Reset Theme to Default",
 				"category": "Theme Editor"
+			},
+			{
+				"command": "themeEditor.cleanupSettings",
+				"title": "Clean Up Theme Settings",
+				"category": "Theme Editor"
 			}
 		],
 		"menus": {

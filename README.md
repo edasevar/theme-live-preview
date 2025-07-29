@@ -1,10 +1,10 @@
 # Theme Editor Live
 
-A comprehensive VS Code extension for creating and editing themes with real-time preview. This extension provides a visual interface to customize every aspect of VS Code's appearance, including workbench colors, semantic tokens, and TextMate token colors.
+A comprehensive VS Code extension for creating and editing themes with real-time preview and transparency controls. This extension provides a visual interface to customize every aspect of VS Code's appearance, including workbench colors, semantic tokens, and TextMate token colors with full alpha channel support.
 
 ## ✨ Features
 
-### 🚀 Enhanced Live Editing Capabilities (New!)
+### 🚀 Enhanced Live Editing Capabilities
 - **Throttled Updates**: Color changes are batched and throttled (150ms) to prevent overwhelming VS Code
 - **Batch Processing**: Multiple simultaneous changes are processed efficiently in batches
 - **Debounced Search**: Search input is debounced (200ms) for smoother filtering experience
@@ -14,10 +14,23 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 - **Change Listeners**: Extensible system for theme change notifications
 - **Memory Efficient**: Optimized batching prevents memory leaks during intensive editing
 
+### 🎨 Transparency & Alpha Controls (New!)
+- **Full Alpha Channel Support**: 8-digit hex colors with transparency (#RRGGBBAA)
+- **Visual Alpha Controls**: Intuitive opacity sliders for all color values
+- **Percentage-Based Alpha**: Easy-to-understand 0-100% opacity controls
+- **Real-time Sync**: Color picker, hex input, and alpha controls stay synchronized
+- **Transparent Defaults**: Support for fully transparent colors in theme templates
+
 ### 🎨 Complete Theme Coverage
-- **Workbench UI Colors**: Edit all VS Code interface colors including editor, activity bar, sidebar, status bar, and more
-- **Semantic Token Colors**: Customize syntax highlighting for different code elements (classes, functions, variables, etc.)
-- **TextMate Token Colors**: Fine-tune syntax highlighting with granular scope-based control
+- **Workbench UI Colors**: Edit all VS Code interface colors including editor, activity bar, sidebar, status bar, and more (200+ elements)
+- **Semantic Token Colors**: Customize syntax highlighting for different code elements with style modifiers
+- **TextMate Token Colors**: Fine-tune syntax highlighting with granular scope-based control and complete token coverage
+
+### 🛠 Smart Settings Management (New!)
+- **Proper Routing**: Colors are correctly routed to appropriate VS Code settings sections
+- **Legacy Cleanup**: Automatic detection and cleanup of incorrectly placed settings
+- **Type Safety**: Full TypeScript implementation with proper interface definitions
+- **Settings Validation**: Real-time validation of all theme configurations
 
 ### 🔄 Live Preview
 - Real-time theme application as you make changes
@@ -32,11 +45,12 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 - Categorized color groups for better organization
 
 ### 📁 Theme Management
-- Load existing themes from JSON/JSONC files
-- Load empty themes with `#ffffff` and `#ffffff00` values
-- Export your custom themes as JSON files
-- Import and modify any VS Code theme
-- Future support for .vsix and .css files
+- **Load Current Theme**: Import your existing VS Code theme settings
+- **Load Empty Theme**: Start with clean white theme using `#ffffff` and `#ffffff00` (transparent) values
+- **Export Custom Themes**: Save your themes as JSON files for sharing or backup
+- **Reset to Default**: Clear all customizations and restore original settings
+- **Legacy Settings Cleanup**: Automatic cleanup of duplicate or incorrectly placed theme settings
+- **Multiple Format Support**: JSON/JSONC theme files (with future support for .vsix and .css files)
 
 ## 🚀 Getting Started
 
@@ -57,9 +71,11 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 | Command | Description |
 |---------|-------------|
 | `Theme Editor: Open Theme Editor Live` | Opens the main theme editor interface |
-| `Theme Editor: Load Theme File` | Load a theme from JSON, JSONC, VSIX, or CSS file |
-| `Theme Editor: Export Current Theme` | Export your current theme customizations |
-| `Theme Editor: Reset Theme to Default` | Reset all customizations to default |
+| `Theme Editor: Load Current Theme` | Load your current VS Code theme settings |
+| `Theme Editor: Load Empty Theme` | Start with a clean white theme template |
+| `Theme Editor: Export Current Theme` | Export your current theme customizations as JSON |
+| `Theme Editor: Reset Theme to Default` | Reset all customizations to default settings |
+| `Theme Editor: Cleanup Legacy Settings` | Clean up duplicate or incorrectly placed theme settings |
 
 ## 🎯 Theme Components
 
@@ -103,11 +119,14 @@ Modern syntax highlighting based on language understanding:
 - **Comments**: Single-line and block comments
 
 ### TextMate Token Colors
-Fine-grained syntax highlighting control:
-- **Scopes**: Detailed token scoping rules
-- **Language-Specific**: Support for all programming languages
-- **Markup**: HTML, Markdown, XML styling
-- **Debug Tokens**: Special debugging information
+Fine-grained syntax highlighting control with complete scope coverage:
+- **Language Constructs**: Classes, functions, variables, keywords, operators
+- **Literals**: Strings, numbers, booleans, constants, escape characters
+- **Comments**: Single-line and block comments, documentation
+- **Markup**: HTML, Markdown, XML styling and attributes
+- **Debug Tokens**: Special debugging information and placeholders
+- **Namespaces**: Modules, object keys, and label definitions
+- **All Missing Tokens**: Previously missing tokens like `entity.name.type`, `support.type`, `entity.name.function`, `support.function`, `variable.other.constant`, `meta.object-literal.key`, `constant.character.escape`, `constant.other.placeholder`, `entity.name.label`, `entity.name.namespace` are now fully supported
 
 ## 🔍 Advanced Features
 
@@ -119,8 +138,10 @@ Fine-grained syntax highlighting control:
 
 ### Theme Management
 - **Multiple Formats**: Support for JSON, JSONC files (VSIX and CSS coming soon)
-- **Empty Themes**: Start with blank templates using `#ffffff` and transparent colors
-- **Export Options**: Save your themes for sharing or backup
+- **Current Theme Import**: Load your existing VS Code theme settings directly
+- **Empty Themes**: Start with blank templates using `#ffffff` and fully transparent colors (`#ffffff00`)
+- **Export Options**: Save your themes for sharing or backup with complete token coverage
+- **Legacy Cleanup**: Automatic detection and removal of duplicate/incorrectly placed settings
 - **Live Application**: See changes immediately without restarts
 
 ### User Experience
@@ -136,36 +157,48 @@ Fine-grained syntax highlighting control:
 
 ### Creating a Dark Theme
 1. Open Theme Editor Live
-2. Click "Load Empty Theme" for a clean start
+2. Click "Load Empty Theme" for a clean start with transparent defaults
 3. Navigate to "Workbench UI" section
 4. Set `editor.background` to `#1e1e1e`
 5. Set `editor.foreground` to `#d4d4d4`
-6. Continue customizing other elements
-7. Export when satisfied
+6. Adjust transparency using the alpha slider for subtle effects
+7. Continue customizing other elements with full TextMate token support
+8. Export when satisfied with your theme
 
 ### Customizing Syntax Highlighting
-1. Go to "Semantic Tokens" section
+1. Go to "Semantic Tokens" section for modern language-aware highlighting
 2. Set `keyword` to your preferred color (e.g., `#569cd6`)
 3. Set `string` to a contrasting color (e.g., `#ce9178`)
 4. Adjust `comment` for readability (e.g., `#6a9955`)
-5. See changes in the live preview
+5. Switch to "TextMate Tokens" for fine-grained control
+6. Customize specific scopes like `entity.name.function` or `support.type`
+7. See changes in the live preview instantly
 
-### Loading an Existing Theme
-1. Click "Load Theme File"
-2. Select your JSON/JSONC theme file
-3. Colors will populate in the editor
-4. Make modifications as needed
-5. Export your enhanced version
+### Loading Your Current Theme
+1. Click "Load Current Theme" to import existing settings
+2. All your current customizations will populate in the editor
+3. Missing tokens will be displayed with default values
+4. Make modifications using the visual interface
+5. Export your enhanced version with complete coverage
 
 ## 🎨 Color Format Support
 
-- **Hex Colors**: `#ffffff`, `#fff`
-- **Hex with Alpha**: `#ffffff00` (transparent), `#ffffffcc` (semi-transparent)
-- **Auto-validation**: Invalid colors are highlighted
-- **Color Picker**: Visual color selection
-- **Synchronized Inputs**: Color picker and hex input stay in sync
+- **Hex Colors**: `#ffffff`, `#fff` (3 and 6 digit formats)
+- **Hex with Alpha**: `#ffffff00` (transparent), `#ffffffcc` (semi-transparent), `#ffff` (4-digit with alpha)
+- **Alpha Controls**: Visual opacity sliders with percentage display (0-100%)
+- **Auto-validation**: Invalid colors are highlighted with immediate feedback
+- **Color Picker**: Visual color selection with transparency support
+- **Synchronized Inputs**: Color picker, hex input, and alpha controls stay perfectly synchronized
+- **Transparent Defaults**: Full support for transparent colors in theme templates
 
 ## 🔧 Technical Details
+
+### Recent Improvements (v1.0.0)
+- **Fixed TextMate Token Routing**: Resolved issues where TextMate tokens weren't properly routing to `editor.tokenColorCustomizations`
+- **Complete Token Coverage**: All missing TextMate tokens now display in the UI with proper default values
+- **Settings Management**: Improved routing logic to ensure colors go to correct VS Code settings sections
+- **TypeScript Interfaces**: Fixed interface definitions for proper type safety and settings handling
+- **Legacy Cleanup**: Added automatic cleanup of duplicate settings and legacy configurations
 
 ### File Structure
 ```
@@ -184,10 +217,21 @@ Fine-grained syntax highlighting control:
 ```
 
 ### Extension Architecture
-- **Main Extension**: Registers commands and manages lifecycle
-- **Theme Manager**: Handles theme operations (load, save, apply)
-- **Webview Panel**: Provides the visual editor interface
-- **Live Preview**: Real-time VS Code theme updates
+- **Main Extension**: Registers commands and manages lifecycle with proper cleanup
+- **Theme Manager**: Handles theme operations (load, save, apply) with smart settings routing
+- **Webview Panel**: Provides the visual editor interface with transparency controls
+- **Live Preview**: Real-time VS Code theme updates with proper token routing
+- **Settings Integration**: Direct VS Code configuration API with legacy cleanup support
+
+## 🐛 Known Issues Fixed
+
+### v1.0.0 Fixes
+- ✅ **TextMate Token Visibility**: Fixed missing tokens like `entity.name.type`, `support.type`, `entity.name.function` not appearing in UI
+- ✅ **Settings Routing**: Corrected improper routing of semantic and TextMate tokens to wrong settings sections  
+- ✅ **Type Safety**: Resolved TypeScript interface inconsistencies that caused settings errors
+- ✅ **Empty Theme Loading**: Repaired broken empty theme functionality with complete token coverage
+- ✅ **Alpha Channel Support**: Implemented proper transparency handling across all color inputs
+- ✅ **Legacy Settings**: Added automatic cleanup of duplicate/incorrectly placed theme configurations
 
 ## 🤝 Contributing
 

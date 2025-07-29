@@ -20,34 +20,48 @@ export class ThemeEditorPanel {
 	private isUpdating: boolean = false;
 
 	public static createOrShow (extensionUri: vscode.Uri, themeManager: ThemeManager) {
+		console.log('ThemeEditorPanel.createOrShow called with:', extensionUri.fsPath);
 		const column = vscode.ViewColumn.Beside;
 
 		if (ThemeEditorPanel.currentPanel) {
+			console.log('Revealing existing panel');
 			ThemeEditorPanel.currentPanel.panel.reveal(column);
 			return;
 		}
 
-		const panel = vscode.window.createWebviewPanel(
-			'themeEditor',
-			'Theme Editor Live',
-			column,
-			{
-				enableScripts: true,
-				localResourceRoots: [vscode.Uri.file(path.join(extensionUri.fsPath, 'media'))],
-				retainContextWhenHidden: true
-			}
-		);
+		try {
+			console.log('Creating new webview panel...');
+			const panel = vscode.window.createWebviewPanel(
+				'themeEditor',
+				'Theme Editor Live',
+				column,
+				{
+					enableScripts: true,
+					localResourceRoots: [vscode.Uri.file(path.join(extensionUri.fsPath, 'media'))],
+					retainContextWhenHidden: true
+				}
+			);
+			console.log('Webview panel created successfully');
 
-		ThemeEditorPanel.currentPanel = new ThemeEditorPanel(panel, extensionUri, themeManager);
+			ThemeEditorPanel.currentPanel = new ThemeEditorPanel(panel, extensionUri, themeManager);
+			console.log('ThemeEditorPanel instance created successfully');
+		} catch (error) {
+			console.error('Failed to create Theme Editor webview:', error);
+			vscode.window.showErrorMessage(`Failed to create Theme Editor: ${error instanceof Error ? error.message : String(error)}`);
+		}
 	}
 
 	private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, themeManager: ThemeManager) {
+		console.log('ThemeEditorPanel constructor called');
 		this.panel = panel;
 		this.extensionUri = extensionUri;
 		this.themeManager = themeManager;
+		console.log('Basic properties set');
+
 		// Load workbench UI color descriptions from TEMPLATE.jsonc comments
 		try {
 			const templatePath = path.join(this.extensionUri.fsPath, 'TEMPLATE.jsonc');
+			console.log('Loading template from:', templatePath);
 			const lines = fs.readFileSync(templatePath, 'utf8').split(/\r?\n/);
 			let inColors = false;
 			for (const line of lines) {
@@ -65,8 +79,9 @@ export class ThemeEditorPanel {
 					}
 				}
 			}
+			console.log('Loaded color descriptions:', Object.keys(this.colorDescriptions).length);
 		} catch (e) {
-			// Ignore errors loading descriptions
+			console.error('Error loading color descriptions:', e);
 		}
 		// Load semantic token descriptions from TEMPLATE.jsonc comments
 		try {
@@ -108,7 +123,12 @@ export class ThemeEditorPanel {
 			// Ignore errors loading TextMate descriptions
 		}
 
-		this.update();
+		try {
+			this.update();
+		} catch (error) {
+			console.error('Failed to initialize Theme Editor webview:', error);
+			vscode.window.showErrorMessage(`Failed to initialize Theme Editor: ${error instanceof Error ? error.message : String(error)}`);
+		}
 
 		this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
 
@@ -281,15 +301,31 @@ export class ThemeEditorPanel {
 	private async handleLoadEmptyTheme (): Promise<void> {
 		try {
 			const emptyTheme = this.themeManager.getEmptyTheme();
-			// Apply empty theme colors
+
+			// Apply empty theme workbench colors
 			for (const [key, value] of Object.entries(emptyTheme.colors || {})) {
 				await this.themeManager.applyLiveColor(key, value);
 			}
+
+			// Apply empty theme semantic tokens
 			for (const [key, value] of Object.entries(emptyTheme.semanticTokenColors || {})) {
 				await this.themeManager.applyLiveColor(`semantic_${key}`, typeof value === 'string' ? value : value.foreground || '#ffffff');
 			}
+
+			// Apply empty theme TextMate tokens
+			for (const token of emptyTheme.tokenColors || []) {
+				if (token.scope && token.settings) {
+					const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
+					for (const scope of scopes) {
+						if (token.settings.foreground) {
+							await this.themeManager.applyLiveColor(`textmate_${scope}`, token.settings.foreground);
+						}
+					}
+				}
+			}
+
 			this.update(); // Refresh the UI
-			vscode.window.showInformationMessage('Empty theme loaded');
+			vscode.window.showInformationMessage('Empty theme loaded successfully');
 			// Notify webview and refresh all CSS variables
 			this.sendMessageToWebview({ type: 'refreshTheme' });
 			this.sendMessageToWebview({ type: 'themeLoaded' });
@@ -381,8 +417,15 @@ export class ThemeEditorPanel {
 	}
 
 	private update () {
-		const webview = this.panel.webview;
-		this.panel.webview.html = this.getHtmlForWebview(webview);
+		try {
+			console.log('Updating webview HTML...');
+			const webview = this.panel.webview;
+			this.panel.webview.html = this.getHtmlForWebview(webview);
+			console.log('Webview HTML updated successfully');
+		} catch (error) {
+			console.error('Failed to update Theme Editor webview:', error);
+			vscode.window.showErrorMessage(`Failed to update Theme Editor: ${error instanceof Error ? error.message : String(error)}`);
+		}
 	}
 
 	private getHtmlForWebview (webview: vscode.Webview): string {
@@ -409,18 +452,24 @@ export class ThemeEditorPanel {
 			<title>Theme Editor Live</title>
 		</head>
 		<body>
-			<div class="header">
-				<h1>🎨 Theme Editor Live</h1>
-				<div class="header-actions">
-				<button type="button" id="loadEmptyTheme" class="btn btn-secondary">Load Empty Theme</button>
-				<button type="button" id="loadCurrentTheme" class="btn btn-secondary">Load Current Theme</button>
-					<button type="button" id="loadTheme" class="btn btn-secondary">Load Theme File</button>
-					<button type="button" id="exportTheme" class="btn btn-primary">Export Theme</button>
-					<button type="button" id="resetColors" class="btn btn-danger">Reset All</button>
-				</div>
+			<div id="loading-indicator" style="display: block; text-align: center; padding: 20px; color: #666;">
+				<div>🎨 Loading Theme Editor...</div>
+				<div style="font-size: 0.9em; margin-top: 10px;">Please wait while the interface loads</div>
 			</div>
+			
+			<div id="main-content" style="display: none;">
+				<div class="header">
+					<h1>🎨 Theme Editor Live</h1>
+					<div class="header-actions">
+					<button type="button" id="loadEmptyTheme" class="btn btn-secondary">Load Empty Theme</button>
+					<button type="button" id="loadCurrentTheme" class="btn btn-secondary">Load Current Theme</button>
+						<button type="button" id="loadTheme" class="btn btn-secondary">Load Theme File</button>
+						<button type="button" id="exportTheme" class="btn btn-primary">Export Theme</button>
+						<button type="button" id="resetColors" class="btn btn-danger">Reset All</button>
+					</div>
+				</div>
 
-			<div class="search-bar">
+				<div class="search-bar">
 				<input type="text" id="searchInput" placeholder="Search color properties..." class="search-input">
 				<span class="search-count" id="searchCount"></span>
 			</div>
@@ -496,12 +545,32 @@ export class ThemeEditorPanel {
 					</code></pre>
 				</div>
 			</div>
+			</div>
 
 			<script src="${scriptUri}"></script>
-+            <script>
-+              // Notify extension when webview is ready
-+              vscode.postMessage({ type: 'webviewReady' });
-+            </script>
+            <script>
+              // Show main content immediately if service worker fails
+              function showContent() {
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                // Notify extension when webview is ready
+                if (typeof vscode !== 'undefined') {
+                  vscode.postMessage({ type: 'webviewReady' });
+                }
+              }
+              
+              // Multiple fallbacks to ensure content loads
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                  setTimeout(showContent, 200);
+                });
+              } else {
+                setTimeout(showContent, 100);
+              }
+              
+              // Emergency fallback - always show after 2 seconds
+              setTimeout(showContent, 2000);
+            </script>
 		 </body>
 		 </html>`;
 	}
@@ -513,19 +582,7 @@ export class ThemeEditorPanel {
 		// Group colors by category
 		const categories: Record<string, string[]> = {
 			'Editor Core': [
-				'editor.background', 'editor.foreground', 'editor.lineHighlightBackground',
-				'editor.lineHighlightBorder', 'editor.selectionBackground',
-				'editor.selectionHighlightBackground', 'editor.inactiveSelectionBackground',
-				'editor.wordHighlightBackground', 'editor.wordHighlightStrongBackground',
-				'editor.wordHighlightTextBackground', 'editor.rangeHighlightBackground',
-				'editor.hoverHighlightBackground', 'editor.findMatchBackground',
-				'editor.findMatchHighlightBackground', 'editor.findRangeHighlightBackground',
-				'editor.foldBackground', 'editorCursor.foreground', 'editorLink.activeForeground',
-				'editorWhitespace.foreground', 'editorIndentGuide.background1',
-				'editorIndentGuide.activeBackground1', 'editorRuler.foreground',
-				'editorBracketMatch.background', 'editorBracketMatch.border',
-				'editorBracketHighlight.foreground1', 'editorBracketHighlight.foreground2',
-				'editorBracketHighlight.foreground3', 'editorOverviewRuler.border'
+				'editor', 'editor.background', 'editor.foreground', 'editor.lineHighlightBackground', 'editor.lineHighlightBorder', 'editor.selectionBackground', 'editor.selectionHighlightBackground', 'editor.inactiveSelectionBackground', 'editor.wordHighlightBackground', 'editor.wordHighlightStrongBackground', 'editor.wordHighlightTextBackground', 'editor.rangeHighlightBackground', 'editor.hoverHighlightBackground', 'editor.findMatchBackground', 'editor.findMatchHighlightBackground', 'editor.findRangeHighlightBackground', 'editor.foldBackground', 'editorCursor.foreground', 'editorLink.activeForeground', 'editorWhitespace.foreground', 'editorIndentGuide.background1', 'editorIndentGuide.activeBackground1', 'editorRuler.foreground', 'editorBracketMatch.background', 'editorBracketMatch.border', 'editorBracketHighlight.foreground1', 'editorBracketHighlight.foreground2', 'editorBracketHighlight.foreground3', 'editorOverviewRuler.border'
 			],
 			'Editor Widgets': [
 				'editorWidget.background', 'editorWidget.border', 'editorSuggestWidget.background', 'editorSuggestWidget.border', 'editorSuggestWidget.foreground', 'editorSuggestWidget.highlightForeground', 'editorSuggestWidget.selectedBackground', 'editorHoverWidget.background', 'editorHoverWidget.border', 'editorGhostText.foreground', 'editorHint.foreground', 'editorInfo.foreground', 'editorWarning.foreground', 'editorError.foreground'
@@ -546,7 +603,7 @@ export class ThemeEditorPanel {
 				'sideBar.background', 'sideBar.foreground', 'sideBar.border', 'sideBarTitle.foreground', 'sideBarSectionHeader.background', 'sideBarSectionHeader.foreground', 'sideBarSectionHeader.border', 'sideBar.dropBackground'
 			],
 			'Status Bar': [
-				'statusBar.background', 'statusBar.foreground', 'statusBar.border', 'statusBar.debuggingBackground', 'statusBar.debuggingForeground', 'statusBar.noFolderBackground', 'statusBar.noFolderForeground', 'statusBarItem.activeBackground', 'statusBarItem.hoverBackground', 'statusBarItem.remoteBackground', 'statusBarItem.remoteForeground', 'statusBarItem.errorBackgroun', 'statusBarItem.errorForeground'
+				'statusBar.background', 'statusBar.foreground', 'statusBar.border', 'statusBar.debuggingBackground', 'statusBar.debuggingForeground', 'statusBar.noFolderBackground', 'statusBar.noFolderForeground', 'statusBarItem.activeBackground', 'statusBarItem.hoverBackground', 'statusBarItem.remoteBackground', 'statusBarItem.remoteForeground', 'statusBarItem.errorBackground', 'statusBarItem.errorForeground'
 			],
 			'Title Bar': [
 				'titleBar.activeBackground', 'titleBar.activeForeground', 'titleBar.inactiveBackground', 'titleBar.inactiveForeground', 'titleBar.border',
@@ -567,7 +624,10 @@ export class ThemeEditorPanel {
 				'button.background', 'button.foreground', 'button.hoverBackground', 'button.secondaryBackground', 'button.secondaryForeground', 'button.secondaryHoverBackground', 'badge.background', 'badge.foreground'
 			],
 			'Dropdown': [
-				'dropdown.background', 'peekViewTitle.background', 'peekViewTitleDescription.foreground', 'peekViewTitleLabel.foreground'
+				'dropdown.background', 'dropdown.foreground', 'dropdown.border', 'dropdown.listBackground'
+			],
+			'Peek View': [
+				'peekView.border', 'peekViewTitle.background', 'peekViewTitleDescription.foreground', 'peekViewTitleLabel.foreground', 'peekViewEditor.background', 'peekViewEditor.matchHighlightBackground', 'peekViewResult.background', 'peekViewResult.fileForeground', 'peekViewResult.lineForeground', 'peekViewResult.matchHighlightBackground', 'peekViewResult.selectionBackground', 'peekViewResult.selectionForeground'
 			],
 			'Merge Conflicts': [
 				'merge.border', 'merge.commonContentBackground', 'merge.commonHeaderBackground', 'merge.currentContentBackground', 'merge.currentHeaderBackground', 'merge.incomingContentBackground', 'merge.incomingHeaderBackground'
@@ -713,19 +773,10 @@ export class ThemeEditorPanel {
 		// Render TextMate tokens by grouping each defined scope under its category
 		const tokenColors = (currentTheme.tokenColors && currentTheme.tokenColors.length > 0)
 			? currentTheme.tokenColors : templateTheme.tokenColors || [];
+		
 		const textmateGroups: Record<string, string[]> = {
-			'Base Text & Structure': [
-				'source',
-				'support.type.property-name.css'
-			],
-			'Punctuation & Delimiters': [
-				'punctuation',
-				'punctuation.terminator',
-				'punctuation.definition.tag',
-				'punctuation.separator',
-				'punctuation.definition.string',
-				'punctuation.section.block'
-			],
+			'Base Text & Structure': ['source', 'support.type.property-name.css'],
+			'Punctuation & Delimiters': ['punctuation', 'punctuation.terminator', 'punctuation.definition.tag', 'punctuation.separator', 'punctuation.definition.string', 'punctuation.section.block'],
 			'Class Definitions': ['entity.name.type.class'],
 			'Interface Definitions': ['entity.name.type.interface', 'entity.name.type'],
 			'Struct Definitions': ['entity.name.type.struct'],
@@ -758,12 +809,8 @@ export class ThemeEditorPanel {
 			'Labels': ['entity.name.label', 'punctuation.definition.label'],
 			'Comments': ['comment', 'punctuation.definition.comment'],
 			'Documentation Comments': ['comment.documentation', 'comment.line.documentation'],
-			'Namespaces': [
-				'entity.name.namespace', 'storage.modifier.namespace', 'markup.bold.markdown'
-			],
-			'Modules': [
-				'entity.name.module', 'storage.modifier.module'
-			],
+			'Namespaces': ['entity.name.namespace', 'storage.modifier.namespace', 'markup.bold.markdown'],
+			'Modules': ['entity.name.module', 'storage.modifier.module'],
 			'Underlined Links': ['markup.underline.link'],
 			'HTML/XML Tag Names': ['entity.name.tag'],
 			'Component Class Names': ['support.class.component'],
@@ -782,8 +829,12 @@ export class ThemeEditorPanel {
 					const tScopes = Array.isArray(t.scope) ? t.scope : [t.scope as string];
 					return tScopes.includes(scope);
 				});
-				const fg = token?.settings?.foreground;
-				if (typeof fg !== 'string') { return; }
+				let fg = token?.settings?.foreground;
+				
+				// If no foreground color found, use a default color so the token still appears in UI
+				if (typeof fg !== 'string') {
+					fg = '#ffffff'; // Default white color for missing tokens
+				}
 				const safeValue = this.ensureValidHexColor(fg);
 				const description = this.getTextMateTokenDescription(scope);
 				// Determine color picker value for TextMate tokens
@@ -793,14 +844,14 @@ export class ThemeEditorPanel {
 					? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
 					: 100;
 				html += `<div class="color-item" data-search="${scope}">` +
-				   `<div class="color-info"><label class="color-label">${scope}</label>` +
-				   `<p class="color-description">${description}</p></div>` +
-				   `<div class="color-controls">` +
-				   `<input type="color" class="color-picker" name="textmate_${scope}" value="${tmPicker}" />` +
-				   `<input type="text" class="hex-input" name="textmate_${scope}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />` +
-				   `<input type="range" class="alpha-slider" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />` +
-				   `<input type="number" class="alpha-input" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />` +
-				   `</div></div>`;
+					`<div class="color-info"><label class="color-label">${scope}</label>` +
+					`<p class="color-description">${description}</p></div>` +
+					`<div class="color-controls">` +
+					`<input type="color" class="color-picker" name="textmate_${scope}" value="${tmPicker}" />` +
+					`<input type="text" class="hex-input" name="textmate_${scope}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />` +
+					`<input type="range" class="alpha-slider" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />` +
+					`<input type="number" class="alpha-input" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />` +
+					`</div></div>`;
 			});
 			html += `</div></div>`;
 		}
