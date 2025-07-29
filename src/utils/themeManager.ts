@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { parse, parseTree, getNodeValue } from 'jsonc-parser';
+import { parse } from 'jsonc-parser';
 
 export interface ThemeDefinition {
 	name?: string;
@@ -19,31 +19,103 @@ export interface ThemeDefinition {
 	}>;
 }
 
+interface LogEntry {
+	timestamp: string;
+	level: 'info' | 'warn' | 'error' | 'debug';
+	message: string;
+	data?: any;
+}
+
 export class ThemeManager {
 	private context: vscode.ExtensionContext;
 	private currentTheme: ThemeDefinition = {};
 	private templateTheme: ThemeDefinition = {};
 	private changeListeners: Array<(key: string, value: string) => void> = [];
+	private logEntries: LogEntry[] = [];
+	private readonly MAX_LOG_ENTRIES = 1000;
 
 	constructor(context: vscode.ExtensionContext) {
 		this.context = context;
+		this.log('info', 'ThemeManager initializing...');
+		
 		// Load TEMPLATE.jsonc for baseline keysets
 		this.loadTemplateTheme();
 		// Load active VS Code theme defaults
 		this.loadActiveThemeDefaults();
 		// Clean up any legacy settings
 		this.cleanupLegacySettings();
+		
+		this.log('info', 'ThemeManager initialized successfully');
+	}
+
+	/**
+	 * Enhanced logging system with different levels
+	 */
+	private log(level: LogEntry['level'], message: string, data?: any): void {
+		const entry: LogEntry = {
+			timestamp: new Date().toISOString(),
+			level,
+			message,
+			data
+		};
+
+		this.logEntries.push(entry);
+		
+		// Keep log size manageable
+		if (this.logEntries.length > this.MAX_LOG_ENTRIES) {
+			this.logEntries = this.logEntries.slice(-this.MAX_LOG_ENTRIES);
+		}
+
+		// Console output with appropriate level
+		const logMessage = `[ThemeManager:${level.toUpperCase()}] ${message}`;
+		switch (level) {
+			case 'error':
+				console.error(logMessage, data);
+				break;
+			case 'warn':
+				console.warn(logMessage, data);
+				break;
+			case 'debug':
+				console.debug(logMessage, data);
+				break;
+			default:
+				console.log(logMessage, data);
+		}
+	}
+
+	/**
+	 * Get recent log entries for debugging
+	 */
+	public getLogEntries(count = 50): LogEntry[] {
+		return this.logEntries.slice(-count);
+	}
+
+	/**
+	 * Clear log entries
+	 */
+	public clearLogs(): void {
+		this.logEntries = [];
+		this.log('info', 'Log entries cleared');
 	}
 
 	private loadTemplateTheme (): void {
 		try {
 			const templatePath = path.join(this.context.extensionPath, 'TEMPLATE.jsonc');
+			this.log('debug', `Loading template from: ${templatePath}`);
+			
 			if (fs.existsSync(templatePath)) {
 				const content = fs.readFileSync(templatePath, 'utf8');
 				this.templateTheme = parse(content);
+				
+				const stats = this.getTemplateStats();
+				this.log('info', 'Template theme loaded successfully', stats);
+			} else {
+				this.log('warn', 'TEMPLATE.jsonc not found, using empty template');
+				this.templateTheme = { colors: {}, semanticTokenColors: {}, tokenColors: [] };
 			}
 		} catch (error) {
-			console.error('Failed to load TEMPLATE.jsonc:', error);
+			this.log('error', 'Failed to load TEMPLATE.jsonc', error);
+			this.templateTheme = { colors: {}, semanticTokenColors: {}, tokenColors: [] };
 		}
 	}
 
@@ -166,7 +238,7 @@ export class ThemeManager {
 		return theme;
 	}
 
-	private async loadVsixTheme (filePath: string): Promise<ThemeDefinition> {
+	private async loadVsixTheme (_filePath: string): Promise<ThemeDefinition> {
 		// For now, show message that VSIX support is coming
 		vscode.window.showInformationMessage(
 			"VSIX theme loading is not yet implemented. Please extract the theme JSON file manually."
@@ -283,8 +355,6 @@ export class ThemeManager {
 	 * Apply live color change with enhanced capabilities
 	 */
 	async applyLiveColor (key: string, value: string): Promise<void> {
-		const config = vscode.workspace.getConfiguration();
-
 		// Validate color value
 		if (!this.isValidColor(value)) {
 			throw new Error(`Invalid color value: ${value}`);
@@ -988,7 +1058,7 @@ export class ThemeManager {
 	 * This allows updating template elements after changes to the template file
 	 */
 	public async reloadTemplate(): Promise<void> {
-		console.log('[ThemeManager] Reloading template from TEMPLATE.jsonc...');
+		this.log('info', 'Reloading template from TEMPLATE.jsonc...');
 		
 		try {
 			const templatePath = path.join(this.context.extensionPath, 'TEMPLATE.jsonc');
@@ -999,13 +1069,24 @@ export class ThemeManager {
 				
 				// Emit event for template change if needed
 				this.emitTemplateReloaded(oldTemplate, this.templateTheme);
-				console.log('[ThemeManager] Template reloaded successfully');
+				
+				const stats = this.getTemplateStats();
+				this.log('info', 'Template reloaded successfully', stats);
+				
+				vscode.window.showInformationMessage(
+					`Template reloaded: ${stats.total} elements (${stats.colors} colors, ${stats.semanticTokenColors} semantic, ${stats.tokenColors} tokens)`
+				);
 			} else {
-				console.warn('[ThemeManager] TEMPLATE.jsonc not found at:', templatePath);
+				const error = 'TEMPLATE.jsonc not found';
+				this.log('error', error, { path: templatePath });
+				vscode.window.showErrorMessage(`Template reload failed: ${error}`);
+				throw new Error(error);
 			}
 		} catch (error) {
-			console.error('[ThemeManager] Failed to reload template:', error);
-			throw new Error(`Failed to reload template: ${error}`);
+			const message = `Failed to reload template: ${error}`;
+			this.log('error', message, error);
+			vscode.window.showErrorMessage(message);
+			throw error;
 		}
 	}
 
@@ -1016,30 +1097,52 @@ export class ThemeManager {
 		category: 'colors' | 'semanticTokenColors' | 'tokenColors',
 		key: string,
 		value: string | any,
-		applyImmediately: boolean = false
+		applyImmediately = false
 	): Promise<void> {
-		console.log(`[ThemeManager] Updating template element: ${category}.${key} = ${value}`);
+		this.log('debug', `Updating template element: ${category}.${key}`, { value, applyImmediately });
 		
 		try {
+			// Validate inputs
+			if (!category || !key) {
+				throw new Error('Category and key are required');
+			}
+
+			if (!['colors', 'semanticTokenColors', 'tokenColors'].includes(category)) {
+				throw new Error(`Invalid category: ${category}. Must be one of: colors, semanticTokenColors, tokenColors`);
+			}
+
 			// Update template in memory
 			switch (category) {
 				case 'colors':
 					if (!this.templateTheme.colors) {
 						this.templateTheme.colors = {};
 					}
+					if (typeof value !== 'string' || !this.isValidColor(value)) {
+						throw new Error(`Invalid color value for colors.${key}: ${value}`);
+					}
 					this.templateTheme.colors[key] = value;
 					break;
+					
 				case 'semanticTokenColors':
 					if (!this.templateTheme.semanticTokenColors) {
 						this.templateTheme.semanticTokenColors = {};
 					}
+					if (typeof value !== 'string' || !this.isValidColor(value)) {
+						throw new Error(`Invalid color value for semanticTokenColors.${key}: ${value}`);
+					}
 					this.templateTheme.semanticTokenColors[key] = value;
 					break;
+					
 				case 'tokenColors':
-					// For tokenColors, key should be scope and value should be token settings
 					if (!this.templateTheme.tokenColors) {
 						this.templateTheme.tokenColors = [];
 					}
+					
+					// Validate token color settings
+					if (typeof value === 'object' && value.foreground && !this.isValidColor(value.foreground)) {
+						throw new Error(`Invalid color value for tokenColors.${key}.foreground: ${value.foreground}`);
+					}
+					
 					const existingIndex = this.templateTheme.tokenColors.findIndex(token => {
 						const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
 						return scopes.includes(key);
@@ -1058,6 +1161,8 @@ export class ThemeManager {
 			
 			// Optionally apply to current theme immediately
 			if (applyImmediately) {
+				this.log('debug', `Applying template element immediately: ${category}.${key}`);
+				
 				switch (category) {
 					case 'colors':
 						await this.applyLiveColor(key, value);
@@ -1066,15 +1171,25 @@ export class ThemeManager {
 						await this.applyLiveColor(`semantic_${key}`, value);
 						break;
 					case 'tokenColors':
-						await this.applyLiveColor(`textmate_${key}`, value.foreground || value);
+						const colorValue = typeof value === 'object' ? value.foreground : value;
+						if (colorValue) {
+							await this.applyLiveColor(`textmate_${key}`, colorValue);
+						}
 						break;
 				}
 			}
 			
-			console.log(`[ThemeManager] Template element updated successfully`);
+			this.log('info', `Template element updated: ${category}.${key}`, { value });
+			
+			// Show success message
+			vscode.window.showInformationMessage(
+				`Template updated: ${category}.${key} = ${typeof value === 'object' ? JSON.stringify(value) : value}`
+			);
 		} catch (error) {
-			console.error(`[ThemeManager] Failed to update template element:`, error);
-			throw new Error(`Failed to update template element: ${error}`);
+			const message = `Failed to update template element ${category}.${key}: ${error}`;
+			this.log('error', message, { category, key, value, error });
+			vscode.window.showErrorMessage(message);
+			throw error;
 		}
 	}
 
@@ -1083,10 +1198,24 @@ export class ThemeManager {
 	 * This method ensures the UI reflects any template updates
 	 */
 	public syncTemplateWithUI(): void {
-		console.log('[ThemeManager] Syncing template changes with UI...');
+		this.log('info', 'Syncing template changes with UI...');
 		
-		// Emit template sync event for UI components to refresh
-		this.emitTemplateSynced();
+		try {
+			// Emit template sync event for UI components to refresh
+			this.emitTemplateSynced();
+			
+			const stats = this.getTemplateStats();
+			this.log('info', 'Template synced with UI', stats);
+			
+			vscode.window.showInformationMessage(
+				`Template synchronized: ${stats.total} elements refreshed in UI`
+			);
+		} catch (error) {
+			const message = `Failed to sync template with UI: ${error}`;
+			this.log('error', message, error);
+			vscode.window.showErrorMessage(message);
+			throw error;
+		}
 	}
 
 	/**
@@ -1098,35 +1227,48 @@ export class ThemeManager {
 		tokenColors: number;
 		total: number;
 	} {
-		return {
+		const stats = {
 			colors: Object.keys(this.templateTheme.colors || {}).length,
 			semanticTokenColors: Object.keys(this.templateTheme.semanticTokenColors || {}).length,
 			tokenColors: (this.templateTheme.tokenColors || []).length,
-			total: Object.keys(this.templateTheme.colors || {}).length +
-				   Object.keys(this.templateTheme.semanticTokenColors || {}).length +
-				   (this.templateTheme.tokenColors || []).length
+			total: 0
 		};
+		
+		stats.total = stats.colors + stats.semanticTokenColors + stats.tokenColors;
+		
+		this.log('debug', 'Template stats calculated', stats);
+		return stats;
 	}
 
 	/**
 	 * Emit template reloaded event
 	 */
 	private emitTemplateReloaded(oldTemplate: ThemeDefinition, newTemplate: ThemeDefinition): void {
+		const oldCount = this.getTemplateElementCount(oldTemplate);
+		const newCount = this.getTemplateElementCount(newTemplate);
+		
+		this.log('debug', 'Template reloaded event', { oldCount, newCount });
+		
 		// Template change listeners could be added here for UI updates
-		console.log('[ThemeManager] Template reloaded - old count:', this.getTemplateElementCount(oldTemplate), 'new count:', this.getTemplateElementCount(newTemplate));
+		// For now, just emit regular theme change events to refresh UI
+		this.emitTemplateSynced();
 	}
 
 	/**
 	 * Emit template synced event
 	 */
 	private emitTemplateSynced(): void {
+		this.log('debug', 'Emitting template sync events...');
+		
 		// Emit change events for all template elements to refresh UI
 		const template = this.templateTheme;
+		let eventCount = 0;
 		
 		// Emit workbench color changes
 		if (template.colors) {
 			Object.entries(template.colors).forEach(([key, value]) => {
 				this.emitThemeChange(key, value);
+				eventCount++;
 			});
 		}
 		
@@ -1135,20 +1277,24 @@ export class ThemeManager {
 			Object.entries(template.semanticTokenColors).forEach(([key, value]) => {
 				const color = typeof value === 'string' ? value : value.foreground || '#ffffff';
 				this.emitThemeChange(`semantic_${key}`, color);
+				eventCount++;
 			});
 		}
 		
 		// Emit TextMate token changes
 		if (template.tokenColors) {
-			template.tokenColors.forEach((token, index) => {
+			template.tokenColors.forEach((token, _index) => {
 				if (token.scope && token.settings?.foreground) {
 					const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
 					scopes.forEach(scope => {
 						this.emitThemeChange(`textmate_${scope}`, token.settings!.foreground!);
+						eventCount++;
 					});
 				}
 			});
 		}
+		
+		this.log('debug', `Template sync events emitted: ${eventCount}`);
 	}
 
 	/**

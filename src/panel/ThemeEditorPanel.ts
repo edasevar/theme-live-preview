@@ -17,7 +17,7 @@ export class ThemeEditorPanel {
 	private disposables: vscode.Disposable[] = [];
 	private updateThrottle: NodeJS.Timeout | null = null;
 	private pendingUpdates: Map<string, string> = new Map();
-	private isUpdating: boolean = false;
+	private isUpdating = false;
 
 	public static createOrShow (extensionUri: vscode.Uri, themeManager: ThemeManager) {
 		console.log('ThemeEditorPanel.createOrShow called with:', extensionUri.fsPath);
@@ -103,7 +103,7 @@ export class ThemeEditorPanel {
 					}
 				}
 			}
-		} catch (_) {
+		} catch {
 			// Ignore errors loading semantic descriptions
 		}
 		// Load TextMate token descriptions from TEMPLATE.jsonc comments
@@ -119,7 +119,7 @@ export class ThemeEditorPanel {
 					this.textmateDescriptions[match[1]] = match[2].trim();
 				}
 			}
-		} catch (_) {
+		} catch {
 			// Ignore errors loading TextMate descriptions
 		}
 
@@ -447,7 +447,7 @@ export class ThemeEditorPanel {
 		category: 'colors' | 'semanticTokenColors' | 'tokenColors',
 		key: string,
 		value: string | any,
-		applyImmediately: boolean = false
+		applyImmediately = false
 	): Promise<void> {
 		try {
 			await this.themeManager.updateTemplateElement(category, key, value, applyImmediately);

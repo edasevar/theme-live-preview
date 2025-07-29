@@ -124,7 +124,7 @@ class ThemeEditorPanel {
                 }
             }
         }
-        catch (_) {
+        catch {
             // Ignore errors loading semantic descriptions
         }
         // Load TextMate token descriptions from TEMPLATE.jsonc comments
@@ -141,7 +141,7 @@ class ThemeEditorPanel {
                 }
             }
         }
-        catch (_) {
+        catch {
             // Ignore errors loading TextMate descriptions
         }
         try {

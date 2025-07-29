@@ -172,12 +172,12 @@
 		// --- Minimap ---
 		"minimap.background": "#ffffff", // Background color of the minimap
 		"minimap.foregroundOpacity": "#ffffff00", // Opacity of the minimap foreground content (#000000c0 will render 75% opacity)
-		"minimap.findMatchHighlight": "#ffffff00", // Background color for find matches in the minimap
-		"minimap.selectionHighlight": "#ffffff00", // Background color for selection highlights in the minimap
-		"minimap.errorHighlight": "#ffffff00", // Background color for error highlights in the minimap
-		"minimap.warningHighlight": "#ffffff00", // Background color for warning highlights in the minimap
-		"minimap.infoHighlight": "#ffffff00", // Background color for info highlights in the minimap
-		"minimap.selectionOccurrenceHighlight": "#ffffff00", // Background color for selection occurrences in the minimap
+		"minimap.findMatchHighlight": "#ffffff00", // Background color for find matches in the minimap (#000000c0 will render 75% opacity)
+		"minimap.selectionHighlight": "#ffffff00", // Background color for selection highlights in the minimap (#000000c0 will render 75% opacity)
+		"minimap.errorHighlight": "#ffffff00", // Background color for error highlights in the minimap (#000000c0 will render 75% opacity)
+		"minimap.warningHighlight": "#ffffff00", // Background color for warning highlights in the minimap (#000000c0 will render 75% opacity)
+		"minimap.infoHighlight": "#ffffff00", // Background color for info highlights in the minimap (#000000c0 will render 75% opacity)
+		"minimap.selectionOccurrenceHighlight": "#ffffff00", // Background color for selection occurrences in the minimap (#000000c0 will render 75% opacity)
 		"minimapSlider.background": "#ffffff", // Background color of the minimap slider
 		"minimapSlider.hoverBackground": "#ffffff", // Background color of the minimap slider on hover
 		"minimapSlider.activeBackground": "#ffffff", // Background color of the minimap slider when active
@@ -252,32 +252,32 @@
 		// --- Editor: Selection ---
 		"editor.selectionBackground": "#ffffff", // Background color for selected text in the editor
 		"editor.selectionForeground": "#ffffff", // Color of the selected text for high contrast
-		"editor.selectionHighlightBackground": "#ffffff00", // Background for other instances of the same selected text (must be opaque)
+		"editor.selectionHighlightBackground": "#ffffff00", // Background for other instances of the same selected text (#000000c0 will render 75% opacity)
 		"editor.selectionHighlightBorder": "#ffffff", // Border color for other instances of the same selected text
-		"editor.inactiveSelectionBackground": "#ffffff00", // Selection background when editor loses focus (must be opaque)
+		"editor.inactiveSelectionBackground": "#ffffff00", // Selection background when editor loses focus (#000000c0 will render 75% opacity)
 		// --- Editor: Word Highlight ---
-		"editor.wordHighlightBackground": "#ffffff00", // Background for highlighting matching words under cursor (must be opaque)
-		"editor.wordHighlightStrongBackground": "#ffffff00", // Strong word match highlight for write-access symbols (must be opaque)
-		"editor.wordHighlightTextBackground": "#ffffff00", // Background for text-based word highlighting (must be opaque)
+		"editor.wordHighlightBackground": "#ffffff00", // Background for highlighting matching words under cursor (#000000c0 will render 75% opacity)
+		"editor.wordHighlightStrongBackground": "#ffffff00", // Strong word match highlight for write-access symbols (#000000c0 will render 75% opacity)
+		"editor.wordHighlightTextBackground": "#ffffff00", // Background for text-based word highlighting (#000000c0 will render 75% opacity)
 		"editor.wordHighlightBorder": "#ffffff", // Border color of a symbol during read-access, for example when reading a variable
 		"editor.wordHighlightStrongBorder": "#ffffff", // Border color of a symbol during write-access, for example when writing to a variable
 		"editor.wordHighlightTextBorder": "#ffffff", // Border color of a textual occurrence for a symbol
 		// --- Editor: Find Matches ---
 		"editor.findMatchBackground": "#ffffff", // Background color for the current search result highlight
 		"editor.findMatchForeground": "#ffffff", // Text color of the current search match
-		"editor.findMatchHighlightBackground": "#ffffff00", // Background for other search matches in the document (must be opaque)
-		"editor.findMatchHighlightForeground": "#ffffff00", // Foreground color of the other search matches
+		"editor.findMatchHighlightBackground": "#ffffff00", // Background for other search matches in the document (#000000c0 will render 75% opacity)
+		"editor.findMatchHighlightForeground": "#ffffff00", // Foreground color of the other search matches (#000000c0 will render 75% opacity)
 		"editor.findMatchBorder": "#ffffff", // Border color of the current search match
 		"editor.findMatchHighlightBorder": "#ffffff", // Border color of the other search matches
-		"editor.findRangeHighlightBorder": "#ffffff00", // Border color the range limiting the search (Enable 'Find in Selection' in the find widget)
-		"editor.findRangeHighlightBackground": "#ffffff00", // Background for the search range selection area (must be opaque)
+		"editor.findRangeHighlightBorder": "#ffffff00", // Border color the range limiting the search (#000000c0 will render 75% opacity)
+		"editor.findRangeHighlightBackground": "#ffffff00", // Background for the search range selection area (#000000c0 will render 75% opacity)
 		// --- Editor: Search & Search Editor ---
 		"search.resultsInfoForeground": "#ffffff", // Color of the text in the search viewlet's completion message. For example, this color is used in the text that says "{x} results in {y} files"
 		"searchEditor.findMatchBackground": "#ffffff", // Color of the editor's results
 		"searchEditor.findMatchBorder": "#ffffff", // Border color of the editor's results
 		"searchEditor.textInputBorder": "#ffffff", // Search editor text input box border
 		// --- Editor: Hover ---
-		"editor.hoverHighlightBackground": "#ffffff00", // Background color shown when hovering over symbols (must be opaque)
+		"editor.hoverHighlightBackground": "#ffffff00", // Background color shown when hovering over symbols (#000000c0 will render 75% opacity)
 		// --- Editor: Line Highlight ---
 		"editor.lineHighlightBackground": "#ffffff", // Background color for the currently active line highlight
 		"editor.lineHighlightBorder": "#ffffff", // Border color around the current line highlight
@@ -289,22 +289,20 @@
 		// --- Editor: Links ---
 		"editorLink.activeForeground": "#ffffff", // Color of clickable links when activated or clicked
 		// --- Editor: Range Highlight ---
-		"editor.rangeHighlightBackground": "#ffffff00", // Background for range selection transparency effects (must be opaque)
+		"editor.rangeHighlightBackground": "#ffffff00", // Background for range selection transparency effects (#000000c0 will render 75% opacity)
 		"editor.rangeHighlightBorder": "#ffffff", // Border color for range selection transparency effects
 		// --- Editor: Symbol ---
-		"editor.symbolHighlightBackground": "#ffffff00", // Background color of highlighted symbol. The color must not be opaque so as not to hide underlying decorations
+		"editor.symbolHighlightBackground": "#ffffff00", // Background color of highlighted symbol. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
 		"editor.symbolHighlightBorder": "#ffffff", // Background color of the border around highlighted symbols
 		// --- Editor: Whitespace ---
 		"editorWhitespace.foreground": "#ffffff", // Color of whitespace characters (spaces, tabs) when visible
 		// --- Editor: Indent Guides ---
-		"editorIndentGuide.background": "#ffffff", // Color of the editor indentation guides
 		"editorIndentGuide.background1": "#ffffff", // Color of the editor indentation guides (1)
 		"editorIndentGuide.background2": "#ffffff", // Color of the editor indentation guides (2)
 		"editorIndentGuide.background3": "#ffffff", // Color of the editor indentation guides (3)
 		"editorIndentGuide.background4": "#ffffff", // Color of the editor indentation guides (4)
 		"editorIndentGuide.background5": "#ffffff", // Color of the editor indentation guides (5)
 		"editorIndentGuide.background6": "#ffffff", // Color of the editor indentation guides (6)
-		"editorIndentGuide.activeBackground": "#ffffff", // Color of the active editor indentation guides
 		"editorIndentGuide.activeBackground1": "#ffffff", // Color of the active editor indentation guides (1)
 		"editorIndentGuide.activeBackground2": "#ffffff", // Color of the active editor indentation guides (2)
 		"editorIndentGuide.activeBackground3": "#ffffff", // Color of the active editor indentation guides (3)
@@ -350,17 +348,17 @@
 		"editorBracketPairGuide.background5": "#ffffff", // Background color of inactive bracket pair guides (5). Requires enabling bracket pair guides
 		"editorBracketPairGuide.background6": "#ffffff", // Background color of inactive bracket pair guides (6). Requires enabling bracket pair guides
 		// --- Editor: Folding ---
-		"editor.foldBackground": "#ffffff00", // Background color for folded/collapsed code sections (must be opaque)
+		"editor.foldBackground": "#ffffff00", // Background color for folded/collapsed code sections (#000000c0 will render 75% opacity)
 		"editor.foldPlaceholderForeground": "#ffffff", // Color of the collapsed text after the first line of a folded range
 		// --- Editor: Overview Ruler ---
 		"editorOverviewRuler.border": "#ffffff", // Border color of the overview ruler on the right side of editor
 		"editorOverviewRuler.background": "#ffffff", // Background color of the editor overview ruler. Only used when the minimap is enabled and placed on the right side of the editor
-		"editorOverviewRuler.findMatchForeground": "#ffffff00", // Overview ruler marker color for find matches. The color must not be opaque so as not to hide underlying decorations
-		"editorOverviewRuler.rangeHighlightForeground": "#ffffff00", // Overview ruler marker color for highlighted ranges, like by the Quick Open, Symbol in File and Find features. The color must not be opaque so as not to hide underlying decorations
-		"editorOverviewRuler.selectionHighlightForeground": "#ffffff00", // Overview ruler marker color for selection highlights. The color must not be opaque so as not to hide underlying decorations
-		"editorOverviewRuler.wordHighlightForeground": "#ffffff00", // Overview ruler marker color for symbol highlights. The color must not be opaque so as not to hide underlying decorations
-		"editorOverviewRuler.wordHighlightStrongForeground": "#ffffff00", // Overview ruler marker color for write-access symbol highlights. The color must not be opaque so as not to hide underlying decorations
-		"editorOverviewRuler.wordHighlightTextForeground": "#ffffff00", // Overview ruler marker color of a textual occurrence for a symbol. The color must not be opaque so as not to hide underlying decorations
+		"editorOverviewRuler.findMatchForeground": "#ffffff00", // Overview ruler marker color for find matches. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
+		"editorOverviewRuler.rangeHighlightForeground": "#ffffff00", // Overview ruler marker color for highlighted ranges, like by the Quick Open, Symbol in File and Find features. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
+		"editorOverviewRuler.selectionHighlightForeground": "#ffffff00", // Overview ruler marker color for selection highlights. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
+		"editorOverviewRuler.wordHighlightForeground": "#ffffff00", // Overview ruler marker color for symbol highlights. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
+		"editorOverviewRuler.wordHighlightStrongForeground": "#ffffff00", // Overview ruler marker color for write-access symbol highlights. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
+		"editorOverviewRuler.wordHighlightTextForeground": "#ffffff00", // Overview ruler marker color of a textual occurrence for a symbol. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
 		"editorOverviewRuler.modifiedForeground": "#ffffff", // Overview ruler marker color for modified content
 		"editorOverviewRuler.addedForeground": "#ffffff", // Overview ruler marker color for added content
 		"editorOverviewRuler.deletedForeground": "#ffffff", // Overview ruler marker color for deleted content
@@ -373,13 +371,13 @@
 		// --- Editor: Errors & Warnings ---
 		"editorError.foreground": "#ffffff", // Color for error squiggly underlines and problem indicators
 		"editorError.border": "#ffffff", // Border color of error boxes in the editor
-		"editorError.background": "#ffffff00", // Background color of error text in the editor. The color must not be opaque so as not to hide underlying decorations
+		"editorError.background": "#ffffff00", // Background color of error text in the editor. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
 		"editorWarning.foreground": "#ffffff", // Color for warning squiggly underlines and problem indicators
 		"editorWarning.border": "#ffffff", // Border color of warning boxes in the editor
-		"editorWarning.background": "#ffffff00", // Background color of warning text in the editor. The color must not be opaque so as not to hide underlying decorations
+		"editorWarning.background": "#ffffff00", // Background color of warning text in the editor. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
 		"editorInfo.foreground": "#ffffff", // Color for info squiggly underlines and problem indicators
 		"editorInfo.border": "#ffffff", // Border color of info boxes in the editor
-		"editorInfo.background": "#ffffff00", // Background color of info text in the editor. The color must not be opaque so as not to hide underlying decorations
+		"editorInfo.background": "#ffffff00", // Background color of info text in the editor. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
 		"editorHint.foreground": "#ffffff", // Color for hint squiggly underlines and problem indicators
 		"editorHint.border": "#ffffff", // Border color of hint boxes in the editor
 		"problemsErrorIcon.foreground": "#ffffff", // The color used for the problems error icon
@@ -419,25 +417,25 @@
 		"inlineEdit.gutterIndicator.successfulForeground": "#ffffff", // Foreground color for the successful inline edit gutter indicator
 		"inlineEdit.gutterIndicator.successfulBackground": "#ffffff", // Background color for the successful inline edit gutter indicator
 		"inlineEdit.gutterIndicator.background": "#ffffff", // Background color for the inline edit gutter indicator
-		"inlineEdit.originalBackground": "#ffffff00", // Background color for the original text in inline edits
-		"inlineEdit.modifiedBackground": "#ffffff00", // Background color for the modified text in inline edits
-		"inlineEdit.originalChangedLineBackground": "#ffffff00", // Background color for the changed lines in the original text of inline edits
-		"inlineEdit.originalChangedTextBackground": "#ffffff00", // Overlay color for the changed text in the original text of inline edits
-		"inlineEdit.modifiedChangedLineBackground": "#ffffff00", // Background color for the changed lines in the modified text of inline edits
-		"inlineEdit.modifiedChangedTextBackground": "#ffffff00", // Overlay color for the changed text in the modified text of inline edits
+		"inlineEdit.originalBackground": "#ffffff00", // Background color for the original text in inline edits (#000000c0 will render 75% opacity)
+		"inlineEdit.modifiedBackground": "#ffffff00", // Background color for the modified text in inline edits (#000000c0 will render 75% opacity)
+		"inlineEdit.originalChangedLineBackground": "#ffffff00", // Background color for the changed lines in the original text of inline edits (#000000c0 will render 75% opacity)
+		"inlineEdit.originalChangedTextBackground": "#ffffff00", // Overlay color for the changed text in the original text of inline edits (#000000c0 will render 75% opacity)
+		"inlineEdit.modifiedChangedLineBackground": "#ffffff00", // Background color for the changed lines in the modified text of inline edits (#000000c0 will render 75% opacity)
+		"inlineEdit.modifiedChangedTextBackground": "#ffffff00", // Overlay color for the changed text in the modified text of inline edits (#000000c0 will render 75% opacity)
 		"inlineEdit.originalBorder": "#ffffff", // Border color for the original text in inline edits
 		"inlineEdit.modifiedBorder": "#ffffff", // Border color for the modified text in inline edits
 		"inlineEdit.tabWillAcceptModifiedBorder": "#ffffff", // Modified border color for the inline edits widget when tab will accept it
 		"inlineEdit.tabWillAcceptOriginalBorder": "#ffffff", // Original border color for the inline edits widget over the original text when tab will accept it
 		// --- Editor: Diff ---
-		"diffEditor.insertedTextBackground": "#ffffff00", // Background color for text that got inserted. The color must not be opaque so as not to hide underlying decorations
+		"diffEditor.insertedTextBackground": "#ffffff00", // Background color for text that got inserted. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
 		"diffEditor.insertedTextBorder": "#ffffff", // Outline color for the text that got inserted
-		"diffEditor.removedTextBackground": "#ffffff00", // Background color for text that got removed. The color must not be opaque so as not to hide underlying decorations
+		"diffEditor.removedTextBackground": "#ffffff00", // Background color for text that got removed. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
 		"diffEditor.removedTextBorder": "#ffffff", // Outline color for text that got removed
 		"diffEditor.border": "#ffffff", // Border color between the two text editors
 		"diffEditor.diagonalFill": "#ffffff", // Color of the diff editor's diagonal fill. The diagonal fill is used in side-by-side diff views
-		"diffEditor.insertedLineBackground": "#ffffff00", // Background color for lines that got inserted. The color must not be opaque so as not to hide underlying decorations
-		"diffEditor.removedLineBackground": "#ffffff00", // Background color for lines that got removed. The color must not be opaque so as not to hide underlying decorations
+		"diffEditor.insertedLineBackground": "#ffffff00", // Background color for lines that got inserted. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
+		"diffEditor.removedLineBackground": "#ffffff00", // Background color for lines that got removed. The color must not be opaque so as not to hide underlying decorations (#000000c0 will render 75% opacity)
 		"diffEditorGutter.insertedLineBackground": "#ffffff", // Background color for the margin where lines got inserted
 		"diffEditorGutter.removedLineBackground": "#ffffff", // Background color for the margin where lines got removed
 		"diffEditorOverview.insertedForeground": "#ffffff", // Diff overview ruler foreground for inserted content
@@ -459,11 +457,11 @@
 		"chat.avatarBackground": "#ffffff", // The background color of a chat avatar
 		"chat.avatarForeground": "#ffffff", // The foreground color of a chat avatar
 		"chat.editedFileForeground": "#ffffff", // The foreground color of a chat edited file in the edited file list
-		"chat.linesAddedForeground": "#ffffff00", // Foreground color of lines added in chat code block pill
-		"chat.linesRemovedForeground": "#ffffff00", // Foreground color of lines removed in chat code block pill
-		"chat.requestCodeBorder": "#ffffff00", // Border color of code blocks within the chat request bubble
-		"chat.requestBubbleBackground": "#ffffff00", // Background color of the chat request bubble
-		"chat.requestBubbleHoverBackground": "#ffffff00", // Background color of the chat request bubble on hover
+		"chat.linesAddedForeground": "#ffffff00", // Foreground color of lines added in chat code block pill (#000000c0 will render 75% opacity)
+		"chat.linesRemovedForeground": "#ffffff00", // Foreground color of lines removed in chat code block pill (#000000c0 will render 75% opacity)
+		"chat.requestCodeBorder": "#ffffff00", // Border color of code blocks within the chat request bubble (#000000c0 will render 75% opacity)
+		"chat.requestBubbleBackground": "#ffffff00", // Background color of the chat request bubble (#000000c0 will render 75% opacity)
+		"chat.requestBubbleHoverBackground": "#ffffff00", // Background color of the chat request bubble on hover (#000000c0 will render 75% opacity)
 		// --- Inline Chat Colors ---
 		"inlineChat.background": "#ffffff", // Background color of the interactive editor widget
 		"inlineChat.foreground": "#ffffff", // Foreground color of the interactive editor widget
@@ -534,12 +532,12 @@
 		"peekViewEditorStickyScrollGutter.background": "#ffffff", // Background color of the gutter part of sticky scroll in the peek view editor
 		// --- Merge Conflicts ---
 		"merge.border": "#ffffff", // Border color around merge conflict sections
-		"merge.commonContentBackground": "#ffffff00", // Background for common content in merge conflicts (must be opaque)
-		"merge.commonHeaderBackground": "#ffffff00", // Header background for common content sections (must be opaque)
-		"merge.currentContentBackground": "#ffffff00", // Background for current branch content (must be opaque)
-		"merge.currentHeaderBackground": "#ffffff00", // Header background for current branch (must be opaque)
-		"merge.incomingContentBackground": "#ffffff00", // Background for incoming changes (must be opaque)
-		"merge.incomingHeaderBackground": "#ffffff00", // Header background for incoming changes (must be opaque)
+		"merge.commonContentBackground": "#ffffff00", // Background for common content in merge conflicts (#000000c0 will render 75% opacity)
+		"merge.commonHeaderBackground": "#ffffff00", // Header background for common content sections (#000000c0 will render 75% opacity)
+		"merge.currentContentBackground": "#ffffff00", // Background for current branch content (#000000c0 will render 75% opacity)
+		"merge.currentHeaderBackground": "#ffffff00", // Header background for current branch (#000000c0 will render 75% opacity)
+		"merge.incomingContentBackground": "#ffffff00", // Background for incoming changes (#000000c0 will render 75% opacity)
+		"merge.incomingHeaderBackground": "#ffffff00", // Header background for incoming changes (#000000c0 will render 75% opacity)
 		"editorOverviewRuler.currentContentForeground": "#ffffff", // Current overview ruler foreground for inline merge conflicts
 		"editorOverviewRuler.incomingContentForeground": "#ffffff", // Incoming overview ruler foreground for inline merge conflicts
 		"editorOverviewRuler.commonContentForeground": "#ffffff", // Common ancestor overview ruler foreground for inline merge conflicts
@@ -712,12 +710,12 @@
 		"terminal.selectionBackground": "#ffffff", // Background color of selected text in terminal
 		"terminal.selectionForeground": "#ffffff", // The selection foreground color of the terminal. When this is null the selection foreground will be retained and have the minimum contrast ratio feature applied
 		"terminal.inactiveSelectionBackground": "#ffffff", // The selection background color of the terminal when it does not have focus
-		"terminal.findMatchBackground": "#ffffff00", // Color of the current search match in the terminal. The color must not be opaque so as not to hide underlying terminal content
+		"terminal.findMatchBackground": "#ffffff00", // Color of the current search match in the terminal. The color must not be opaque so as not to hide underlying terminal content (#000000c0 will render 75% opacity)
 		"terminal.findMatchBorder": "#ffffff", // Border color of the current search match in the terminal
-		"terminal.findMatchHighlightBackground": "#ffffff00", // Color of the other search matches in the terminal. The color must not be opaque so as not to hide underlying terminal content
+		"terminal.findMatchHighlightBackground": "#ffffff00", // Color of the other search matches in the terminal. The color must not be opaque so as not to hide underlying terminal content (#000000c0 will render 75% opacity)
 		"terminal.findMatchHighlightBorder": "#ffffff", // Border color of the other search matches in the terminal
 		"terminal.hoverHighlightBackground": "#ffffff", // Color of the highlight when hovering a link in the terminal
-		"terminal.dropBackground": "#ffffff00", // The background color when dragging on top of terminals. The color should have transparency so that the terminal contents can still shine through
+		"terminal.dropBackground": "#ffffff00", // The background color when dragging on top of terminals. The color should have transparency so that the terminal contents can still shine through (#000000c0 will render 75% opacity)
 		"terminal.tab.activeBorder": "#ffffff", // Border on the side of the terminal tab in the panel. This defaults to tab.activeBorder
 		"terminalCommandDecoration.defaultBackground": "#ffffff", // The default terminal command decoration background color
 		"terminalCommandDecoration.successBackground": "#ffffff", // The terminal command decoration background color for successful commands
