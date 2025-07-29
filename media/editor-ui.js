@@ -460,7 +460,20 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeEventListeners();
   initializeSearch();
   initializeSectionNavigation();
+  initializeTooltips();
+  initializeNavigationHelpers();
+  initializeSettingNavigation();
   updateVisibleItems();
+  
+  // Show the main content and hide loading indicator after everything is initialized
+  setTimeout(() => {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const mainContent = document.getElementById('main-content');
+    if (loadingIndicator && mainContent) {
+      loadingIndicator.style.display = 'none';
+      mainContent.style.display = 'block';
+    }
+  }, 500);
 });
 
 function initializeEventListeners() {
@@ -1134,4 +1147,280 @@ function showPreviewFeedback(key, value) {
   setTimeout(() => {
     feedback.remove();
   }, 1500);
+}
+
+// ==========================================
+// TOOLTIP SYSTEM
+// ==========================================
+
+function initializeTooltips() {
+  // Initialize tooltips for status badges and other elements
+  document.addEventListener('mouseenter', handleTooltipShow, true);
+  document.addEventListener('mouseleave', handleTooltipHide, true);
+  document.addEventListener('focus', handleTooltipShow, true);
+  document.addEventListener('blur', handleTooltipHide, true);
+}
+
+function handleTooltipShow(event) {
+  const element = event.target;
+  if (!element.hasAttribute('data-tooltip')) return;
+
+  const tooltipText = element.getAttribute('data-tooltip');
+  const tooltipClass = element.getAttribute('data-tooltip-class') || '';
+  
+  showTooltip(element, tooltipText, tooltipClass);
+}
+
+function handleTooltipHide(event) {
+  const element = event.target;
+  if (!element.hasAttribute('data-tooltip')) return;
+  
+  hideTooltip();
+}
+
+let currentTooltip = null;
+
+function showTooltip(element, text, className = '') {
+  // Remove existing tooltip
+  hideTooltip();
+
+  const tooltip = document.createElement('div');
+  tooltip.className = `tooltip ${className}`;
+  tooltip.textContent = text;
+  
+  document.body.appendChild(tooltip);
+  currentTooltip = tooltip;
+
+  // Position tooltip
+  const rect = element.getBoundingClientRect();
+  const tooltipRect = tooltip.getBoundingClientRect();
+  
+  // Default to bottom positioning
+  let top = rect.bottom + 8;
+  let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+  
+  // Check if tooltip would go off screen and adjust
+  if (left < 8) left = 8;
+  if (left + tooltipRect.width > window.innerWidth - 8) {
+    left = window.innerWidth - tooltipRect.width - 8;
+  }
+  
+  // If tooltip would go below viewport, show above element
+  if (top + tooltipRect.height > window.innerHeight - 8) {
+    top = rect.top - tooltipRect.height - 8;
+    tooltip.classList.add('tooltip-top');
+  } else {
+    tooltip.classList.add('tooltip-bottom');
+  }
+  
+  tooltip.style.top = `${top}px`;
+  tooltip.style.left = `${left}px`;
+  
+  // Show with animation
+  requestAnimationFrame(() => {
+    tooltip.classList.add('show');
+  });
+}
+
+function hideTooltip() {
+  if (currentTooltip) {
+    currentTooltip.classList.remove('show');
+    setTimeout(() => {
+      if (currentTooltip && currentTooltip.parentNode) {
+        currentTooltip.parentNode.removeChild(currentTooltip);
+      }
+      currentTooltip = null;
+    }, 200);
+  }
+}
+
+// ==========================================
+// NAVIGATION & EXAMPLE HELPERS
+// ==========================================
+
+function initializeNavigationHelpers() {
+  // Add event listeners for navigation buttons
+  document.addEventListener('click', handleNavigationClick);
+  
+  // Initialize legend popup
+  initializeLegendPopup();
+}
+
+function initializeLegendPopup() {
+  const legendTrigger = document.getElementById('legendTrigger');
+  const legend = document.querySelector('.ui-legend');
+  
+  if (legendTrigger && legend) {
+    legendTrigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      legend.classList.toggle('show');
+    });
+    
+    // Close legend when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!legend.contains(e.target) && !legendTrigger.contains(e.target)) {
+        legend.classList.remove('show');
+      }
+    });
+    
+    // Close legend on escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && legend.classList.contains('show')) {
+        legend.classList.remove('show');
+      }
+    });
+  }
+}
+
+function handleNavigationClick(event) {
+  const navBtn = event.target.closest('.navigate-btn');
+  if (!navBtn) return;
+  
+  event.preventDefault();
+  const target = navBtn.getAttribute('data-navigate-to');
+  
+  if (target) {
+    navigateToSetting(target);
+  }
+}
+
+function navigateToSetting(settingKey) {
+  // Send message to VS Code to navigate to setting
+  vscode.postMessage({
+    type: 'navigateToSetting',
+    setting: settingKey
+  });
+  
+  // Show feedback
+  showNotification(`Navigating to ${settingKey} setting...`, 'info');
+}
+
+// ==========================================
+// LEGEND GENERATION
+// ==========================================
+
+function createLegend() {
+  return `
+    <div class="ui-legend">
+      <h3>Visual Indicators Guide</h3>
+      <div class="legend-grid">
+        <div class="legend-item">
+          <span class="legend-icon">⚙️</span>
+          <div class="legend-text">
+            <strong>Setting Required</strong><br>
+            Item needs a specific VS Code setting enabled to take effect
+          </div>
+        </div>
+        <div class="legend-item">
+          <span class="legend-icon">👁️</span>
+          <div class="legend-text">
+            <strong>Opacity Supported</strong><br>
+            Item supports transparency/alpha channel values
+          </div>
+        </div>
+        <div class="legend-item">
+          <span class="legend-icon">📝</span>
+          <div class="legend-text">
+            <strong>TextMate Token</strong><br>
+            Syntax highlighting token controlled by TextMate grammar
+          </div>
+        </div>
+        <div class="legend-item">
+          <span class="legend-icon">🔒</span>
+          <div class="legend-text">
+            <strong>Read-only</strong><br>
+            Item is informational or controlled by other settings
+          </div>
+        </div>
+        <div class="legend-item">
+          <span class="legend-icon">📍</span>
+          <div class="legend-text">
+            <strong>Navigate</strong><br>
+            Click to jump to the related VS Code setting
+          </div>
+        </div>
+        <div class="legend-item">
+          <span class="legend-icon">🎨</span>
+          <div class="legend-text">
+            <strong>Preview</strong><br>
+            Live preview of how the color appears in VS Code
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Helper function to get tooltip content for different elements
+function getTooltipContent(element, type) {
+  switch (type) {
+    case 'setting-required':
+      const setting = element.getAttribute('data-setting');
+      return `Requires "${setting}" setting to be enabled in VS Code preferences`;
+      
+    case 'opacity-required':
+      return 'This color supports transparency. Use 8-digit hex values (#RRGGBBAA) or adjust the opacity slider';
+      
+    case 'textmate-readonly':
+      return 'TextMate syntax token - controlled by language grammar rules and theme token mappings';
+      
+    case 'navigate':
+      const target = element.getAttribute('data-navigate-to');
+      return `Click to open ${target} in VS Code settings`;
+      
+    default:
+      return element.getAttribute('data-tooltip') || '';
+  }
+}
+
+// Navigation and highlighting functionality for setting badges
+function initializeSettingNavigation() {
+  // Handle setting badge clicks
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('setting-name')) {
+      const settingName = e.target.getAttribute('data-setting');
+      if (settingName) {
+        // Highlight the setting name visually
+        highlightSettingUsage(settingName);
+        
+        // Send message to VS Code to open the setting
+        vscode.postMessage({
+          type: 'openSetting',
+          setting: settingName
+        });
+      }
+    }
+  });
+}
+
+// Highlight all items controlled by a specific setting
+function highlightSettingUsage(settingName) {
+  // Remove any existing highlights
+  document.querySelectorAll('.color-item.highlight-target').forEach(item => {
+    item.classList.remove('highlight-target');
+  });
+  
+  // Find and highlight all items with this setting
+  const matchingBadges = document.querySelectorAll(`[data-setting="${settingName}"]`);
+  matchingBadges.forEach(badge => {
+    const colorItem = badge.closest('.color-item');
+    if (colorItem) {
+      colorItem.classList.add('highlight-target');
+      
+      // Scroll to first highlighted item
+      if (matchingBadges[0] === badge) {
+        colorItem.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    }
+  });
+  
+  // Remove highlights after 3 seconds
+  setTimeout(() => {
+    document.querySelectorAll('.color-item.highlight-target').forEach(item => {
+      item.classList.remove('highlight-target');
+    });
+  }, 3000);
 }

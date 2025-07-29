@@ -533,38 +533,13 @@ body {
 
 /* Conditional visibility states */
 .color-item.requires-setting {
-  opacity: 0.4;
-  pointer-events: none;
-  filter: grayscale(0.8);
+  /* Don't disable - just show warning */
   position: relative;
-}
-
-.color-item.requires-setting::after {
-  content: '⚙️ Setting Required';
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: linear-gradient(135deg, var(--warning-color), #ff7043);
-  color: white;
-  padding: 4px 8px;
-  border-radius: var(--border-radius-small);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: var(--shadow-light);
-  z-index: 2;
+  border-left: 3px solid var(--warning-color);
 }
 
 .color-item.requires-setting.setting-enabled {
-  opacity: 1;
-  pointer-events: auto;
-  filter: none;
-}
-
-.color-item.requires-setting.setting-enabled::after {
-  content: '⚙️ Enabled';
-  background: linear-gradient(135deg, var(--success-color), #4caf50);
+  border-left: 3px solid var(--success-color);
 }
 
 /* Opacity requirement indicators */
@@ -617,9 +592,10 @@ body {
 }
 
 .color-item.requires-setting:hover {
-  transform: none;
-  box-shadow: none;
-  border-color: var(--border-light);
+  /* Allow normal hover behavior */
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-light);
+  border-color: var(--warning-color);
 }
 
 .color-item.requires-setting.setting-enabled:hover {
@@ -698,19 +674,51 @@ body {
 }
 
 .status-badge.opacity-required {
-  top: 8px;
-  left: 8px;
+  bottom: 4px;
+  left: 4px;
   background: linear-gradient(135deg, var(--info-color), #42a5f5);
+  font-size: 8px;
+  padding: 2px 4px;
 }
 
 .status-badge.opacity-required.with-setting {
-  top: 36px;
+  bottom: 20px;
+  left: 4px;
 }
 
 .status-badge.textmate-readonly {
   top: 8px;
   right: 8px;
   background: linear-gradient(135deg, var(--text-secondary), #666);
+}
+
+.status-badge.setting-name {
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 9px;
+  padding: 3px 6px;
+}
+
+.status-badge.setting-name:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.status-badge.transparency-required {
+  bottom: 4px;
+  left: 4px;
+  background: var(--error-color);
+  color: white;
+  font-size: 7px;
+  padding: 1px 3px;
+  animation: pulse 2s infinite;
+}
+
+.status-badge.transparency-required::before {
+  content: "MUST BE TRANSPARENT";
 }
 
 .color-item:last-child {
@@ -845,6 +853,20 @@ body {
   max-width: 100%;
 }
 
+.setting-warning {
+  color: var(--warning-color);
+  font-weight: 600;
+  font-size: 11px;
+  display: block;
+  margin-top: 4px;
+  background: rgba(255, 165, 0, 0.1);
+  padding: 4px 8px;
+  border-radius: 3px;
+  border-left: 3px solid var(--warning-color);
+  font-style: normal;
+  opacity: 1;
+}
+
 .color-controls {
   display: flex;
   flex-direction: column;
@@ -853,16 +875,6 @@ body {
   flex-shrink: 0;
   min-width: 200px;
   transition: all var(--transition-fast);
-}
-
-.color-item.requires-setting .color-controls {
-  opacity: 0.5;
-  filter: blur(1px);
-}
-
-.color-item.requires-setting.setting-enabled .color-controls {
-  opacity: 1;
-  filter: none;
 }
 
 .color-inputs-row {
@@ -1550,4 +1562,319 @@ mark {
   .nav-btn {
     border: 1px solid;
   }
+}
+
+/* ==========================================
+   LEGEND, TOOLTIPS & NAVIGATION HELPERS
+   ========================================== */
+
+/* Legend Popup Button */
+.legend-trigger {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: var(--accent-color);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 1001;
+  box-shadow: var(--shadow-medium);
+  transition: all 0.2s ease;
+}
+
+.legend-trigger:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-heavy);
+}
+
+.legend-trigger::before {
+  content: "?";
+  font-weight: bold;
+}
+
+/* Legend Popup */
+.ui-legend {
+  position: fixed;
+  top: 50px;
+  right: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 12px;
+  box-shadow: var(--shadow-heavy);
+  z-index: 1000;
+  max-width: 300px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+.ui-legend.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.ui-legend h3 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-legend h3::before {
+  content: "ℹ️";
+  font-size: 12px;
+}
+
+.legend-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-small);
+  border: 1px solid var(--border-light);
+}
+
+.legend-icon {
+  font-size: 12px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.legend-text {
+  color: var(--text-primary);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.legend-text strong {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* Legend demo styles */
+.legend-icon.setting-name-demo {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  font-size: 8px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: bold;
+  min-width: auto;
+}
+
+.legend-icon.transparency-required-demo {
+  background: var(--error-color);
+  color: white;
+  font-size: 6px;
+  padding: 1px 2px;
+  border-radius: 2px;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+  min-width: auto;
+}
+
+/* Tooltip System */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip {
+  position: absolute;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: var(--border-radius-small);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--border-color);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  max-width: 300px;
+  white-space: normal;
+}
+
+.tooltip.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-2px);
+}
+
+.tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--bg-tertiary);
+}
+
+.tooltip.tooltip-top {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  margin-bottom: 5px;
+}
+
+.tooltip.tooltip-bottom {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  margin-top: 5px;
+}
+
+.tooltip.tooltip-bottom::before {
+  top: -5px;
+  border-top-color: transparent;
+  border-bottom-color: var(--bg-tertiary);
+}
+
+/* Tooltip type-specific styling */
+.tooltip.tooltip-setting-info {
+  background: var(--accent-primary);
+  color: white;
+  border: 1px solid var(--accent-primary);
+  font-weight: 500;
+}
+
+.tooltip.tooltip-setting-info::before {
+  border-bottom-color: var(--accent-primary);
+}
+
+.tooltip.tooltip-opacity-info {
+  background: var(--warning-bg);
+  color: var(--warning-fg);
+  border: 1px solid var(--warning-border);
+}
+
+.tooltip.tooltip-opacity-info::before {
+  border-bottom-color: var(--warning-bg);
+}
+
+/* Example Visual System - Better UI Element Previews */
+/* Removed - Preview boxes disabled as they don't provide the expected functionality */
+
+/* Navigation & Settings Info */
+.navigate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  background: var(--accent-light);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  border-radius: var(--border-radius-small);
+  font-size: 9px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 6px;
+}
+
+.navigate-btn:hover {
+  background: var(--accent-color);
+  color: var(--bg-primary);
+  transform: translateY(-1px);
+}
+
+.navigate-btn::before {
+  content: "⚙️";
+  font-size: 8px;
+}
+
+.setting-name {
+  font-size: 9px;
+  color: var(--accent-color);
+  font-family: 'Consolas', 'Monaco', monospace;
+  background: var(--accent-light);
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: 4px;
+}
+
+/* Status Badge Enhancements */
+.status-badge[data-tooltip] {
+  cursor: help;
+}
+
+.status-badge.setting-required {
+  background: var(--warning-color);
+  color: var(--bg-primary);
+}
+
+.status-badge.opacity-required {
+  background: var(--info-color);
+  color: var(--bg-primary);
+}
+
+.status-badge.transparency-required {
+  background: var(--error-color);
+  color: white;
+  font-size: 7px;
+  padding: 1px 3px;
+  animation: pulse 2s infinite;
+}
+
+.status-badge.transparency-required::before {
+  content: "MUST BE TRANSPARENT";
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Navigation highlighting */
+.color-item.highlight-target {
+  animation: highlightTarget 3s ease-in-out;
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 0 20px rgba(var(--accent-color-rgb), 0.4);
+}
+
+@keyframes highlightTarget {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(var(--accent-color-rgb), 0.4);
+  }
+  25% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(var(--accent-color-rgb), 0.6);
+  }
+  50% { 
+    transform: scale(1.02);
+    box-shadow: 0 0 25px rgba(var(--accent-color-rgb), 0.5);
+  }
+  100% { 
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(var(--accent-color-rgb), 0.3);
+  }
+}
+
+.status-badge.textmate-readonly {
+  background: var(--success-color);
+  color: var(--bg-primary);
 }

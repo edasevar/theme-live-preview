@@ -260,7 +260,21 @@ Fine-grained syntax highlighting control with complete scope coverage:
 
 ## 🔧 Technical Details
 
-### Recent Improvements (v2.5.1)
+### Recent Improvements (v2.6.3)
+- **Simplified Interface**: Completely removed preview boxes that weren't providing expected functionality for a cleaner, more focused color editing experience
+- **Improved Performance**: Eliminated unnecessary DOM elements and JavaScript functions for better efficiency
+
+### Previous Improvements (v2.6.2)
+- **Cleaner Preview Interface**: Removed text labels from example preview boxes for a cleaner, more focused visual design
+- **Enhanced Visual Design**: Example previews now show pure color representation without distracting text overlays
+
+### Previous Improvements (v2.6.1)
+- **Fixed Tooltip System**: Resolved tooltip initialization issues and added proper styling for different tooltip types
+- **Enhanced Setting Navigation**: Fixed click handling for setting badges with improved visual feedback
+- **Streamlined Initialization**: Consolidated initialization process for better performance and reliability
+- **Documentation Updates**: Comprehensive updates to README, changelog, and added proper MIT license
+
+### Previous Improvements (v2.5.1)
 - **Enhanced User Experience**: Removed all disabled UI elements - items requiring settings now show clear warnings instead of being disabled
 - **Smart Setting Requirements**: Visual indicators show which items require specific VS Code settings to be enabled
 - **Direct Setting Navigation**: Click warning icons to navigate directly to the required VS Code setting with exact path shown
@@ -300,6 +314,23 @@ Fine-grained syntax highlighting control with complete scope coverage:
 - **Settings Integration**: Direct VS Code configuration API with legacy cleanup support
 
 ## 🐛 Known Issues Fixed
+
+### v2.6.3 Fixes
+- ✅ **Preview Boxes Removed**: Eliminated non-functional preview boxes that didn't meet user expectations
+- ✅ **Simplified Layout**: Cleaner color item interface without distracting preview elements
+- ✅ **Performance Optimization**: Removed unnecessary code and DOM elements for better efficiency
+- ✅ **Code Cleanup**: Commented out unused methods and cleaned up associated functionality
+
+### v2.6.2 Fixes
+- ✅ **Clean Preview Design**: Removed distracting text labels from example preview boxes
+- ✅ **Improved Visual Focus**: Example previews now display pure color representation without text overlays
+- ✅ **Enhanced Interface**: Cleaner, more professional appearance for color preview elements
+
+### v2.6.1 Fixes
+- ✅ **Tooltip Initialization**: Fixed missing tooltip system initialization causing tooltips not to appear
+- ✅ **Setting Badge Styling**: Added proper CSS classes for different tooltip types (setting-info, opacity-info)
+- ✅ **Navigation Cleanup**: Removed redundant event listeners and streamlined click handling
+- ✅ **Documentation**: Updated all project documentation including proper licensing
 
 ### v2.5.1 Fixes
 - ✅ **Disabled Items Removed**: Eliminated all disabled UI elements that prevented user interaction - now shows warnings instead

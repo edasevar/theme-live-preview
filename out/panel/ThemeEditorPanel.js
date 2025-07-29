@@ -196,11 +196,17 @@ class ThemeEditorPanel {
                 case 'reloadTemplate':
                     await this.handleReloadTemplate();
                     break;
+                case 'openSetting':
+                    await this.handleOpenSetting(message.setting);
+                    break;
                 case 'updateTemplateElement':
                     await this.handleUpdateTemplateElement(message.category, message.key, message.value, message.applyImmediately);
                     break;
                 case 'syncTemplate':
                     this.handleSyncTemplate();
+                    break;
+                case 'navigateToSetting':
+                    this.handleNavigateToSetting(message.setting);
                     break;
             }
         }, null, this.disposables);
@@ -491,6 +497,10 @@ class ThemeEditorPanel {
             });
         }
     }
+    handleNavigateToSetting(setting) {
+        // Open VS Code settings to the specific setting
+        vscode.commands.executeCommand('workbench.action.openSettings', setting);
+    }
     refresh() {
         this.update();
     }
@@ -588,6 +598,10 @@ class ThemeEditorPanel {
 					</div>
 				</div>
 			</div>
+
+			<!-- Legend Popup -->
+			<button class="legend-trigger" id="legendTrigger" title="Show visual indicators guide"></button>
+			${this.generateLegend()}
 
 			<div class="preview-section">
 				<h3>Live Preview</h3>
@@ -736,26 +750,34 @@ class ThemeEditorPanel {
                     ? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
                     : 100;
                 // Determine special classes and indicators
-                const requiresOpacity = safeValue.length === 9 || key.includes('opacity') || key.includes('alpha') || description.toLowerCase().includes('opacity');
-                const requiresSetting = key.includes('tab') || key.includes('panel') || key.includes('minimap');
+                const requiresOpacity = safeValue.length === 9 || key.includes('opacity') || key.includes('alpha');
+                const requiresTransparency = this.requiresTransparency(key);
+                const requiresSetting = this.requiresSpecificSetting(key);
                 const itemClasses = ['color-item'];
                 if (requiresOpacity)
                     itemClasses.push('requires-opacity');
+                if (requiresTransparency)
+                    itemClasses.push('requires-transparency');
                 if (requiresSetting)
                     itemClasses.push('requires-setting');
                 html += `<div class="${itemClasses.join(' ')}" data-search="${key.toLowerCase()} ${description.toLowerCase()}">
 					<span class="border-indicator"></span>`;
-                // Add status badges
+                // Add status badges with better tooltips
                 if (requiresSetting) {
-                    html += `<span class="status-badge setting-required">⚙️ Setting Required</span>`;
+                    const settingName = this.getNavigationTarget(key);
+                    html += `<span class="status-badge setting-name" data-setting="${settingName}" data-tooltip="Click to find: ${settingName}" data-tooltip-class="tooltip-setting-info">⚙️ ${settingName}</span>`;
                 }
-                if (requiresOpacity) {
-                    const opacityClass = requiresSetting ? 'opacity-required with-setting' : 'opacity-required';
-                    html += `<span class="status-badge ${opacityClass}">👁️ Opacity</span>`;
+                if (requiresTransparency) {
+                    html += `<span class="status-badge transparency-required" data-tooltip="This color MUST use transparency (alpha) to work correctly" data-tooltip-class="tooltip-opacity-info"></span>`;
+                }
+                else if (requiresOpacity) {
+                    html += `<span class="status-badge opacity-required" data-tooltip="This color supports transparency. Use 8-digit hex values (#RRGGBBAA) or adjust the opacity slider" data-tooltip-class="tooltip-opacity-info">👁️ Alpha OK</span>`;
                 }
                 html += `<div class="color-info">
-						<label class="color-label">${key}</label>
-						<p class="color-description">${description}</p>
+						<label class="color-label">
+							${key}
+						</label>
+						<p class="color-description">${description}${requiresSetting ? ` <span class="setting-warning">⚠️ Requires "${this.getNavigationTarget(key)}" to be enabled to take effect.</span>` : ''}</p>
 					</div>
 					<div class="color-controls">
 						<div class="color-inputs-row">
@@ -868,18 +890,28 @@ class ThemeEditorPanel {
                     ? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
                     : 100;
                 // Determine special classes for semantic tokens
-                const requiresOpacity = safeValue.length === 9 || description.toLowerCase().includes('opacity');
+                const requiresOpacity = safeValue.length === 9;
+                const requiresTransparency = key.includes('inactive') || key.includes('muted') || key.includes('deprecated');
                 const itemClasses = ['color-item'];
                 if (requiresOpacity)
                     itemClasses.push('requires-opacity');
+                if (requiresTransparency)
+                    itemClasses.push('requires-transparency');
                 html += `<div class="${itemClasses.join(' ')}" data-search="${key}">
 							<span class="border-indicator"></span>`;
-                // Add status badges for semantic tokens
-                if (requiresOpacity) {
-                    html += `<span class="status-badge opacity-required">👁️ Opacity</span>`;
+                // Add status badges for semantic tokens with better tooltips
+                const settingName = "editor.semanticTokenColorCustomizations";
+                html += `<span class="status-badge setting-name" data-setting="${settingName}" data-tooltip="Click to find: ${settingName}" data-tooltip-class="tooltip-setting-info">${settingName}</span>`;
+                if (requiresTransparency) {
+                    html += `<span class="status-badge transparency-required" data-tooltip="This semantic token MUST use transparency for proper layering" data-tooltip-class="tooltip-opacity-info"></span>`;
+                }
+                else if (requiresOpacity) {
+                    html += `<span class="status-badge opacity-required" data-tooltip="This semantic token supports transparency for better visual hierarchy" data-tooltip-class="tooltip-opacity-info">👁️ Alpha OK</span>`;
                 }
                 html += `<div class="color-info">
-								<label class="color-label">${key}</label>
+								<label class="color-label">
+									${key}
+								</label>
 								<p class="color-description">${description}</p>
 							</div>
 							<div class="color-controls">
@@ -1116,25 +1148,34 @@ class ThemeEditorPanel {
                     ? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
                     : 100;
                 // Determine special classes for TextMate tokens
-                const requiresOpacity = safeValue.length === 9 || description.toLowerCase().includes('opacity');
+                const requiresOpacity = safeValue.length === 9;
+                const requiresTransparency = scope.includes('inactive') || scope.includes('muted') || scope.includes('deprecated') || scope.includes('comment.block.documentation');
                 const isReadonly = !tokenSettings; // Mark as readonly if no token settings found
                 const itemClasses = ['color-item'];
                 if (requiresOpacity)
                     itemClasses.push('requires-opacity');
+                if (requiresTransparency)
+                    itemClasses.push('requires-transparency');
                 if (isReadonly)
                     itemClasses.push('textmate-readonly');
                 html += `<div class="${itemClasses.join(' ')}" data-search="${scope}">
 							<span class="border-indicator"></span>`;
-                // Add status badges for TextMate tokens
+                // Add status badges for TextMate tokens with better tooltips
+                const settingName = "editor.tokenColorCustomizations";
+                html += `<span class="status-badge setting-name" data-setting="${settingName}" data-tooltip="Click to find: ${settingName}" data-tooltip-class="tooltip-setting-info">${settingName}</span>`;
                 if (isReadonly) {
-                    html += `<span class="status-badge textmate-readonly">📝 TextMate</span>`;
+                    html += `<span class="status-badge textmate-readonly" data-tooltip="TextMate syntax token - controlled by language grammar rules" data-tooltip-class="tooltip-textmate-info">📝 Grammar</span>`;
                 }
-                if (requiresOpacity) {
-                    const opacityClass = isReadonly ? 'opacity-required with-setting' : 'opacity-required';
-                    html += `<span class="status-badge ${opacityClass}">👁️ Opacity</span>`;
+                if (requiresTransparency) {
+                    html += `<span class="status-badge transparency-required" data-tooltip="This TextMate token should have transparency for proper visual hierarchy" data-tooltip-class="tooltip-opacity-info">� Needs Alpha</span>`;
+                }
+                else if (requiresOpacity) {
+                    html += `<span class="status-badge opacity-required" data-tooltip="This TextMate token supports transparency for better code readability" data-tooltip-class="tooltip-opacity-info">👁️ Alpha OK</span>`;
                 }
                 html += `<div class="color-info">
-							<label class="color-label">${scope}</label>
+							<label class="color-label">
+								${scope}
+							</label>
 							<p class="color-description">${description}</p>
 						</div>
 						<div class="color-controls">
@@ -1263,6 +1304,356 @@ class ThemeEditorPanel {
     }
     getSemanticTokenDescription(key) {
         return this.semanticDescriptions[key] || key;
+    }
+    generateLegend() {
+        return `
+			<div class="ui-legend" id="legendPopup">
+				<h3>Visual Indicators</h3>
+				<div class="legend-grid">
+					<div class="legend-item">
+						<span class="legend-icon setting-name-demo">workbench.colorCustomizations</span>
+						<div class="legend-text">
+							<strong>Required Setting</strong><br>
+							Click to find the required setting
+						</div>
+					</div>
+					<div class="legend-item">
+						<span class="legend-icon">�</span>
+						<div class="legend-text">
+							<strong>Required Transparency</strong><br>
+							MUST have alpha channel to work
+						</div>
+					</div>
+					<div class="legend-item">
+						<span class="legend-icon">�️</span>
+						<div class="legend-text">
+							<strong>Alpha OK</strong><br>
+							Supports optional transparency
+						</div>
+					</div>
+					<div class="legend-item">
+						<span class="legend-icon">�</span>
+						<div class="legend-text">
+							<strong>Grammar</strong><br>
+							TextMate syntax token
+						</div>
+					</div>
+					<div class="legend-item">
+						<span class="legend-icon">🎨</span>
+						<div class="legend-text">
+							<strong>Preview</strong><br>
+							Shows actual UI element/token
+						</div>
+					</div>
+				</div>
+			</div>
+		`;
+    }
+    getTooltipForSetting(key) {
+        const settingTooltips = {
+            'editor.selectionHighlightBackground': 'Requires "editor.selectionHighlight" setting to be enabled',
+            'editor.wordHighlightBackground': 'Requires "editor.wordHighlight" setting to be enabled',
+            'editor.wordHighlightStrongBackground': 'Requires "editor.wordHighlight" setting to be enabled',
+            'editor.findMatchBackground': 'Requires Find widget to be active',
+            'editor.findMatchHighlightBackground': 'Requires "editor.findMatchHighlight" setting to be enabled',
+            'breadcrumb.background': 'Requires "breadcrumbs.enabled" setting to be enabled',
+            'breadcrumb.foreground': 'Requires "breadcrumbs.enabled" setting to be enabled',
+            'titleBar.activeBackground': 'Requires "window.titleBarStyle" to be "custom"',
+            'titleBar.activeForeground': 'Requires "window.titleBarStyle" to be "custom"',
+            'git.decoration.addedResourceForeground': 'Requires Git extension and repository',
+            'git.decoration.modifiedResourceForeground': 'Requires Git extension and repository'
+        };
+        return settingTooltips[key] || `Requires specific settings for ${key}`;
+    }
+    getNavigationTarget(key) {
+        const navigationMap = {
+            'editor.selectionHighlightBackground': 'editor.selectionHighlight',
+            'editor.wordHighlightBackground': 'editor.wordHighlight',
+            'editor.wordHighlightStrongBackground': 'editor.wordHighlight',
+            'editor.findMatchHighlightBackground': 'editor.findMatchHighlight',
+            'breadcrumb.background': 'breadcrumbs.enabled',
+            'breadcrumb.foreground': 'breadcrumbs.enabled',
+            'breadcrumb.focusForeground': 'breadcrumbs.enabled',
+            'breadcrumb.activeSelectionForeground': 'breadcrumbs.enabled',
+            'titleBar.activeBackground': 'window.titleBarStyle',
+            'titleBar.activeForeground': 'window.titleBarStyle',
+            'titleBar.inactiveBackground': 'window.titleBarStyle',
+            'titleBar.inactiveForeground': 'window.titleBarStyle',
+            'minimap.background': 'editor.minimap.enabled',
+            'minimap.selectionHighlight': 'editor.minimap.enabled',
+            'minimap.findMatchHighlight': 'editor.minimap.enabled',
+            'peekView.border': 'editor.peekWidgetDefaultFocus',
+            'peekViewEditor.background': 'editor.peekWidgetDefaultFocus',
+            'peekViewResult.background': 'editor.peekWidgetDefaultFocus',
+            'peekViewTitle.background': 'editor.peekWidgetDefaultFocus'
+        };
+        return navigationMap[key] || key;
+    }
+    /* Removed - Example visual class mapping no longer needed since preview boxes were removed
+    private getExampleVisualClass(key: string): string {
+        // Map specific workbench colors to appropriate UI element previews
+        const elementMap: Record<string, string> = {
+            // Editor
+            'editor.background': 'editor-bg',
+            'editor.foreground': 'text-color',
+            'editor.selectionBackground': 'selection-bg',
+            'editor.selectionForeground': 'text-color',
+            'editor.lineHighlightBackground': 'editor-bg',
+            'editor.findMatchBackground': 'selection-bg',
+            
+            // Sidebar/Explorer
+            'sideBar.background': 'sidebar-bg',
+            'sideBar.foreground': 'text-color',
+            'sideBar.border': 'border-style',
+            
+            // Activity Bar
+            'activityBar.background': 'activity-bar-bg',
+            'activityBar.foreground': 'text-color',
+            'activityBar.border': 'border-style',
+            
+            // Status Bar
+            'statusBar.background': 'statusbar-bg',
+            'statusBar.foreground': 'text-color',
+            'statusBar.border': 'border-style',
+            
+            // Tabs
+            'tab.activeBackground': 'tab-bg',
+            'tab.activeForeground': 'text-color',
+            'tab.inactiveBackground': 'tab-bg',
+            'tab.border': 'border-style',
+            
+            // Panel
+            'panel.background': 'panel-bg',
+            'panel.foreground': 'text-color',
+            'panel.border': 'border-style',
+            
+            // Buttons
+            'button.background': 'button-bg',
+            'button.foreground': 'text-color',
+            'button.hoverBackground': 'button-bg',
+            
+            // Input
+            'input.background': 'input-bg',
+            'input.foreground': 'text-color',
+            'input.border': 'border-style',
+            
+            // Scrollbar
+            'scrollbar.shadow': 'scrollbar-bg',
+            'scrollbarSlider.background': 'scrollbar-bg',
+            'scrollbarSlider.hoverBackground': 'scrollbar-bg'
+        };
+        
+        // Return specific mapping if found
+        if (elementMap[key]) {
+            return elementMap[key];
+        }
+        
+        // Fallback to pattern matching
+        if (key.includes('background') || key.includes('Background')) {
+            if (key.includes('editor')) return 'editor-bg';
+            if (key.includes('sideBar') || key.includes('sidebar')) return 'sidebar-bg';
+            if (key.includes('statusBar') || key.includes('status')) return 'statusbar-bg';
+            if (key.includes('activityBar') || key.includes('activity')) return 'activity-bar-bg';
+            if (key.includes('tab')) return 'tab-bg';
+            if (key.includes('panel')) return 'panel-bg';
+            if (key.includes('button')) return 'button-bg';
+            if (key.includes('input')) return 'input-bg';
+            if (key.includes('scrollbar')) return 'scrollbar-bg';
+            return 'editor-bg';
+        }
+        if (key.includes('foreground') || key.includes('Foreground')) {
+            return 'text-color';
+        }
+        if (key.includes('border') || key.includes('Border')) {
+            return 'border-style';
+        }
+        if (key.includes('selection') || key.includes('Selection')) {
+            return 'selection-bg';
+        }
+        return 'editor-bg';
+    }
+    */
+    requiresTransparency(key) {
+        // Colors that REQUIRE transparency to work properly
+        const transparencyRequired = [
+            'editor.selectionHighlightBackground',
+            'editor.wordHighlightBackground',
+            'editor.wordHighlightStrongBackground',
+            'editor.rangeHighlightBackground',
+            'editor.findMatchHighlightBackground',
+            'editor.hoverHighlightBackground',
+            'editor.lineHighlightBackground',
+            'list.dropBackground',
+            'editor.inactiveSelectionBackground',
+            'selection.background',
+            'widget.shadow',
+            'scrollbar.shadow'
+        ];
+        return transparencyRequired.includes(key);
+    }
+    requiresSpecificSetting(key) {
+        const settingDependentKeys = [
+            'editor.selectionHighlightBackground',
+            'editor.wordHighlightBackground',
+            'editor.wordHighlightStrongBackground',
+            'editor.findMatchHighlightBackground',
+            'breadcrumb.background',
+            'breadcrumb.foreground',
+            'breadcrumb.focusForeground',
+            'breadcrumb.activeSelectionForeground',
+            'titleBar.activeBackground',
+            'titleBar.activeForeground',
+            'titleBar.inactiveBackground',
+            'titleBar.inactiveForeground',
+            'minimap.background',
+            'minimap.selectionHighlight',
+            'minimap.findMatchHighlight',
+            'peekView.border',
+            'peekViewEditor.background',
+            'peekViewResult.background',
+            'peekViewTitle.background'
+        ];
+        return settingDependentKeys.includes(key);
+    }
+    getTextMateTokenExample(scope) {
+        const examples = {
+            'keyword': 'if',
+            'keyword.control': 'if',
+            'keyword.operator': '===',
+            'storage.type': 'class',
+            'storage.modifier': 'public',
+            'entity.name.function': 'func',
+            'entity.name.class': 'User',
+            'entity.name.type': 'String',
+            'variable': 'user',
+            'variable.parameter': 'name',
+            'string': '"abc"',
+            'string.quoted': '"text"',
+            'constant.numeric': '123',
+            'constant.language': 'true',
+            'comment': '// ...',
+            'comment.line': '// ...',
+            'comment.block': '/* */',
+            'punctuation': '{}',
+            'punctuation.definition': '{}',
+            'operator': '+',
+            'support.function': 'log',
+            'support.class': 'Array',
+            'meta.function': 'fn',
+            'meta.class': 'class',
+            'markup.heading': '# H1',
+            'markup.bold': '**bold**',
+            'markup.italic': '*italic*',
+            'invalid': 'error',
+            'invalid.illegal': 'err'
+        };
+        // Try exact match first
+        if (examples[scope])
+            return examples[scope];
+        // Try partial matches for scopes with dots
+        const parts = scope.split('.');
+        for (let i = parts.length - 1; i >= 0; i--) {
+            const partialScope = parts.slice(0, i + 1).join('.');
+            if (examples[partialScope])
+                return examples[partialScope];
+        }
+        // Fallback based on scope name patterns
+        if (scope.includes('string'))
+            return '"..."';
+        if (scope.includes('number'))
+            return '123';
+        if (scope.includes('comment'))
+            return '//';
+        if (scope.includes('keyword'))
+            return 'key';
+        if (scope.includes('function'))
+            return 'fn';
+        if (scope.includes('class'))
+            return 'Cls';
+        if (scope.includes('variable'))
+            return 'var';
+        if (scope.includes('type'))
+            return 'Type';
+        if (scope.includes('operator'))
+            return '+';
+        if (scope.includes('punctuation'))
+            return '()';
+        // Final fallback
+        return 'Abc';
+    }
+    getSemanticTokenExample(key) {
+        const examples = {
+            // Language constructs
+            'keyword': 'if',
+            'keyword.control': 'for',
+            'function': 'fn()',
+            'function.declaration': 'func',
+            'method': 'get()',
+            'variable': 'user',
+            'variable.parameter': 'name',
+            'parameter': 'arg',
+            'type': 'String',
+            'class': 'User',
+            'interface': 'IUser',
+            'struct': 'Point',
+            'enum': 'Color',
+            'enumMember': 'RED',
+            'property': 'name',
+            'string': '"text"',
+            'number': '123',
+            'boolean': 'true',
+            'comment': '// ...',
+            'operator': '+',
+            'punctuation': '{}',
+            'namespace': 'std',
+            'module': 'fs',
+            'label': 'loop:',
+            'decorator': '@Override',
+            'macro': '#define',
+            'generic': '<T>',
+            'lifetime': "'a"
+        };
+        // Try exact match
+        if (examples[key])
+            return examples[key];
+        // Try partial matches
+        const parts = key.split('.');
+        for (let i = parts.length - 1; i >= 0; i--) {
+            const partialKey = parts.slice(0, i + 1).join('.');
+            if (examples[partialKey])
+                return examples[partialKey];
+        }
+        // Pattern-based fallbacks
+        if (key.includes('function'))
+            return 'fn()';
+        if (key.includes('class'))
+            return 'Class';
+        if (key.includes('variable'))
+            return 'var';
+        if (key.includes('string'))
+            return '"..."';
+        if (key.includes('number'))
+            return '42';
+        if (key.includes('keyword'))
+            return 'key';
+        if (key.includes('type'))
+            return 'Type';
+        return key.charAt(0).toUpperCase();
+    }
+    /**
+     * Handle opening a specific VS Code setting
+     */
+    async handleOpenSetting(settingName) {
+        try {
+            // Open VS Code settings UI with search for the specific setting
+            await vscode.commands.executeCommand('workbench.action.openSettings', settingName);
+            // Show notification to user
+            vscode.window.showInformationMessage(`Opened VS Code settings for: ${settingName}`);
+        }
+        catch (error) {
+            console.error(`Failed to open setting ${settingName}:`, error);
+            vscode.window.showErrorMessage(`Failed to open setting: ${settingName}`);
+        }
     }
     dispose() {
         ThemeEditorPanel.currentPanel = undefined;

@@ -5,6 +5,50 @@ All notable changes to the Theme Editor Live extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.3] - 2025-07-29
+
+### Removed
+- **🗑️ Preview Boxes Removed**: Completely removed example preview boxes that weren't providing expected functionality
+  - Removed `.example-visual` and `.example-preview` elements from all color items
+  - Cleaned up associated CSS styles and JavaScript functionality
+  - Removed `updateExampleVisuals()` and `initializeExampleVisuals()` functions
+  - Commented out unused `getExampleVisualClass()` method in TypeScript
+  - Simplified color item layout for cleaner, more focused interface
+
+### Enhanced
+- **🎯 Cleaner Interface**: Color items now have a simplified layout without distracting preview elements
+- **⚡ Better Performance**: Removed unnecessary DOM elements and event listeners for improved efficiency
+
+## [2.6.2] - 2025-07-29
+
+### Enhanced
+- **🎨 Cleaner Preview Boxes**: Removed text labels ("editor", "status", "tab", etc.) from example preview boxes
+  - Example previews now show pure color previews without distracting text overlays
+  - Simplified visual design focuses attention on actual color representation
+  - Improved readability and cleaner interface appearance
+
+## [2.6.1] - 2025-07-29
+
+### Fixed
+- **🔧 Tooltip System**: Fixed tooltip initialization and styling issues
+  - Added missing `initializeSettingNavigation()` call to main initialization sequence
+  - Added proper CSS styling for `tooltip-setting-info` and `tooltip-opacity-info` classes
+  - Removed redundant DOMContentLoaded event listener causing conflicts
+- **🎨 Tooltip Styling**: Enhanced tooltip appearance with type-specific colors
+  - Setting tooltips now use accent colors for better visibility
+  - Opacity/transparency tooltips use warning colors for appropriate emphasis
+  - Fixed tooltip positioning and arrow styling
+- **📚 Documentation**: Updated README and LICENSE files
+  - Enhanced README with recent UX improvements and accessibility features
+  - Added proper MIT License to the project
+  - Updated technical details section with comprehensive improvement history
+
+### Enhanced
+- **⚡ Better Initialization**: Streamlined initialization process
+  - Consolidated tooltip and navigation initialization into main sequence
+  - Removed duplicate initialization calls for better performance
+  - Improved error handling for tooltip display
+
 ## [2.5.1] - 2025-07-29
 
 ### 🚀 Major UX Overhaul: No More Disabled Items!
