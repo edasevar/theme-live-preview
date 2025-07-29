@@ -843,6 +843,160 @@ class ThemeManager {
             console.error('Failed to load active theme defaults:', error);
         }
     }
+    /**
+     * Reload template from TEMPLATE.jsonc file
+     * This allows updating template elements after changes to the template file
+     */
+    async reloadTemplate() {
+        console.log('[ThemeManager] Reloading template from TEMPLATE.jsonc...');
+        try {
+            const templatePath = path.join(this.context.extensionPath, 'TEMPLATE.jsonc');
+            if (fs.existsSync(templatePath)) {
+                const content = fs.readFileSync(templatePath, 'utf8');
+                const oldTemplate = { ...this.templateTheme };
+                this.templateTheme = (0, jsonc_parser_1.parse)(content);
+                // Emit event for template change if needed
+                this.emitTemplateReloaded(oldTemplate, this.templateTheme);
+                console.log('[ThemeManager] Template reloaded successfully');
+            }
+            else {
+                console.warn('[ThemeManager] TEMPLATE.jsonc not found at:', templatePath);
+            }
+        }
+        catch (error) {
+            console.error('[ThemeManager] Failed to reload template:', error);
+            throw new Error(`Failed to reload template: ${error}`);
+        }
+    }
+    /**
+     * Update a specific template element and optionally apply to current theme
+     */
+    async updateTemplateElement(category, key, value, applyImmediately = false) {
+        console.log(`[ThemeManager] Updating template element: ${category}.${key} = ${value}`);
+        try {
+            // Update template in memory
+            switch (category) {
+                case 'colors':
+                    if (!this.templateTheme.colors) {
+                        this.templateTheme.colors = {};
+                    }
+                    this.templateTheme.colors[key] = value;
+                    break;
+                case 'semanticTokenColors':
+                    if (!this.templateTheme.semanticTokenColors) {
+                        this.templateTheme.semanticTokenColors = {};
+                    }
+                    this.templateTheme.semanticTokenColors[key] = value;
+                    break;
+                case 'tokenColors':
+                    // For tokenColors, key should be scope and value should be token settings
+                    if (!this.templateTheme.tokenColors) {
+                        this.templateTheme.tokenColors = [];
+                    }
+                    const existingIndex = this.templateTheme.tokenColors.findIndex(token => {
+                        const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
+                        return scopes.includes(key);
+                    });
+                    if (existingIndex >= 0) {
+                        this.templateTheme.tokenColors[existingIndex].settings = value;
+                    }
+                    else {
+                        this.templateTheme.tokenColors.push({
+                            scope: key,
+                            settings: value
+                        });
+                    }
+                    break;
+            }
+            // Optionally apply to current theme immediately
+            if (applyImmediately) {
+                switch (category) {
+                    case 'colors':
+                        await this.applyLiveColor(key, value);
+                        break;
+                    case 'semanticTokenColors':
+                        await this.applyLiveColor(`semantic_${key}`, value);
+                        break;
+                    case 'tokenColors':
+                        await this.applyLiveColor(`textmate_${key}`, value.foreground || value);
+                        break;
+                }
+            }
+            console.log(`[ThemeManager] Template element updated successfully`);
+        }
+        catch (error) {
+            console.error(`[ThemeManager] Failed to update template element:`, error);
+            throw new Error(`Failed to update template element: ${error}`);
+        }
+    }
+    /**
+     * Sync template changes with current UI
+     * This method ensures the UI reflects any template updates
+     */
+    syncTemplateWithUI() {
+        console.log('[ThemeManager] Syncing template changes with UI...');
+        // Emit template sync event for UI components to refresh
+        this.emitTemplateSynced();
+    }
+    /**
+     * Get template element categories and their counts
+     */
+    getTemplateStats() {
+        return {
+            colors: Object.keys(this.templateTheme.colors || {}).length,
+            semanticTokenColors: Object.keys(this.templateTheme.semanticTokenColors || {}).length,
+            tokenColors: (this.templateTheme.tokenColors || []).length,
+            total: Object.keys(this.templateTheme.colors || {}).length +
+                Object.keys(this.templateTheme.semanticTokenColors || {}).length +
+                (this.templateTheme.tokenColors || []).length
+        };
+    }
+    /**
+     * Emit template reloaded event
+     */
+    emitTemplateReloaded(oldTemplate, newTemplate) {
+        // Template change listeners could be added here for UI updates
+        console.log('[ThemeManager] Template reloaded - old count:', this.getTemplateElementCount(oldTemplate), 'new count:', this.getTemplateElementCount(newTemplate));
+    }
+    /**
+     * Emit template synced event
+     */
+    emitTemplateSynced() {
+        // Emit change events for all template elements to refresh UI
+        const template = this.templateTheme;
+        // Emit workbench color changes
+        if (template.colors) {
+            Object.entries(template.colors).forEach(([key, value]) => {
+                this.emitThemeChange(key, value);
+            });
+        }
+        // Emit semantic token changes
+        if (template.semanticTokenColors) {
+            Object.entries(template.semanticTokenColors).forEach(([key, value]) => {
+                const color = typeof value === 'string' ? value : value.foreground || '#ffffff';
+                this.emitThemeChange(`semantic_${key}`, color);
+            });
+        }
+        // Emit TextMate token changes
+        if (template.tokenColors) {
+            template.tokenColors.forEach((token, index) => {
+                if (token.scope && token.settings?.foreground) {
+                    const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
+                    scopes.forEach(scope => {
+                        this.emitThemeChange(`textmate_${scope}`, token.settings.foreground);
+                    });
+                }
+            });
+        }
+    }
+    /**
+     * Get total count of template elements
+     */
+    getTemplateElementCount(template) {
+        return Object.keys(template.colors || {}).length +
+            Object.keys(template.semanticTokenColors || {}).length +
+            (template.tokenColors || []).length;
+    }
 }
 exports.ThemeManager = ThemeManager;
 //# sourceMappingURL=themeManager.js.map

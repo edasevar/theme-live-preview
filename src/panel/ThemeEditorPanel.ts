@@ -175,6 +175,15 @@ export class ThemeEditorPanel {
 					case 'toggleSection':
 						this.handleToggleSection(message.section);
 						break;
+					case 'reloadTemplate':
+						await this.handleReloadTemplate();
+						break;
+					case 'updateTemplateElement':
+						await this.handleUpdateTemplateElement(message.category, message.key, message.value, message.applyImmediately);
+						break;
+					case 'syncTemplate':
+						this.handleSyncTemplate();
+						break;
 				}
 			},
 			null,
@@ -410,6 +419,81 @@ export class ThemeEditorPanel {
 			type: 'toggleSectionResult',
 			section
 		});
+	}
+
+	private async handleReloadTemplate(): Promise<void> {
+		try {
+			await this.themeManager.reloadTemplate();
+			
+			// Send updated template stats to webview
+			const stats = this.themeManager.getTemplateStats();
+			this.sendMessageToWebview({
+				type: 'templateReloaded',
+				stats
+			});
+			
+			vscode.window.showInformationMessage(`Template reloaded: ${stats.total} elements loaded`);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to reload template: ${errorMessage}`);
+			this.sendMessageToWebview({
+				type: 'templateReloadError',
+				error: errorMessage
+			});
+		}
+	}
+
+	private async handleUpdateTemplateElement(
+		category: 'colors' | 'semanticTokenColors' | 'tokenColors',
+		key: string,
+		value: string | any,
+		applyImmediately: boolean = false
+	): Promise<void> {
+		try {
+			await this.themeManager.updateTemplateElement(category, key, value, applyImmediately);
+			
+			this.sendMessageToWebview({
+				type: 'templateElementUpdated',
+				category,
+				key,
+				value,
+				applied: applyImmediately
+			});
+			
+			if (applyImmediately) {
+				vscode.window.showInformationMessage(`Template element ${category}.${key} updated and applied`);
+			} else {
+				vscode.window.showInformationMessage(`Template element ${category}.${key} updated`);
+			}
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to update template element: ${errorMessage}`);
+			this.sendMessageToWebview({
+				type: 'templateElementUpdateError',
+				error: errorMessage,
+				category,
+				key
+			});
+		}
+	}
+
+	private handleSyncTemplate(): void {
+		try {
+			this.themeManager.syncTemplateWithUI();
+			
+			this.sendMessageToWebview({
+				type: 'templateSynced'
+			});
+			
+			vscode.window.showInformationMessage('Template synced with UI');
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to sync template: ${errorMessage}`);
+			this.sendMessageToWebview({
+				type: 'templateSyncError',
+				error: errorMessage
+			});
+		}
 	}
 
 	public refresh () {

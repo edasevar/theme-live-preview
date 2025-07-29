@@ -875,6 +875,33 @@ function handleExportTheme() {
   vscode.postMessage({ type: 'exportTheme' });
 }
 
+// Template management functions
+function handleReloadTemplate() {
+  const confirmed = confirm('This will reload the template from TEMPLATE.jsonc. Continue?');
+  if (confirmed) {
+    vscode.postMessage({ type: 'reloadTemplate' });
+    showNotification('Reloading template...', 'info');
+  }
+}
+
+function handleSyncTemplate() {
+  const confirmed = confirm('This will sync all template elements with the current UI. Continue?');
+  if (confirmed) {
+    vscode.postMessage({ type: 'syncTemplate' });
+    showNotification('Syncing template with UI...', 'info');
+  }
+}
+
+function updateTemplateElement(category, key, value, applyImmediately = false) {
+  vscode.postMessage({
+    type: 'updateTemplateElement',
+    category,
+    key,
+    value,
+    applyImmediately
+  });
+}
+
 function showNotification(message, type = 'info') {
   // Create notification element
   const notification = document.createElement('div');
@@ -1046,6 +1073,32 @@ window.addEventListener('message', event => {
 
     case 'previewError':
       showErrorFeedback(`Preview failed for ${message.key}: ${message.error}`);
+      break;
+
+    // Template management messages
+    case 'templateReloaded':
+      showSuccessFeedback(`Template reloaded: ${message.stats.total} elements loaded`);
+      break;
+
+    case 'templateReloadError':
+      showErrorFeedback(`Template reload failed: ${message.error}`);
+      break;
+
+    case 'templateElementUpdated':
+      const action = message.applied ? 'updated and applied' : 'updated';
+      showSuccessFeedback(`Template element ${message.category}.${message.key} ${action}`);
+      break;
+
+    case 'templateElementUpdateError':
+      showErrorFeedback(`Failed to update template element ${message.category}.${message.key}: ${message.error}`);
+      break;
+
+    case 'templateSynced':
+      showSuccessFeedback('Template synced with UI');
+      break;
+
+    case 'templateSyncError':
+      showErrorFeedback(`Failed to sync template: ${message.error}`);
       break;
   }
 });

@@ -15,8 +15,8 @@ try {
     
     // First, let's just try to find and replace the specific line
     const scope = "token.debug-token";
-    const oldValue = "#f904cc";
-    const newValue = "#ffffff";
+    const oldValue = "#ffffff";
+    const newValue = "#f904cc";
     
     // Check if the token exists
     if (settingsContent.includes(`"scope": "${scope}"`)) {

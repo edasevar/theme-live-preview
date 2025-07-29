@@ -151,7 +151,42 @@ function activate(context) {
             vscode.window.showErrorMessage(`Nuclear tests FAILED: ${error}`);
         }
     });
-    context.subscriptions.push(openCommand, cleanupCommand, testCommand, nuclearTestCommand, allNuclearTestCommand);
+    // Template management commands
+    const reloadTemplateCommand = vscode.commands.registerCommand('themeEditor.reloadTemplate', async () => {
+        console.log('Theme Editor Live: Reloading template');
+        try {
+            await themeManager.reloadTemplate();
+            const stats = themeManager.getTemplateStats();
+            vscode.window.showInformationMessage(`Template reloaded successfully: ${stats.total} elements (${stats.colors} colors, ${stats.semanticTokenColors} semantic tokens, ${stats.tokenColors} TextMate tokens)`);
+        }
+        catch (error) {
+            console.error('Failed to reload template:', error);
+            vscode.window.showErrorMessage(`Failed to reload template: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+    const syncTemplateCommand = vscode.commands.registerCommand('themeEditor.syncTemplate', () => {
+        console.log('Theme Editor Live: Syncing template with UI');
+        try {
+            themeManager.syncTemplateWithUI();
+            vscode.window.showInformationMessage('Template synced with UI successfully');
+        }
+        catch (error) {
+            console.error('Failed to sync template:', error);
+            vscode.window.showErrorMessage(`Failed to sync template: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+    const templateStatsCommand = vscode.commands.registerCommand('themeEditor.templateStats', () => {
+        console.log('Theme Editor Live: Showing template stats');
+        try {
+            const stats = themeManager.getTemplateStats();
+            vscode.window.showInformationMessage(`Template Statistics:\n• Colors: ${stats.colors}\n• Semantic Tokens: ${stats.semanticTokenColors}\n• TextMate Tokens: ${stats.tokenColors}\n• Total: ${stats.total}`, { modal: true });
+        }
+        catch (error) {
+            console.error('Failed to get template stats:', error);
+            vscode.window.showErrorMessage(`Failed to get template stats: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+    context.subscriptions.push(openCommand, cleanupCommand, testCommand, nuclearTestCommand, allNuclearTestCommand, reloadTemplateCommand, syncTemplateCommand, templateStatsCommand);
     console.log('Theme Editor Live: Commands registered successfully');
     // Show welcome message on first activation
     try {
