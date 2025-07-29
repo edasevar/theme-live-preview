@@ -2,8 +2,9 @@
 	"name": "theme-editor-live",
 	"displayName": "Theme Editor Live",
 	"description": "Visually edit and preview VS Code themes in real time with comprehensive theme management and enhanced tooltip system.",
-	"version": "2.6.7",
+	"version": "3.0.0",
 	"publisher": "edasevar",
+	"icon": "media/icon.png",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/edasevar/theme-editor-live"
@@ -28,6 +29,9 @@
 		"onCommand:themeEditor.reloadTemplate",
 		"onCommand:themeEditor.syncTemplate",
 		"onCommand:themeEditor.templateStats",
+		"onCommand:themeEditor.openFromSidebar",
+		"onCommand:themeEditor.editColor",
+		"onView:themeEditorView",
 		"onLanguage:json",
 		"onLanguage:jsonc"
 	],
@@ -63,9 +67,51 @@
 				"command": "themeEditor.refreshWebview",
 				"title": "Refresh Editor Webview",
 				"category": "Theme Editor"
+			},
+			{
+				"command": "themeEditor.openFromSidebar",
+				"title": "Open Theme Editor",
+				"category": "Theme Editor"
+			},
+			{
+				"command": "themeEditor.editColor",
+				"title": "Edit Color",
+				"category": "Theme Editor"
+			}
+		],
+		"views": {
+			"themeEditor": [
+				{
+					"id": "themeEditorView",
+					"name": "Theme Editor Live",
+					"icon": "$(color-mode)",
+					"when": "true"
+				}
+			]
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "themeEditor",
+					"title": "Theme Editor Live",
+					"icon": "$(color-mode)"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "themeEditorView",
+				"contents": "🎨 **Theme Editor Live**\n\nCreate and customize VS Code themes with real-time preview.\n\n[Open Theme Editor](command:themeEditor.open)\n\n---\n\n**Quick Actions:**\n- [📊 View Statistics](command:themeEditor.templateStats)\n- [🔄 Reload Template](command:themeEditor.reloadTemplate)\n- [⚙️ Clean Settings](command:themeEditor.cleanupSettings)\n\n**Features:**\n✅ Real-time color preview\n✅ Comprehensive theme coverage\n✅ Alpha channel support\n✅ Smart categorization\n✅ Template management"
 			}
 		],
 		"menus": {
+			"view/title": [
+				{
+					"command": "themeEditor.openFromSidebar",
+					"when": "view == themeEditorView",
+					"group": "navigation"
+				}
+			],
 			"commandPalette": [
 				{
 					"command": "themeEditor.open"

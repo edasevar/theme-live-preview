@@ -1,8 +1,27 @@
 # Theme Editor Live
 
-A comprehensive VS Code extension for creating and editing themes with real-time preview and transparency controls. This extension provides a visual interface to customize every aspect of VS Code's appearance, including workbench colors, semantic tokens, and TextMate token colors with full alpha channel support.
+A comprehensive VS Code extension for creating and editing themes with real-time preview, transparency controls, and an integrated sidebar interface. This extension provides a visual interface to customize every aspect of VS Code's appearance, including workbench colors, semantic tokens, and TextMate token colors with full alpha channel support.
 
 ## ✨ Features
+
+### 🎨 **NEW: Attractive Sidebar Integration (v3.0.0)**
+- **📍 Activity Bar Icon**: Dedicated Theme Editor Live icon in the activity bar with professional color palette design
+- **🏗️ Organized Sidebar**: Custom sidebar panel with intuitive tree structure and categorized actions
+- **🚀 Quick Access**: One-click access to all theme editing features directly from the sidebar
+- **🎨 Direct Color Editing**: Edit colors instantly from sidebar without opening the main editor:
+  - **🎨 Quick Colors**: Instantly edit errors (🔴), warnings (⚠️), info messages (ℹ️), focus borders (🎯), links (🔗), and success indicators (✅)
+  - **🔤 Syntax Colors**: Modify code highlighting for comments (💬), keywords (🔤), strings (📝), numbers (🔢), variables (🏷️), and functions (⚡)
+  - **⚡ One-Click Editing**: Click any color item to open VS Code's color picker for immediate changes
+  - **🔄 Real-time Updates**: See changes applied instantly to your VS Code interface
+- **📋 Smart Organization**: Grouped functionality into logical categories:
+  - **🎨 Main Editor**: Launch the visual theme editor with real-time preview
+  - **📁 Template Management**: Reload and sync theme templates with comprehensive controls
+  - **⚙️ Settings & Tools**: Theme cleanup, maintenance, and webview refresh options
+  - **📊 Statistics**: Quick access to theme information and detailed statistics
+  - **⚡ Quick Actions**: Frequently used operations for faster workflow
+- **📖 Welcome Screen**: Rich welcome content with feature highlights and direct action buttons
+- **🎯 Contextual Icons**: Professional VS Code theme icons for each action (paintbrush, tools, rocket, etc.)
+- **📱 Collapsible Structure**: Expandable categories for organized access and clean interface
 
 ### 🚀 Enhanced Live Editing Capabilities
 - **Throttled Updates**: Color changes are batched and throttled (150ms) to prevent overwhelming VS Code
@@ -22,12 +41,12 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 - **Transparent Defaults**: Support for fully transparent colors in theme templates
 
 ### 🎨 Complete Theme Coverage
-- **Workbench UI Colors**: Edit all VS Code interface colors including editor, activity bar, sidebar, status bar, and more (200+ elements)
+- **Workbench UI Colors**: Edit all VS Code interface colors including editor, activity bar, sidebar, status bar, and more (800+ elements)
 - **Semantic Token Colors**: Customize syntax highlighting for different code elements with style modifiers
 - **TextMate Token Colors**: Fine-tune syntax highlighting with granular scope-based control and complete token coverage
   - **📂 Smart Categorization (v2.1.0)**: TextMate tokens are now organized into 48 meaningful categories instead of a generic "Other" section
   - **🎯 Logical Groupings**: Tokens grouped by functionality (Language Keywords, Function Names, Class Definitions, etc.)
-  - **📊 Complete Coverage**: All 122+ TextMate token scopes properly categorized from TEMPLATE.jsonc
+  - **📊 Complete Coverage**: 122+ TextMate token scopes properly categorized from TEMPLATE.jsonc
   - **🔍 Enhanced Discovery**: Find specific tokens faster with descriptive category names
 
 ### 🛠 Smart Settings Management (New!)
@@ -72,13 +91,13 @@ A comprehensive VS Code extension for creating and editing themes with real-time
   - Complete overhaul of empty theme generation with robust fallback mechanisms
   - Fixed webview communication issues that prevented theme application
   - Added comprehensive debugging system for troubleshooting
-  - Created standalone `themes/empty-theme.json` for independent operation
+  - Created standalone ***[Template](https://github.com/edasevar/theme-live-preview/blob/main/TEMPLATE.jsonc)*** for independent operation
   - Implemented triple-fallback strategy: template → file-based → manual generation
 - **Export Custom Themes**: 🎯 **Enhanced (v2.6.7)!** Save themes with expanded TextMate token structure
   - **Individual Scope Export**: Each TextMate scope now gets its own separate entry (matches UI editing experience)
   - **Template-Like Structure**: Exported themes mirror how scopes are individually editable in the interface
   - **Perfect for Sharing**: Recipients can easily see and modify each token scope independently
-  - Example: Instead of grouped scopes, each `keyword.operator`, `keyword.operator.assignment`, etc. gets separate entries
+  - Example: Instead of grouped scopes, each scope, such as `keyword.operator`, `keyword.operator.assignment`, etc. gets separate entries
 - **Reset to Default**: Clear all customizations and restore original settings
 - **Legacy Settings Cleanup**: Automatic cleanup of duplicate or incorrectly placed theme settings
 - **Multiple Format Support**: JSON/JSONC theme files (with future support for .vsix and .css files)
@@ -87,15 +106,23 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 
 ### Installation
 1. Install the extension from the VS Code marketplace (or package and install the .vsix file)
-2. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-3. Run the command `Theme Editor: Open Theme Editor Live`
+2. **NEW**: Look for the Theme Editor Live icon in the activity bar (color palette icon)
+3. **Option 1 - Sidebar**: Click the activity bar icon to open the integrated sidebar with organized actions
+4. **Option 2 - Command Palette**: Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run `Theme Editor: Open Theme Editor Live`
 
-### Basic Usage
-1. **Open the Theme Editor**: Use the command palette or click the extension icon
-2. **Navigate Sections**: Use the sidebar to switch between Workbench UI, Semantic Tokens, and TextMate Tokens
-3. **Edit Colors**: Click on color boxes or type hex values directly
-4. **Search**: Use the search bar to quickly find specific color properties
-5. **Preview**: See changes applied instantly to VS Code and in the preview panel
+### Basic Usage (Enhanced Workflow)
+1. **Access via Sidebar**: Click the Theme Editor Live icon in the activity bar to open the sidebar
+2. **Quick Color Editing**: 
+   - Expand "🎨 Quick Colors" to edit common colors (errors, warnings, links, etc.)
+   - Expand "🔤 Syntax Colors" to modify code highlighting (comments, keywords, strings, etc.)
+   - Click any color item to open the color picker and see changes instantly
+3. **Advanced Editing**: Click "🎨 Open Theme Editor" in the sidebar or use the command palette for comprehensive editing
+4. **Navigate Sections**: Use the main editor sidebar to switch between Workbench UI, Semantic Tokens, and TextMate Tokens
+5. **Edit Colors**: Click on color boxes or type hex values directly with full alpha channel support
+6. **Search & Filter**: Use the search bar to quickly find specific color properties
+7. **Preview Changes**: See changes applied instantly to VS Code and in the preview panel
+8. **Manage Templates**: Use sidebar template management tools for advanced theme workflows
+9. **View Statistics**: Access theme information and statistics directly from the sidebar
 
 ### 📂 TextMate Token Categories (v2.1.0)
 TextMate tokens are now intelligently organized into **48 meaningful categories** for easier navigation:
@@ -133,23 +160,23 @@ This categorization makes it much easier to find and customize specific types of
 
 ## 📋 Commands
 
-| Command | Description |
-|---------|-------------|
-| `Theme Editor: Open Theme Editor Live` | Opens the main theme editor interface |
-| `Theme Editor: Load Current Theme` | Load your current VS Code theme settings |
-| `Theme Editor: Load Empty Theme` | Start with a clean white theme template |
-| `Theme Editor: Export Current Theme` | Export your current theme customizations as JSON |
-| `Theme Editor: Reset Theme to Default` | Reset all customizations to default settings |
-| `Theme Editor: Cleanup Legacy Settings` | Clean up duplicate or incorrectly placed theme settings |
-| **📋 Template Management Commands** (v2.0.0) |  |
-| `Theme Editor: Reload Template from TEMPLATE.jsonc` | Reload template elements from the template file |
-| `Theme Editor: Sync Template with UI` | Synchronize template state with the current UI |
-| `Theme Editor: Show Template Statistics` | Display template element counts and coverage statistics |
-| `Theme Editor: Refresh Editor Webview` | Force refresh the theme editor interface (useful for development) |
-| **🧪 Nuclear Test Commands** (Developer/Debug) |  |
-| `Theme Editor: Test Update` | Test direct file manipulation for settings updates |
-| `Theme Editor: Nuclear Test` | Test nuclear option for TextMate token changes |
-| `Theme Editor: Test All Nuclear` | **Comprehensive test of all three nuclear options** |
+| Command | Description | Sidebar Access |
+|---------|-------------|---------------|
+| `Theme Editor: Open Theme Editor Live` | Opens the main theme editor interface | 🎨 Open Theme Editor |
+| `Theme Editor: Load Current Theme` | Load your current VS Code theme settings | Via main editor |
+| `Theme Editor: Load Empty Theme` | Start with a clean white theme template | Via main editor |
+| `Theme Editor: Export Current Theme` | Export your current theme customizations as JSON | Via main editor |
+| `Theme Editor: Reset Theme to Default` | Reset all customizations to default settings | Via main editor |
+| `Theme Editor: Cleanup Legacy Settings` | Clean up duplicate or incorrectly placed theme settings | 🧹 Clean Up Settings |
+| **📋 Template Management Commands** (v2.0.0) | | **📁 Template Management** |
+| `Theme Editor: Reload Template from TEMPLATE.jsonc` | Reload template elements from the template file | 🔄 Reload Template |
+| `Theme Editor: Sync Template with UI` | Synchronize template state with the current UI | 🔗 Sync Template |
+| `Theme Editor: Show Template Statistics` | Display template element counts and coverage statistics | 📊 Theme Statistics |
+| `Theme Editor: Refresh Editor Webview` | Force refresh the theme editor interface (useful for development) | 🔄 Refresh Webview |
+| **🧪 Nuclear Test Commands** (Developer/Debug) | | **⚙️ Settings & Tools** |
+| `Theme Editor: Test Update` | Test direct file manipulation for settings updates | Via command palette |
+| `Theme Editor: Nuclear Test` | Test nuclear option for TextMate token changes | Via command palette |
+| `Theme Editor: Test All Nuclear` | **Comprehensive test of all three nuclear options** | Via command palette |
 
 ## 🎯 Theme Components
 
@@ -302,21 +329,26 @@ Fine-grained syntax highlighting control with complete scope coverage:
 ### File Structure
 ```
 ├── src/
-│   ├── extension.ts          # Main extension entry point
+│   ├── extension.ts              # Main extension entry point with sidebar integration
 │   ├── panel/
 │   │   └── ThemeEditorPanel.ts   # Webview panel implementation
-│   └── utils/
-│       └── themeManager.ts       # Theme loading/saving logic
+│   ├── utils/
+│   │   └── themeManager.ts       # Theme loading/saving logic
+│   └── views/
+│       └── ThemeEditorTreeProvider.ts  # NEW: Sidebar tree data provider
 ├── media/
-│   ├── editor-ui.js          # Frontend JavaScript
-│   └── style.css             # UI styling
+│   ├── editor-ui.js              # Frontend JavaScript
+│   ├── style.css                 # UI styling
+│   ├── icon.png                  # NEW: Extension icon for activity bar
+│   └── icon.svg                  # NEW: Source icon design
 ├── themes/
-│   └── empty-theme.json      # Empty theme template
-└── TEMPLATE.jsonc            # Complete theme structure reference
+│   └── empty-theme.json          # Empty theme template
+└── TEMPLATE.jsonc                # Complete theme structure reference
 ```
 
 ### Extension Architecture
-- **Main Extension**: Registers commands and manages lifecycle with proper cleanup
+- **Main Extension**: Registers commands and manages lifecycle with proper cleanup and sidebar integration
+- **Sidebar Integration**: Custom tree data provider with organized action categories and professional UI
 - **Theme Manager**: Handles theme operations (load, save, apply) with smart settings routing
 - **Webview Panel**: Provides the visual editor interface with transparency controls
 - **Live Preview**: Real-time VS Code theme updates with proper token routing
