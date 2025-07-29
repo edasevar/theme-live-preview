@@ -151,6 +151,14 @@ class ThemeManager {
         catch (error) {
             console.error('Failed to clean up legacy settings:', error);
         }
+        // Remove deprecated entries from globalState to prevent conflicts with the new schema
+        const legacyKeys = [
+            'themeEditor.legacyColorMap',
+            'themeEditor.oldTokenSettings'
+        ];
+        for (const key of legacyKeys) {
+            await this.context.globalState.update(key, undefined);
+        }
     }
     /**
       * Get empty theme with #ffffff and #ffffff00 values
@@ -814,7 +822,7 @@ class ThemeManager {
                     tokenCustomizations.textMateRules.push(newRule);
                 }
                 hasTokenChanges = true;
-                // Update internal state
+                // Update internal theme state
                 // ensure array exists
                 if (!this.currentTheme.tokenColors) {
                     this.currentTheme.tokenColors = [];

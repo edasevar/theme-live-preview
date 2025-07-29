@@ -1358,8 +1358,7 @@ function getTooltipContent(element, type) {
       const setting = element.getAttribute('data-setting');
       return `Requires "${setting}" setting to be enabled in VS Code preferences`;
       
-    case 'opacity-required':
-      return 'This color supports transparency. Use 8-digit hex values (#RRGGBBAA) or adjust the opacity slider';
+    // Removed 'opacity-required' case - no longer needed
       
     case 'textmate-readonly':
       return 'TextMate syntax token - controlled by language grammar rules and theme token mappings';

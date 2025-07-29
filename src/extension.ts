@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const cleanupCommand = vscode.commands.registerCommand('themeEditor.cleanupSettings', async () => {
 		console.log('Theme Editor Live: Running settings cleanup');
 		try {
-			await (themeManager as any).cleanupLegacySettings();
+			await themeManager.cleanupLegacySettings();   // now strongly typed
 			vscode.window.showInformationMessage('Theme Editor: Legacy settings cleaned up successfully!');
 		} catch (error) {
 			console.error('Failed to cleanup settings:', error);

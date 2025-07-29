@@ -2,7 +2,7 @@
 	"name": "theme-editor-live",
 	"displayName": "Theme Editor Live",
 	"description": "Visually edit and preview VS Code themes in real time with comprehensive theme management and enhanced tooltip system.",
-	"version": "2.6.3",
+	"version": "2.6.4",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/edasevar/theme-editor-live"
@@ -102,7 +102,7 @@
 		"@types/vscode": "^1.102.0",
 		"@typescript-eslint/eslint-plugin": "^8.38.0",
 		"@typescript-eslint/parser": "^8.38.0",
-		"@vscode/test-electron": "^2.0.1",
+		"@vscode/test-electron": "^2.5.2",
 		"eslint": "^9.32.0",
 		"mocha": "^11.7.1",
 		"typescript": "^5.8.3"

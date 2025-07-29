@@ -673,18 +673,7 @@ body {
   background: linear-gradient(135deg, var(--success-color), #4caf50);
 }
 
-.status-badge.opacity-required {
-  bottom: 4px;
-  left: 4px;
-  background: linear-gradient(135deg, var(--info-color), #42a5f5);
-  font-size: 8px;
-  padding: 2px 4px;
-}
-
-.status-badge.opacity-required.with-setting {
-  bottom: 20px;
-  left: 4px;
-}
+/* Removed .status-badge.opacity-required rules - no longer needed */
 
 .status-badge.textmate-readonly {
   top: 8px;
@@ -1160,15 +1149,7 @@ mark {
     width: 100%;
   }
   
-  .color-item .status-badge.opacity-required {
-    display: block;
-    margin-bottom: 8px;
-    width: 100%;
-  }
-  
-  .color-item .status-badge.opacity-required.with-setting {
-    margin-top: 4px;
-  }
+  /* Removed .color-item .status-badge.opacity-required rules */
 }
 
 /* Focus Indicators for Accessibility */
@@ -1825,10 +1806,7 @@ mark {
   color: var(--bg-primary);
 }
 
-.status-badge.opacity-required {
-  background: var(--info-color);
-  color: var(--bg-primary);
-}
+/* Removed .status-badge.opacity-required rule */
 
 .status-badge.transparency-required {
   background: var(--error-color);

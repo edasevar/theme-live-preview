@@ -37,21 +37,21 @@ export class ThemeManager {
 	constructor(context: vscode.ExtensionContext) {
 		this.context = context;
 		this.log('info', 'ThemeManager initializing...');
-		
+
 		// Load TEMPLATE.jsonc for baseline keysets
 		this.loadTemplateTheme();
 		// Load active VS Code theme defaults
 		this.loadActiveThemeDefaults();
 		// Clean up any legacy settings
 		this.cleanupLegacySettings();
-		
+
 		this.log('info', 'ThemeManager initialized successfully');
 	}
 
 	/**
 	 * Enhanced logging system with different levels
 	 */
-	private log(level: LogEntry['level'], message: string, data?: any): void {
+	private log (level: LogEntry['level'], message: string, data?: any): void {
 		const entry: LogEntry = {
 			timestamp: new Date().toISOString(),
 			level,
@@ -60,7 +60,7 @@ export class ThemeManager {
 		};
 
 		this.logEntries.push(entry);
-		
+
 		// Keep log size manageable
 		if (this.logEntries.length > this.MAX_LOG_ENTRIES) {
 			this.logEntries = this.logEntries.slice(-this.MAX_LOG_ENTRIES);
@@ -86,14 +86,14 @@ export class ThemeManager {
 	/**
 	 * Get recent log entries for debugging
 	 */
-	public getLogEntries(count = 50): LogEntry[] {
+	public getLogEntries (count = 50): LogEntry[] {
 		return this.logEntries.slice(-count);
 	}
 
 	/**
 	 * Clear log entries
 	 */
-	public clearLogs(): void {
+	public clearLogs (): void {
 		this.logEntries = [];
 		this.log('info', 'Log entries cleared');
 	}
@@ -102,11 +102,11 @@ export class ThemeManager {
 		try {
 			const templatePath = path.join(this.context.extensionPath, 'TEMPLATE.jsonc');
 			this.log('debug', `Loading template from: ${templatePath}`);
-			
+
 			if (fs.existsSync(templatePath)) {
 				const content = fs.readFileSync(templatePath, 'utf8');
 				this.templateTheme = parse(content);
-				
+
 				const stats = this.getTemplateStats();
 				this.log('info', 'Template theme loaded successfully', stats);
 			} else {
@@ -162,6 +162,15 @@ export class ThemeManager {
 			}
 		} catch (error) {
 			console.error('Failed to clean up legacy settings:', error);
+		}
+
+		// Remove deprecated entries from globalState to prevent conflicts with the new schema
+		const legacyKeys = [
+			'themeEditor.legacyColorMap',
+			'themeEditor.oldTokenSettings'
+		];
+		for (const key of legacyKeys) {
+			await this.context.globalState.update(key, undefined);
 		}
 	}
 	/**
@@ -327,7 +336,7 @@ export class ThemeManager {
 				scope: rule.scope,
 				settings: rule.settings // Use settings object directly
 			}));
-			
+
 			// Debug specific token
 			const debugToken = vscodeTokens.find((t: any) => {
 				const scopes = Array.isArray(t.scope) ? t.scope : [t.scope];
@@ -336,7 +345,7 @@ export class ThemeManager {
 			if (debugToken) {
 				console.log('[ThemeManager] Found token.debug-token in VS Code settings:', debugToken);
 			}
-			
+
 			tokenColors = [...tokenColors, ...vscodeTokens];
 		} else {
 			console.log('[ThemeManager] No textMateRules found in editor.tokenColorCustomizations');
@@ -420,10 +429,10 @@ export class ThemeManager {
 	 * Apply TextMate token color changes to editor.tokenColorCustomizations
 	 * This version directly updates the main VS Code settings file to ensure changes persist
 	 */
-	public async applyTextMateColor(scope: string, value: string): Promise<void> {
+	public async applyTextMateColor (scope: string, value: string): Promise<void> {
 		try {
 			console.log(`[ThemeManager] Applying TextMate color: ${scope} = ${value}`);
-			
+
 			// First, try the VS Code API approach
 			const config = vscode.workspace.getConfiguration();
 			const currentTokenColors = config.get<any>("editor.tokenColorCustomizations") || {};
@@ -505,7 +514,7 @@ export class ThemeManager {
 
 			// NUCLEAR OPTION: Skip the broken VS Code API entirely
 			console.log(`[ThemeManager] NUCLEAR OPTION: Bypassing VS Code API - going straight to direct file update`);
-			
+
 			// Fallback to direct file manipulation (like our manual script)
 			await this.updateSettingsFileDirect(scope, value);
 
@@ -543,20 +552,20 @@ export class ThemeManager {
 	 * NUCLEAR OPTION: Direct file manipulation for semantic tokens
 	 * Completely bypasses VS Code's broken API
 	 */
-	private async updateSemanticTokenDirect(semanticKey: string, value: string): Promise<void> {
+	private async updateSemanticTokenDirect (semanticKey: string, value: string): Promise<void> {
 		const settingsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User', 'settings.json');
 		console.log(`[ThemeManager] NUCLEAR SEMANTIC: Direct update for ${semanticKey} = ${value}`);
-		
+
 		try {
 			const settingsContent = fs.readFileSync(settingsPath, 'utf8');
 			let updatedContent = settingsContent;
-			
+
 			// Check if semanticTokenColorCustomizations exists
 			if (settingsContent.includes('"editor.semanticTokenColorCustomizations"')) {
 				// Update existing semantic token
 				const semanticKeyEscaped = semanticKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 				const semanticRegex = new RegExp(`("${semanticKeyEscaped}":\\s*)"[^"]*"`, 'g');
-				
+
 				if (settingsContent.includes(`"${semanticKey}"`)) {
 					// Update existing key
 					updatedContent = updatedContent.replace(semanticRegex, `$1"${value}"`);
@@ -567,8 +576,8 @@ export class ThemeManager {
 					const rulesMatch = settingsContent.match(rulesRegex);
 					if (rulesMatch) {
 						const existingRules = rulesMatch[1].trim();
-						const newRules = existingRules ? 
-							`${existingRules},\n            "${semanticKey}": "${value}"` : 
+						const newRules = existingRules ?
+							`${existingRules},\n            "${semanticKey}": "${value}"` :
 							`"${semanticKey}": "${value}"`;
 						updatedContent = updatedContent.replace(rulesRegex, `"rules": {${newRules}}`);
 						console.log(`[ThemeManager] NUCLEAR SEMANTIC: Added new ${semanticKey} to existing rules`);
@@ -599,20 +608,20 @@ export class ThemeManager {
 	 * NUCLEAR OPTION: Direct file manipulation for workbench colors
 	 * Completely bypasses VS Code's broken API
 	 */
-	private async updateWorkbenchColorDirect(colorKey: string, value: string): Promise<void> {
+	private async updateWorkbenchColorDirect (colorKey: string, value: string): Promise<void> {
 		const settingsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User', 'settings.json');
 		console.log(`[ThemeManager] NUCLEAR WORKBENCH: Direct update for ${colorKey} = ${value}`);
-		
+
 		try {
 			const settingsContent = fs.readFileSync(settingsPath, 'utf8');
 			let updatedContent = settingsContent;
-			
+
 			// Check if workbench.colorCustomizations exists
 			if (settingsContent.includes('"workbench.colorCustomizations"')) {
 				// Update existing workbench color
 				const colorKeyEscaped = colorKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 				const colorRegex = new RegExp(`("${colorKeyEscaped}":\\s*)"[^"]*"`, 'g');
-				
+
 				if (settingsContent.includes(`"${colorKey}"`)) {
 					// Update existing key
 					updatedContent = updatedContent.replace(colorRegex, `$1"${value}"`);
@@ -623,8 +632,8 @@ export class ThemeManager {
 					const workbenchMatch = settingsContent.match(workbenchRegex);
 					if (workbenchMatch) {
 						const existingColors = workbenchMatch[1].trim();
-						const newColors = existingColors ? 
-							`${existingColors},\n        "${colorKey}": "${value}"` : 
+						const newColors = existingColors ?
+							`${existingColors},\n        "${colorKey}": "${value}"` :
 							`"${colorKey}": "${value}"`;
 						updatedContent = updatedContent.replace(workbenchRegex, `"workbench.colorCustomizations": {${newColors}}`);
 						console.log(`[ThemeManager] NUCLEAR WORKBENCH: Added new ${colorKey} to existing workbench colors`);
@@ -655,17 +664,17 @@ export class ThemeManager {
 	 * NUCLEAR OPTION: Direct file manipulation for TextMate tokens
 	 * This completely bypasses VS Code's broken API
 	 */
-	private async updateSettingsFileDirect(scope: string, value: string): Promise<void> {
+	private async updateSettingsFileDirect (scope: string, value: string): Promise<void> {
 		const settingsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User', 'settings.json');
 		console.log(`[ThemeManager] NUCLEAR TEXTMATE: Direct file update for ${scope} = ${value}`);
-		
+
 		try {
 			const settingsContent = fs.readFileSync(settingsPath, 'utf8');
 			console.log(`[ThemeManager] Read settings file successfully`);
-			
+
 			// Nuclear option: Multiple replacement methods to ENSURE it works
 			let updatedContent = settingsContent;
-			
+
 			// Method 1: Find the current color value and replace it
 			const currentColorMatch = settingsContent.match(new RegExp(`("scope":\\s*"${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^}]*"foreground":\\s*)"([^"]*)"`, 'g'));
 			if (currentColorMatch) {
@@ -679,15 +688,15 @@ export class ThemeManager {
 					);
 				}
 			}
-			
+
 			// Method 2: Nuclear regex replacement for this specific scope
 			const debugTokenRegex = new RegExp(`("scope":\\s*"${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[\\s\\S]*?"foreground":\\s*)"#[a-fA-F0-9]{6}"`, 'g');
 			updatedContent = updatedContent.replace(debugTokenRegex, `$1"${value}"`);
-			
+
 			if (updatedContent !== settingsContent) {
 				fs.writeFileSync(settingsPath, updatedContent, 'utf8');
 				console.log(`[ThemeManager] NUCLEAR TEXTMATE SUCCESS: Updated ${scope} to ${value}`);
-				
+
 				// Verify the change
 				const verifyContent = fs.readFileSync(settingsPath, 'utf8');
 				if (verifyContent.includes(`"foreground": "${value}"`)) {
@@ -947,7 +956,7 @@ export class ThemeManager {
 				}
 				hasTokenChanges = true;
 
-				// Update internal state
+				// Update internal theme state
 				// ensure array exists
 				if (!this.currentTheme.tokenColors) {
 					this.currentTheme.tokenColors = [];
@@ -1057,22 +1066,22 @@ export class ThemeManager {
 	 * Reload template from TEMPLATE.jsonc file
 	 * This allows updating template elements after changes to the template file
 	 */
-	public async reloadTemplate(): Promise<void> {
+	public async reloadTemplate (): Promise<void> {
 		this.log('info', 'Reloading template from TEMPLATE.jsonc...');
-		
+
 		try {
 			const templatePath = path.join(this.context.extensionPath, 'TEMPLATE.jsonc');
 			if (fs.existsSync(templatePath)) {
 				const content = fs.readFileSync(templatePath, 'utf8');
 				const oldTemplate = { ...this.templateTheme };
 				this.templateTheme = parse(content);
-				
+
 				// Emit event for template change if needed
 				this.emitTemplateReloaded(oldTemplate, this.templateTheme);
-				
+
 				const stats = this.getTemplateStats();
 				this.log('info', 'Template reloaded successfully', stats);
-				
+
 				vscode.window.showInformationMessage(
 					`Template reloaded: ${stats.total} elements (${stats.colors} colors, ${stats.semanticTokenColors} semantic, ${stats.tokenColors} tokens)`
 				);
@@ -1093,14 +1102,14 @@ export class ThemeManager {
 	/**
 	 * Update a specific template element and optionally apply to current theme
 	 */
-	public async updateTemplateElement(
+	public async updateTemplateElement (
 		category: 'colors' | 'semanticTokenColors' | 'tokenColors',
 		key: string,
 		value: string | any,
 		applyImmediately = false
 	): Promise<void> {
 		this.log('debug', `Updating template element: ${category}.${key}`, { value, applyImmediately });
-		
+
 		try {
 			// Validate inputs
 			if (!category || !key) {
@@ -1122,7 +1131,7 @@ export class ThemeManager {
 					}
 					this.templateTheme.colors[key] = value;
 					break;
-					
+
 				case 'semanticTokenColors':
 					if (!this.templateTheme.semanticTokenColors) {
 						this.templateTheme.semanticTokenColors = {};
@@ -1132,22 +1141,22 @@ export class ThemeManager {
 					}
 					this.templateTheme.semanticTokenColors[key] = value;
 					break;
-					
+
 				case 'tokenColors':
 					if (!this.templateTheme.tokenColors) {
 						this.templateTheme.tokenColors = [];
 					}
-					
+
 					// Validate token color settings
 					if (typeof value === 'object' && value.foreground && !this.isValidColor(value.foreground)) {
 						throw new Error(`Invalid color value for tokenColors.${key}.foreground: ${value.foreground}`);
 					}
-					
+
 					const existingIndex = this.templateTheme.tokenColors.findIndex(token => {
 						const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
 						return scopes.includes(key);
 					});
-					
+
 					if (existingIndex >= 0) {
 						this.templateTheme.tokenColors[existingIndex].settings = value;
 					} else {
@@ -1158,11 +1167,11 @@ export class ThemeManager {
 					}
 					break;
 			}
-			
+
 			// Optionally apply to current theme immediately
 			if (applyImmediately) {
 				this.log('debug', `Applying template element immediately: ${category}.${key}`);
-				
+
 				switch (category) {
 					case 'colors':
 						await this.applyLiveColor(key, value);
@@ -1178,9 +1187,9 @@ export class ThemeManager {
 						break;
 				}
 			}
-			
+
 			this.log('info', `Template element updated: ${category}.${key}`, { value });
-			
+
 			// Show success message
 			vscode.window.showInformationMessage(
 				`Template updated: ${category}.${key} = ${typeof value === 'object' ? JSON.stringify(value) : value}`
@@ -1197,16 +1206,16 @@ export class ThemeManager {
 	 * Sync template changes with current UI
 	 * This method ensures the UI reflects any template updates
 	 */
-	public syncTemplateWithUI(): void {
+	public syncTemplateWithUI (): void {
 		this.log('info', 'Syncing template changes with UI...');
-		
+
 		try {
 			// Emit template sync event for UI components to refresh
 			this.emitTemplateSynced();
-			
+
 			const stats = this.getTemplateStats();
 			this.log('info', 'Template synced with UI', stats);
-			
+
 			vscode.window.showInformationMessage(
 				`Template synchronized: ${stats.total} elements refreshed in UI`
 			);
@@ -1221,7 +1230,7 @@ export class ThemeManager {
 	/**
 	 * Get template element categories and their counts
 	 */
-	public getTemplateStats(): {
+	public getTemplateStats (): {
 		colors: number;
 		semanticTokenColors: number;
 		tokenColors: number;
@@ -1233,9 +1242,9 @@ export class ThemeManager {
 			tokenColors: (this.templateTheme.tokenColors || []).length,
 			total: 0
 		};
-		
+
 		stats.total = stats.colors + stats.semanticTokenColors + stats.tokenColors;
-		
+
 		this.log('debug', 'Template stats calculated', stats);
 		return stats;
 	}
@@ -1243,12 +1252,12 @@ export class ThemeManager {
 	/**
 	 * Emit template reloaded event
 	 */
-	private emitTemplateReloaded(oldTemplate: ThemeDefinition, newTemplate: ThemeDefinition): void {
+	private emitTemplateReloaded (oldTemplate: ThemeDefinition, newTemplate: ThemeDefinition): void {
 		const oldCount = this.getTemplateElementCount(oldTemplate);
 		const newCount = this.getTemplateElementCount(newTemplate);
-		
+
 		this.log('debug', 'Template reloaded event', { oldCount, newCount });
-		
+
 		// Template change listeners could be added here for UI updates
 		// For now, just emit regular theme change events to refresh UI
 		this.emitTemplateSynced();
@@ -1257,13 +1266,13 @@ export class ThemeManager {
 	/**
 	 * Emit template synced event
 	 */
-	private emitTemplateSynced(): void {
+	private emitTemplateSynced (): void {
 		this.log('debug', 'Emitting template sync events...');
-		
+
 		// Emit change events for all template elements to refresh UI
 		const template = this.templateTheme;
 		let eventCount = 0;
-		
+
 		// Emit workbench color changes
 		if (template.colors) {
 			Object.entries(template.colors).forEach(([key, value]) => {
@@ -1271,7 +1280,7 @@ export class ThemeManager {
 				eventCount++;
 			});
 		}
-		
+
 		// Emit semantic token changes
 		if (template.semanticTokenColors) {
 			Object.entries(template.semanticTokenColors).forEach(([key, value]) => {
@@ -1280,7 +1289,7 @@ export class ThemeManager {
 				eventCount++;
 			});
 		}
-		
+
 		// Emit TextMate token changes
 		if (template.tokenColors) {
 			template.tokenColors.forEach((token, _index) => {
@@ -1293,16 +1302,16 @@ export class ThemeManager {
 				}
 			});
 		}
-		
+
 		this.log('debug', `Template sync events emitted: ${eventCount}`);
 	}
 
 	/**
 	 * Get total count of template elements
 	 */
-	private getTemplateElementCount(template: ThemeDefinition): number {
+	private getTemplateElementCount (template: ThemeDefinition): number {
 		return Object.keys(template.colors || {}).length +
-			   Object.keys(template.semanticTokenColors || {}).length +
-			   (template.tokenColors || []).length;
+			Object.keys(template.semanticTokenColors || {}).length +
+			(template.tokenColors || []).length;
 	}
 }

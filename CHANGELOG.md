@@ -5,6 +5,26 @@ All notable changes to the Theme Editor Live extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.4] - 2025-07-29
+
+### Removed
+- **🗑️ Opacity Boxes Removed**: Completely removed the top-left opacity indicator boxes from all color items
+  - Removed `opacity-required` status badges from workbench colors, semantic tokens, and TextMate tokens
+  - Cleaned up associated CSS rules for `.status-badge.opacity-required`
+  - Removed tooltip handlers for opacity-related elements from JavaScript
+  - Streamlined interface by removing visual clutter while maintaining functionality
+
+### Fixed
+- **🔧 Build System Repair**: Fixed spontaneous file deletions and compilation errors
+  - Restored missing ThemeManager class exports and essential functionality
+  - Fixed syntax errors preventing proper module resolution
+  - Ensured all imports and exports work correctly across the codebase
+  - Rebuilt output directory for clean compilation state
+
+### Enhanced
+- **⚡ Cleaner Interface**: Color items now have a more streamlined appearance without opacity indicators
+- **🎯 Better Focus**: Removed distracting UI elements to focus on core color editing functionality
+
 ## [2.6.3] - 2025-07-29
 
 ### Removed

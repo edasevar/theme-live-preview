@@ -770,9 +770,7 @@ class ThemeEditorPanel {
                 if (requiresTransparency) {
                     html += `<span class="status-badge transparency-required" data-tooltip="This color MUST use transparency (alpha) to work correctly" data-tooltip-class="tooltip-opacity-info"></span>`;
                 }
-                else if (requiresOpacity) {
-                    html += `<span class="status-badge opacity-required" data-tooltip="This color supports transparency. Use 8-digit hex values (#RRGGBBAA) or adjust the opacity slider" data-tooltip-class="tooltip-opacity-info">👁️ Alpha OK</span>`;
-                }
+                // Removed opacity-required badge (top left opacity box) per user request
                 html += `<div class="color-info">
 						<label class="color-label">
 							${key}
@@ -905,9 +903,7 @@ class ThemeEditorPanel {
                 if (requiresTransparency) {
                     html += `<span class="status-badge transparency-required" data-tooltip="This semantic token MUST use transparency for proper layering" data-tooltip-class="tooltip-opacity-info"></span>`;
                 }
-                else if (requiresOpacity) {
-                    html += `<span class="status-badge opacity-required" data-tooltip="This semantic token supports transparency for better visual hierarchy" data-tooltip-class="tooltip-opacity-info">👁️ Alpha OK</span>`;
-                }
+                // Removed opacity-required badge (semantic token) per user request
                 html += `<div class="color-info">
 								<label class="color-label">
 									${key}
@@ -1169,9 +1165,7 @@ class ThemeEditorPanel {
                 if (requiresTransparency) {
                     html += `<span class="status-badge transparency-required" data-tooltip="This TextMate token should have transparency for proper visual hierarchy" data-tooltip-class="tooltip-opacity-info">� Needs Alpha</span>`;
                 }
-                else if (requiresOpacity) {
-                    html += `<span class="status-badge opacity-required" data-tooltip="This TextMate token supports transparency for better code readability" data-tooltip-class="tooltip-opacity-info">👁️ Alpha OK</span>`;
-                }
+                // Removed opacity-required badge (TextMate token) per user request
                 html += `<div class="color-info">
 							<label class="color-label">
 								${scope}
