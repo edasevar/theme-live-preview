@@ -5,6 +5,113 @@ All notable changes to the Theme Editor Live extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-07-29
+
+### 🎨 Major Release: Beautiful Sidebar Integration
+
+This major release introduces a comprehensive sidebar interface that makes Theme Editor Live more accessible and visually appealing, transforming it from a command-only extension to a fully integrated VS Code experience.
+
+### Added
+- **📍 Activity Bar Integration**: Dedicated Theme Editor Live icon in the activity bar
+  - **Professional Icon Design**: Custom color palette icon with gradient background and paint brush elements
+  - **SVG + PNG Support**: High-quality vector graphics with PNG fallback for compatibility
+  - **Visual Identity**: Distinctive icon that clearly represents theme editing functionality
+
+- **🏗️ Comprehensive Sidebar Panel**: Custom tree-structured sidebar with organized functionality
+  - **Smart Organization**: Five main categories for logical workflow organization
+  - **Collapsible Structure**: Expandable/collapsible categories for clean interface
+  - **Contextual Icons**: Professional VS Code theme icons for each action (paintbrush, tools, rocket, graph, etc.)
+  - **Rich Tooltips**: Detailed descriptions for each action and category
+
+- **📋 Organized Action Categories**:
+  - **🎨 Main Editor**: Direct access to open the visual theme editor with real-time preview
+  - **📁 Template Management**: Template reload and synchronization operations with detailed descriptions
+  - **⚙️ Settings & Tools**: Theme cleanup, maintenance, and webview refresh functionality
+  - **📊 Theme Statistics**: Quick access to theme information and detailed statistics
+  - **🚀 Quick Actions**: Frequently used operations for streamlined workflow (launch editor, view stats)
+
+- **🎨 Direct Color Editing from Sidebar**: Revolutionary instant color editing without opening the main editor
+  - **🎨 Quick Colors Category**: Edit common colors directly from expandable tree items
+    - **🔴 Errors**: Instant editing of error message colors (`errorForeground`)
+    - **⚠️ Warnings**: Direct warning color modifications (`warningForeground`)
+    - **ℹ️ Info Messages**: Information message color editing (`infoForeground`)
+    - **🎯 Focus Border**: Focus indicator border color editing (`focusBorder`)
+    - **🔗 Links**: Clickable link color modifications (`textLinkForeground`)
+    - **✅ Success**: Success indicator color editing (`successForeground`)
+  - **🔤 Syntax Colors Category**: Code highlighting color editing with one-click access
+    - **💬 Comments**: Code comment color editing (`comment` token)
+    - **🔤 Keywords**: Language keyword color modifications (`keyword` token)
+    - **📝 Strings**: String literal color editing (`string` token)
+    - **🔢 Numbers**: Numeric literal color modifications (`number` token)
+    - **🏷️ Variables**: Variable name color editing (`variable` token)
+    - **⚡ Functions**: Function name color modifications (`function` token)
+  - **⚡ One-Click Color Picker**: Click any color item to open VS Code's native color picker
+  - **🔄 Instant Application**: Changes apply immediately to VS Code interface with no reload required
+  - **🎯 Smart Color Routing**: Colors automatically routed to correct VS Code settings sections
+
+- **🌟 Enhanced Welcome Experience**: Rich welcome content when sidebar is first opened
+  - **Feature Highlights**: Checkmark list showcasing key capabilities (real-time preview, alpha support, etc.)
+  - **Quick Action Buttons**: Direct access to main functions via clickable links
+  - **Professional Formatting**: Markdown-formatted content with emojis and clear structure
+  - **Getting Started Guide**: Immediate access to core functionality
+
+### Technical Implementation
+- **🔧 Tree Data Provider**: Custom `ThemeEditorTreeProvider` class with full TypeScript support
+  - **Dynamic Tree Structure**: Intelligent tree building with parent-child relationships
+  - **Icon Management**: VS Code theme icon integration with contextual visual cues
+  - **Command Integration**: Seamless integration with all existing extension commands
+  - **State Management**: Proper tree refresh and state handling
+
+- **📦 Package.json Enhancements**: Comprehensive manifest updates for sidebar functionality
+  - **Views Container**: Custom activity bar container with professional icon
+  - **View Registration**: Proper view registration with conditional visibility
+  - **Menu Contributions**: Enhanced menu system with view/title actions
+  - **Welcome Content**: Rich viewsWelcome content with interactive elements
+  - **Activation Events**: Expanded activation events for sidebar integration
+
+- **🔗 Command Extensions**: Enhanced command system for sidebar integration
+  - **New Command**: `themeEditor.openFromSidebar` for sidebar-specific launching
+  - **New Command**: `themeEditor.editColor` for direct color editing from sidebar items
+  - **Enhanced Registration**: All commands properly registered with sidebar context
+  - **VS Code Settings API Integration**: Direct color editing uses VS Code's configuration API for instant updates
+  - **Improved Error Handling**: Robust error handling for sidebar-initiated actions
+
+### Enhanced User Experience
+- **🎯 One-Click Access**: No more hunting through command palette - everything visible in sidebar
+- **🎨 Instant Color Editing**: Edit common colors directly from sidebar without opening main editor
+- **📱 Mobile-Like Interface**: Intuitive tree structure similar to VS Code's built-in panels
+- **🚀 Faster Workflow**: Direct access to all theme editing functionality from dedicated panel
+- **📖 Better Discovery**: New users can easily find and understand all available features
+- **⚡ Zero-Friction Editing**: Click any color in sidebar → VS Code color picker opens → changes apply instantly
+- **🎨 Professional Appearance**: Matches VS Code's design language with consistent styling
+
+### Compatibility & Migration
+- **🔄 Backward Compatible**: All existing commands and functionality remain unchanged
+- **📈 Enhanced Access**: New sidebar provides additional access methods without removing existing ones
+- **⚙️ Existing Workflows**: Users can continue using command palette alongside new sidebar
+- **🔧 No Breaking Changes**: Existing theme files, settings, and workflows continue to work exactly as before
+
+### File Changes
+- **New Files Added**:
+  - `src/views/ThemeEditorTreeProvider.ts` - Sidebar tree data provider implementation
+  - `media/icon.png` - Extension icon for activity bar (128x128 PNG)
+  - `media/icon.svg` - Source icon design with gradient and theme elements
+  - `media/icon-readme.md` - Icon documentation and creation notes
+
+- **Enhanced Files**:
+  - `src/extension.ts` - Added sidebar tree provider registration and new command
+  - `package.json` - Added views, viewsContainers, viewsWelcome, and menu contributions
+  - `README.md` - Updated with sidebar usage instructions and enhanced getting started guide
+  - `CHANGELOG.md` - This comprehensive release documentation
+
+### Benefits Summary
+- **🎯 **Improved Accessibility**: Theme editing is now one click away from any VS Code session
+- **📱 **Modern UX**: Professional sidebar interface matches VS Code's design standards  
+- **🚀 **Faster Workflow**: Organized categories and quick actions speed up common tasks
+- **📖 **Better Onboarding**: Rich welcome content and clear action descriptions help new users
+- **🔍 **Enhanced Discovery**: Users can easily see all available functionality in organized tree structure
+- **🎨 **Professional Polish**: High-quality icons and careful attention to visual design details
+
 ## [2.6.7] - 2025-07-29
 
 ### Enhanced
@@ -367,6 +474,15 @@ The extension handles the complexity of VS Code's theming system while providing
 
 ## Links
 
+[3.0.0]: https://github.com/edasevar/theme-live-preview/releases/tag/v3.0.0
+[2.6.7]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.6.7
+[2.6.6]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.6.6
+[2.6.5]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.6.5
+[2.6.4]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.6.4
+[2.6.3]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.6.3
+[2.6.2]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.6.2
+[2.6.1]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.6.1
+[2.5.1]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.5.1
 [2.1.0]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.1.0
 [1.1.0]: https://github.com/edasevar/theme-live-preview/releases/tag/v1.1.0
 [1.0.0]: https://github.com/edasevar/theme-live-preview/releases/tag/v1.0.0
