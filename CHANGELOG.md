@@ -5,6 +5,66 @@ All notable changes to the Theme Editor Live extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-07-29
+
+### 🎯 Major User Experience Improvement
+This release focuses on dramatically improving the TextMate token editing experience by replacing the confusing single "Other TextMate Tokens" section with 48 intelligently organized categories.
+
+### Added
+- **📂 Smart TextMate Token Categorization**: Revolutionary organization of TextMate tokens into meaningful categories
+  - **48 Logical Categories**: Tokens now organized by functionality instead of generic "Other TextMate Tokens"
+  - **Complete Coverage**: All 122+ TextMate token scopes properly categorized from TEMPLATE.jsonc
+  - **Enhanced Discovery**: Categories like "Source & Base Structure", "Language Keywords", "Function Names", "Class Definitions", etc.
+  - **Dynamic Parsing**: Intelligent parsing of TEMPLATE.jsonc comment headers to extract category structure
+  - **Fallback System**: Graceful fallback to basic categories if parsing fails
+
+### Fixed
+- **TextMate Token Organization**: Resolved issue where all TextMate tokens appeared in a single "Other" section
+  - Fixed regex pattern for detecting tokenColors section boundaries in TEMPLATE.jsonc
+  - Enhanced parsing logic to handle both single-line and multiline scope arrays
+  - Improved state tracking for nested JSON structures during parsing
+- **Template Parsing Reliability**: Strengthened parsing algorithm to handle complex TEMPLATE.jsonc structures
+  - Better handling of comment-based category headers (`// --- Category Name ---`)
+  - Improved detection of scope arrays and individual scope strings
+  - Fixed edge cases in JSON parsing with mixed formatting
+
+### Enhanced
+- **Developer Experience**: Added comprehensive debugging and refresh capabilities
+  - New command: `Theme Editor: Refresh Editor Webview` for forcing UI updates during development
+  - Enhanced logging for TextMate token parsing with detailed category statistics
+  - Improved error handling and graceful degradation when parsing fails
+- **UI Organization**: TextMate tokens now display in organized, collapsible categories
+  - Categories show token count for better overview
+  - Logical grouping improves token discovery and editing workflow
+  - Consistent with existing Workbench and Semantic token section organization
+
+### Technical Improvements
+- **Parser Enhancement**: Complete rewrite of `parseTextMateCategoriesFromFile()` method
+  - Sophisticated state machine for tracking JSON parsing context
+  - Robust regex patterns for category detection and section boundaries
+  - Support for both compact and formatted JSON structures
+- **Webview Integration**: Enhanced webview refresh system for better development experience
+  - Force refresh capability bypasses VS Code webview caching
+  - Improved message passing between extension and webview
+  - Better error reporting and status feedback
+
+### Categories Added
+The extension now organizes TextMate tokens into these 48 categories:
+- Source & Base Structure, Basic Punctuation & Delimiters, Advanced Punctuation & Operators
+- Language Keywords, Import & Module Keywords, Exception Handling Keywords
+- Operators, Storage & Modifiers, String Literals, String Components
+- Numeric Literals, Boolean & Language Constants, Support Constants
+- Standard Comments, Documentation Comments, General Variables
+- Object Properties, Object Variables, Global & Special Variables
+- Local Variables, Function Parameters, Constants & Readonly
+- Method Definitions, Function Names, Function Variables, Function Meta Information
+- Preprocessor Functions, Class Definitions, Interface Definitions
+- Struct Definitions, Enum Definitions, Built-in Types, Type Parameters & Annotations
+- HTML/XML Tag Names, HTML Attributes, Markup & Content
+- Git Diff & Version Control, Decorators, Annotations & Meta
+- Namespaces, Modules, Labels, Component Classes
+- Information Tokens, Warning Tokens, Error Tokens, Debug Tokens, Invalid & Deprecated
+
 ## [1.1.0] - 2025-07-29
 
 ### Added
@@ -143,5 +203,6 @@ The extension handles the complexity of VS Code's theming system while providing
 
 ## Links
 
+[2.1.0]: https://github.com/edasevar/theme-live-preview/releases/tag/v2.1.0
 [1.1.0]: https://github.com/edasevar/theme-live-preview/releases/tag/v1.1.0
 [1.0.0]: https://github.com/edasevar/theme-live-preview/releases/tag/v1.0.0

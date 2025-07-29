@@ -2,7 +2,7 @@
 	"name": "theme-editor-live",
 	"displayName": "Theme Editor Live",
 	"description": "Visually edit and preview VS Code themes in real time with comprehensive theme management.",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/edasevar/theme-editor-live"

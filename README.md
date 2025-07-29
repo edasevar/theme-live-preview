@@ -25,6 +25,10 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 - **Workbench UI Colors**: Edit all VS Code interface colors including editor, activity bar, sidebar, status bar, and more (200+ elements)
 - **Semantic Token Colors**: Customize syntax highlighting for different code elements with style modifiers
 - **TextMate Token Colors**: Fine-tune syntax highlighting with granular scope-based control and complete token coverage
+  - **📂 Smart Categorization (v2.1.0)**: TextMate tokens are now organized into 48 meaningful categories instead of a generic "Other" section
+  - **🎯 Logical Groupings**: Tokens grouped by functionality (Language Keywords, Function Names, Class Definitions, etc.)
+  - **📊 Complete Coverage**: All 122+ TextMate token scopes properly categorized from TEMPLATE.jsonc
+  - **🔍 Enhanced Discovery**: Find specific tokens faster with descriptive category names
 
 ### 🛠 Smart Settings Management (New!)
 - **Proper Routing**: Colors are correctly routed to appropriate VS Code settings sections
@@ -84,6 +88,40 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 4. **Search**: Use the search bar to quickly find specific color properties
 5. **Preview**: See changes applied instantly to VS Code and in the preview panel
 
+### 📂 TextMate Token Categories (v2.1.0)
+TextMate tokens are now intelligently organized into **48 meaningful categories** for easier navigation:
+
+#### Core Language Elements
+- **Source & Base Structure**: Base source code, HTML, XML, TeX content
+- **Language Keywords**: Core language keywords, control flow
+- **Import & Module Keywords**: Import statements, module declarations
+- **Exception Handling**: Try, catch, finally, throw keywords
+
+#### Code Structure  
+- **Class Definitions**: Class names and declarations
+- **Interface Definitions**: Interface names and types
+- **Function Names**: Function and method names
+- **Method Definitions**: Method declarations and signatures
+
+#### Variables & Properties
+- **General Variables**: Standard variable names
+- **Object Properties**: Object member properties  
+- **Global & Special Variables**: Global vars, `this`, special identifiers
+- **Function Parameters**: Parameter names and types
+- **Constants & Readonly**: Constant values and readonly variables
+
+#### Literals & Values
+- **String Literals**: String values and components
+- **Numeric Literals**: Numbers, decimals, scientific notation
+- **Boolean & Language Constants**: True, false, null, undefined
+
+#### Styling & Formatting
+- **Basic Punctuation**: Semicolons, commas, quotes
+- **Advanced Operators**: Mathematical and logical operators
+- **Comments**: Standard and documentation comments
+
+This categorization makes it much easier to find and customize specific types of syntax highlighting compared to the previous single "Other TextMate Tokens" section.
+
 ## 📋 Commands
 
 | Command | Description |
@@ -98,6 +136,7 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 | `Theme Editor: Reload Template from TEMPLATE.jsonc` | Reload template elements from the template file |
 | `Theme Editor: Sync Template with UI` | Synchronize template state with the current UI |
 | `Theme Editor: Show Template Statistics` | Display template element counts and coverage statistics |
+| `Theme Editor: Refresh Editor Webview` | Force refresh the theme editor interface (useful for development) |
 | **🧪 Nuclear Test Commands** (Developer/Debug) |  |
 | `Theme Editor: Test Update` | Test direct file manipulation for settings updates |
 | `Theme Editor: Nuclear Test` | Test nuclear option for TextMate token changes |
