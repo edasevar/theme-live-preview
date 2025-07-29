@@ -2,8 +2,11 @@
 	"name": "theme-editor-live",
 	"displayName": "Theme Editor Live",
 	"description": "Visually edit and preview VS Code themes in real time with comprehensive theme management.",
-	"version": "1.0.0",
-	"publisher": "your-publisher-name",
+	"version": "1.1.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/edasevar/theme-editor-live"
+	},
 	"engines": {
 		"vscode": "^1.74.0"
 	},
@@ -18,14 +21,14 @@
 		"customization",
 		"live preview"
 	],
-  "activationEvents": [
-	"onCommand:themeEditor.open",
-	"onCommand:themeEditor.loadTheme",
-	"onCommand:themeEditor.exportTheme",
-	"onCommand:themeEditor.resetTheme",
-	"onLanguage:json",
-	"onLanguage:jsonc"
-  ],
+	"activationEvents": [
+		"onCommand:themeEditor.open",
+		"onCommand:themeEditor.loadTheme",
+		"onCommand:themeEditor.exportTheme",
+		"onCommand:themeEditor.resetTheme",
+		"onLanguage:json",
+		"onLanguage:jsonc"
+	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
@@ -52,6 +55,11 @@
 			{
 				"command": "themeEditor.cleanupSettings",
 				"title": "Clean Up Theme Settings",
+				"category": "Theme Editor"
+			},
+			{
+				"command": "themeEditor.testUpdate",
+				"title": "Test TextMate Update (Debug)",
 				"category": "Theme Editor"
 			}
 		],

@@ -774,6 +774,23 @@ export class ThemeEditorPanel {
 		const tokenColors = (currentTheme.tokenColors && currentTheme.tokenColors.length > 0)
 			? currentTheme.tokenColors : templateTheme.tokenColors || [];
 		
+		// Create a map for faster token lookup
+		const tokenMap = new Map<string, { foreground?: string; background?: string; fontStyle?: string }>();
+		
+		tokenColors.forEach(token => {
+			if (token.scope && token.settings) {
+				const scopes = Array.isArray(token.scope) ? token.scope : [token.scope as string];
+				scopes.forEach(scope => {
+					if (scope) {
+						tokenMap.set(scope, token.settings!);
+					}
+				});
+			}
+		});
+		
+		console.log(`[TextMate] Loaded ${tokenMap.size} token mappings`);
+		console.log(`[TextMate] token.debug-token value:`, tokenMap.get('token.debug-token'));
+		
 		const textmateGroups: Record<string, string[]> = {
 			'Base Text & Structure': ['source', 'support.type.property-name.css'],
 			'Punctuation & Delimiters': ['punctuation', 'punctuation.terminator', 'punctuation.definition.tag', 'punctuation.separator', 'punctuation.definition.string', 'punctuation.section.block'],
@@ -824,12 +841,16 @@ export class ThemeEditorPanel {
 		for (const [groupName, scopes] of Object.entries(textmateGroups)) {
 			html += `<div class="color-category"><h3 class="category-title">${groupName}</h3><div class="category-content">`;
 			scopes.forEach(scope => {
-				// find matching token entry
-				const token = tokenColors.find(t => {
-					const tScopes = Array.isArray(t.scope) ? t.scope : [t.scope as string];
-					return tScopes.includes(scope);
-				});
-				let fg = token?.settings?.foreground;
+				// Use the token map for faster and more reliable lookup
+				const tokenSettings = tokenMap.get(scope);
+				let fg = tokenSettings?.foreground;
+				
+				// Debug logging for specific problematic tokens
+				if (scope === 'token.debug-token') {
+					console.log(`[TextMate Debug] Looking for scope: ${scope}`);
+					console.log(`[TextMate Debug] Found settings:`, tokenSettings);
+					console.log(`[TextMate Debug] Foreground color:`, fg);
+				}
 				
 				// If no foreground color found, use a default color so the token still appears in UI
 				if (typeof fg !== 'string') {

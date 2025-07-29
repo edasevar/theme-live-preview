@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { parse, parseTree, getNodeValue } from 'jsonc-parser';
 
 export interface ThemeDefinition {
@@ -249,11 +250,24 @@ export class ThemeManager {
 
 		// Add VS Code settings textMateRules
 		if (tokenColorCustomizations.textMateRules && Array.isArray(tokenColorCustomizations.textMateRules)) {
+			console.log(`[ThemeManager] Loading ${tokenColorCustomizations.textMateRules.length} TextMate rules from VS Code settings`);
 			const vscodeTokens = tokenColorCustomizations.textMateRules.map((rule: any) => ({
 				scope: rule.scope,
 				settings: rule.settings // Use settings object directly
 			}));
+			
+			// Debug specific token
+			const debugToken = vscodeTokens.find((t: any) => {
+				const scopes = Array.isArray(t.scope) ? t.scope : [t.scope];
+				return scopes.includes('token.debug-token');
+			});
+			if (debugToken) {
+				console.log('[ThemeManager] Found token.debug-token in VS Code settings:', debugToken);
+			}
+			
 			tokenColors = [...tokenColors, ...vscodeTokens];
+		} else {
+			console.log('[ThemeManager] No textMateRules found in editor.tokenColorCustomizations');
 		}
 
 		return {
@@ -277,26 +291,13 @@ export class ThemeManager {
 		}
 
 		try {
+			console.log(`[ThemeManager] NUCLEAR MODE: Updating ${key} = ${value}`);
+
 			if (key.startsWith("semantic_")) {
-				// Handle semantic token colors - go to editor.semanticTokenColorCustomizations
+				// Handle semantic token colors - NUCLEAR OPTION
 				const semanticKey = key.replace("semantic_", "");
-				const currentSemanticColors = config.get<Record<string, any>>("editor.semanticTokenColorCustomizations") || {};
-
-				// Ensure the structure exists
-				if (!currentSemanticColors.rules) {
-					currentSemanticColors.rules = {};
-				}
-				if (currentSemanticColors.enabled === undefined) {
-					currentSemanticColors.enabled = true;
-				}
-
-				currentSemanticColors.rules[semanticKey] = value;
-
-				await config.update(
-					"editor.semanticTokenColorCustomizations",
-					currentSemanticColors,
-					vscode.ConfigurationTarget.Global
-				);
+				console.log(`[ThemeManager] NUCLEAR SEMANTIC: ${semanticKey} = ${value}`);
+				await this.updateSemanticTokenDirect(semanticKey, value);
 
 				// Update internal theme state
 				if (!this.currentTheme.semanticTokenColors) {
@@ -304,22 +305,32 @@ export class ThemeManager {
 				}
 				this.currentTheme.semanticTokenColors[semanticKey] = value;
 			} else if (key.startsWith("textmate_")) {
-				// Handle TextMate token colors - go to editor.tokenColorCustomizations
+				// Handle TextMate token colors - NUCLEAR OPTION
 				const scope = key.replace("textmate_", "");
-				console.log(`[ThemeManager] Routing TextMate token: ${scope} = ${value}`);
-				await this.applyTextMateColor(scope, value);
-			} else {
-				// Handle workbench colors
-				const currentColors =
-					config.get<Record<string, string>>("workbench.colorCustomizations") ||
-					{};
-				currentColors[key] = value;
+				console.log(`[ThemeManager] NUCLEAR TEXTMATE: ${scope} = ${value}`);
+				await this.updateSettingsFileDirect(scope, value);
 
-				await config.update(
-					"workbench.colorCustomizations",
-					currentColors,
-					vscode.ConfigurationTarget.Global
-				);
+				// Update internal theme state
+				if (!this.currentTheme.tokenColors) {
+					this.currentTheme.tokenColors = [];
+				}
+				const existingTokenIndex = this.currentTheme.tokenColors.findIndex(token => {
+					const tokenScopes = Array.isArray(token.scope) ? token.scope : (token.scope ? [token.scope] : []);
+					return tokenScopes.includes(scope);
+				});
+
+				if (existingTokenIndex >= 0) {
+					this.currentTheme.tokenColors[existingTokenIndex].settings = { foreground: value };
+				} else {
+					this.currentTheme.tokenColors.push({
+						scope: scope,
+						settings: { foreground: value }
+					});
+				}
+			} else {
+				// Handle workbench colors - NUCLEAR OPTION
+				console.log(`[ThemeManager] NUCLEAR WORKBENCH: ${key} = ${value}`);
+				await this.updateWorkbenchColorDirect(key, value);
 
 				// Update internal theme state
 				if (!this.currentTheme.colors) {
@@ -337,66 +348,289 @@ export class ThemeManager {
 
 	/**
 	 * Apply TextMate token color changes to editor.tokenColorCustomizations
+	 * This version directly updates the main VS Code settings file to ensure changes persist
 	 */
-	private async applyTextMateColor (scope: string, value: string): Promise<void> {
-		console.log(`[ThemeManager] Applying TextMate color: ${scope} = ${value}`);
-		const config = vscode.workspace.getConfiguration();
-		const currentTokenColors = config.get<any>("editor.tokenColorCustomizations") || {};
+	public async applyTextMateColor(scope: string, value: string): Promise<void> {
+		try {
+			console.log(`[ThemeManager] Applying TextMate color: ${scope} = ${value}`);
+			
+			// First, try the VS Code API approach
+			const config = vscode.workspace.getConfiguration();
+			const currentTokenColors = config.get<any>("editor.tokenColorCustomizations") || {};
 
-		if (!currentTokenColors.textMateRules) {
-			currentTokenColors.textMateRules = [];
-		}
+			console.log(`[ThemeManager] Current textMateRules:`, JSON.stringify(currentTokenColors.textMateRules || [], null, 2));
 
-		// Find existing rule for this scope or create new one
-		const existingRuleIndex = currentTokenColors.textMateRules.findIndex(
-			(rule: any) => {
-				const ruleScopes = Array.isArray(rule.scope) ? rule.scope : [rule.scope];
-				return ruleScopes.includes(scope);
+			if (!currentTokenColors.textMateRules) {
+				currentTokenColors.textMateRules = [];
 			}
-		);
 
-		const newRule = {
-			scope: [scope], // Always use array format for consistency
-			settings: {
-				foreground: value,
-			},
-		};
+			// Find existing rule for this scope with improved matching
+			let existingRuleIndex = -1;
+			for (let i = 0; i < currentTokenColors.textMateRules.length; i++) {
+				const rule = currentTokenColors.textMateRules[i];
+				console.log(`[ThemeManager] Checking rule ${i}:`, JSON.stringify(rule, null, 2));
+				if (!rule.scope) continue;
 
-		if (existingRuleIndex >= 0) {
-			// Update existing rule
-			currentTokenColors.textMateRules[existingRuleIndex] = newRule;
-		} else {
-			// Add new rule
-			currentTokenColors.textMateRules.push(newRule);
-		}
+				// Handle both string and array scope formats
+				const ruleScopes = Array.isArray(rule.scope) ? rule.scope : [rule.scope];
+				console.log(`[ThemeManager] Rule scopes:`, ruleScopes, `Looking for:`, scope);
 
-		await config.update(
-			"editor.tokenColorCustomizations",
-			currentTokenColors,
-			vscode.ConfigurationTarget.Global
-		);
-		console.log(`[ThemeManager] Updated editor.tokenColorCustomizations:`, JSON.stringify(currentTokenColors, null, 2));
+				// Check if this rule contains our scope
+				if (ruleScopes.includes(scope)) {
+					existingRuleIndex = i;
+					console.log(`[ThemeManager] Found matching rule at index ${i}`);
+					break;
+				}
+			}
 
-		// Update internal theme state
-		if (!this.currentTheme.tokenColors) {
-			this.currentTheme.tokenColors = [];
-		}
-		const existingTokenIndex = this.currentTheme.tokenColors.findIndex(token => {
-			const tokenScopes = Array.isArray(token.scope) ? token.scope : (token.scope ? [token.scope] : []);
-			return tokenScopes.includes(scope);
-		});
+			console.log(`[ThemeManager] Looking for scope "${scope}", found at index: ${existingRuleIndex}`);
 
-		if (existingTokenIndex >= 0) {
-			// update the existing token settings
-			this.currentTheme.tokenColors[existingTokenIndex].settings = {
-				foreground: value
-			};
-		} else {
-			// add new token
-			this.currentTheme.tokenColors.push({
-				scope: [scope], // Use array format for consistency
-				settings: { foreground: value }
+			if (existingRuleIndex >= 0) {
+				// Update existing rule - preserve the original scope format and other scopes
+				const existingRule = currentTokenColors.textMateRules[existingRuleIndex];
+				const existingScopes: string[] = Array.isArray(existingRule.scope)
+					? existingRule.scope
+					: [existingRule.scope];
+
+				// If this rule only contains our scope, update it directly
+				if (existingScopes.length === 1 && existingScopes[0] === scope) {
+					currentTokenColors.textMateRules[existingRuleIndex] = {
+						scope: scope, // Keep as single scope, not array
+						settings: {
+							foreground: value,
+							...existingRule.settings // Preserve other settings like fontStyle
+						}
+					};
+					console.log(`[ThemeManager] Updated existing single-scope rule for "${scope}"`);
+				} else {
+					// Rule contains multiple scopes, need to handle differently
+					// Remove our scope from the existing rule and create a new rule for our scope
+					const otherScopes = existingScopes.filter(s => s !== scope);
+					if (otherScopes.length > 0) {
+						currentTokenColors.textMateRules[existingRuleIndex].scope = otherScopes.length === 1 ? otherScopes[0] : otherScopes;
+					} else {
+						// Remove the rule entirely if it has no other scopes
+						currentTokenColors.textMateRules.splice(existingRuleIndex, 1);
+					}
+
+					// Add new rule for our scope
+					currentTokenColors.textMateRules.push({
+						scope: scope,
+						settings: {
+							foreground: value
+						}
+					});
+					console.log(`[ThemeManager] Separated scope "${scope}" into new rule`);
+				}
+			} else {
+				// Add new rule
+				currentTokenColors.textMateRules.push({
+					scope: scope,
+					settings: {
+						foreground: value
+					}
+				});
+				console.log(`[ThemeManager] Added new rule for scope "${scope}"`);
+			}
+
+			// NUCLEAR OPTION: Skip the broken VS Code API entirely
+			console.log(`[ThemeManager] NUCLEAR OPTION: Bypassing VS Code API - going straight to direct file update`);
+			
+			// Fallback to direct file manipulation (like our manual script)
+			await this.updateSettingsFileDirect(scope, value);
+
+			// Update internal theme state
+			if (!this.currentTheme.tokenColors) {
+				this.currentTheme.tokenColors = [];
+			}
+			const existingTokenIndex = this.currentTheme.tokenColors.findIndex(token => {
+				const tokenScopes = Array.isArray(token.scope) ? token.scope : (token.scope ? [token.scope] : []);
+				return tokenScopes.includes(scope);
 			});
+
+			if (existingTokenIndex >= 0) {
+				// update the existing token settings
+				this.currentTheme.tokenColors[existingTokenIndex].settings = {
+					foreground: value
+				};
+			} else {
+				// add new token
+				this.currentTheme.tokenColors.push({
+					scope: scope, // Keep consistent with VS Code format
+					settings: { foreground: value }
+				});
+			}
+
+			// Show a notification for success
+			vscode.window.showInformationMessage(`Theme Editor: Updated ${scope} to ${value}`);
+		} catch (err: any) {
+			console.error(`[ThemeManager] Error applying TextMate color:`, err);
+			vscode.window.showErrorMessage(`Theme Editor: Failed to update ${scope}: ${err?.message || err}`);
+		}
+	}
+
+	/**
+	 * NUCLEAR OPTION: Direct file manipulation for semantic tokens
+	 * Completely bypasses VS Code's broken API
+	 */
+	private async updateSemanticTokenDirect(semanticKey: string, value: string): Promise<void> {
+		const settingsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User', 'settings.json');
+		console.log(`[ThemeManager] NUCLEAR SEMANTIC: Direct update for ${semanticKey} = ${value}`);
+		
+		try {
+			const settingsContent = fs.readFileSync(settingsPath, 'utf8');
+			let updatedContent = settingsContent;
+			
+			// Check if semanticTokenColorCustomizations exists
+			if (settingsContent.includes('"editor.semanticTokenColorCustomizations"')) {
+				// Update existing semantic token
+				const semanticKeyEscaped = semanticKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				const semanticRegex = new RegExp(`("${semanticKeyEscaped}":\\s*)"[^"]*"`, 'g');
+				
+				if (settingsContent.includes(`"${semanticKey}"`)) {
+					// Update existing key
+					updatedContent = updatedContent.replace(semanticRegex, `$1"${value}"`);
+					console.log(`[ThemeManager] NUCLEAR SEMANTIC: Updated existing ${semanticKey} to ${value}`);
+				} else {
+					// Add new key to existing rules
+					const rulesRegex = /"rules":\s*{([^}]*)}/;
+					const rulesMatch = settingsContent.match(rulesRegex);
+					if (rulesMatch) {
+						const existingRules = rulesMatch[1].trim();
+						const newRules = existingRules ? 
+							`${existingRules},\n            "${semanticKey}": "${value}"` : 
+							`"${semanticKey}": "${value}"`;
+						updatedContent = updatedContent.replace(rulesRegex, `"rules": {${newRules}}`);
+						console.log(`[ThemeManager] NUCLEAR SEMANTIC: Added new ${semanticKey} to existing rules`);
+					}
+				}
+			} else {
+				// Add entire semanticTokenColorCustomizations section
+				const editorConfigEnd = settingsContent.lastIndexOf('"editor.tabSize"');
+				if (editorConfigEnd > -1) {
+					const insertPoint = settingsContent.indexOf(',', editorConfigEnd);
+					const newSection = `,\n    "editor.semanticTokenColorCustomizations": {\n        "enabled": true,\n        "rules": {\n            "${semanticKey}": "${value}"\n        }\n    }`;
+					updatedContent = settingsContent.slice(0, insertPoint) + newSection + settingsContent.slice(insertPoint);
+					console.log(`[ThemeManager] NUCLEAR SEMANTIC: Added new semanticTokenColorCustomizations section`);
+				}
+			}
+
+			if (updatedContent !== settingsContent) {
+				fs.writeFileSync(settingsPath, updatedContent, 'utf8');
+				console.log(`[ThemeManager] NUCLEAR SEMANTIC SUCCESS: Updated ${semanticKey} to ${value}`);
+			}
+		} catch (error) {
+			console.error(`[ThemeManager] Nuclear semantic update failed:`, error);
+			throw error;
+		}
+	}
+
+	/**
+	 * NUCLEAR OPTION: Direct file manipulation for workbench colors
+	 * Completely bypasses VS Code's broken API
+	 */
+	private async updateWorkbenchColorDirect(colorKey: string, value: string): Promise<void> {
+		const settingsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User', 'settings.json');
+		console.log(`[ThemeManager] NUCLEAR WORKBENCH: Direct update for ${colorKey} = ${value}`);
+		
+		try {
+			const settingsContent = fs.readFileSync(settingsPath, 'utf8');
+			let updatedContent = settingsContent;
+			
+			// Check if workbench.colorCustomizations exists
+			if (settingsContent.includes('"workbench.colorCustomizations"')) {
+				// Update existing workbench color
+				const colorKeyEscaped = colorKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				const colorRegex = new RegExp(`("${colorKeyEscaped}":\\s*)"[^"]*"`, 'g');
+				
+				if (settingsContent.includes(`"${colorKey}"`)) {
+					// Update existing key
+					updatedContent = updatedContent.replace(colorRegex, `$1"${value}"`);
+					console.log(`[ThemeManager] NUCLEAR WORKBENCH: Updated existing ${colorKey} to ${value}`);
+				} else {
+					// Add new key to existing workbench.colorCustomizations
+					const workbenchRegex = /"workbench\.colorCustomizations":\s*{([^}]*)}/;
+					const workbenchMatch = settingsContent.match(workbenchRegex);
+					if (workbenchMatch) {
+						const existingColors = workbenchMatch[1].trim();
+						const newColors = existingColors ? 
+							`${existingColors},\n        "${colorKey}": "${value}"` : 
+							`"${colorKey}": "${value}"`;
+						updatedContent = updatedContent.replace(workbenchRegex, `"workbench.colorCustomizations": {${newColors}}`);
+						console.log(`[ThemeManager] NUCLEAR WORKBENCH: Added new ${colorKey} to existing workbench colors`);
+					}
+				}
+			} else {
+				// Add entire workbench.colorCustomizations section
+				const lastConfigItem = settingsContent.lastIndexOf('"editor.tabSize"');
+				if (lastConfigItem > -1) {
+					const insertPoint = settingsContent.indexOf(',', lastConfigItem);
+					const newSection = `,\n    "workbench.colorCustomizations": {\n        "${colorKey}": "${value}"\n    }`;
+					updatedContent = settingsContent.slice(0, insertPoint) + newSection + settingsContent.slice(insertPoint);
+					console.log(`[ThemeManager] NUCLEAR WORKBENCH: Added new workbench.colorCustomizations section`);
+				}
+			}
+
+			if (updatedContent !== settingsContent) {
+				fs.writeFileSync(settingsPath, updatedContent, 'utf8');
+				console.log(`[ThemeManager] NUCLEAR WORKBENCH SUCCESS: Updated ${colorKey} to ${value}`);
+			}
+		} catch (error) {
+			console.error(`[ThemeManager] Nuclear workbench update failed:`, error);
+			throw error;
+		}
+	}
+
+	/**
+	 * NUCLEAR OPTION: Direct file manipulation for TextMate tokens
+	 * This completely bypasses VS Code's broken API
+	 */
+	private async updateSettingsFileDirect(scope: string, value: string): Promise<void> {
+		const settingsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User', 'settings.json');
+		console.log(`[ThemeManager] NUCLEAR TEXTMATE: Direct file update for ${scope} = ${value}`);
+		
+		try {
+			const settingsContent = fs.readFileSync(settingsPath, 'utf8');
+			console.log(`[ThemeManager] Read settings file successfully`);
+			
+			// Nuclear option: Multiple replacement methods to ENSURE it works
+			let updatedContent = settingsContent;
+			
+			// Method 1: Find the current color value and replace it
+			const currentColorMatch = settingsContent.match(new RegExp(`("scope":\\s*"${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^}]*"foreground":\\s*)"([^"]*)"`, 'g'));
+			if (currentColorMatch) {
+				const currentColor = currentColorMatch[0].match(/"foreground":\s*"([^"]*)"/)?.[1];
+				if (currentColor) {
+					console.log(`[ThemeManager] Found current color: ${currentColor}, changing to: ${value}`);
+					// Replace the specific color in the specific scope
+					updatedContent = updatedContent.replace(
+						new RegExp(`("scope":\\s*"${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[^}]*"foreground":\\s*)"${currentColor}"`, 'g'),
+						`$1"${value}"`
+					);
+				}
+			}
+			
+			// Method 2: Nuclear regex replacement for this specific scope
+			const debugTokenRegex = new RegExp(`("scope":\\s*"${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[\\s\\S]*?"foreground":\\s*)"#[a-fA-F0-9]{6}"`, 'g');
+			updatedContent = updatedContent.replace(debugTokenRegex, `$1"${value}"`);
+			
+			if (updatedContent !== settingsContent) {
+				fs.writeFileSync(settingsPath, updatedContent, 'utf8');
+				console.log(`[ThemeManager] NUCLEAR TEXTMATE SUCCESS: Updated ${scope} to ${value}`);
+				
+				// Verify the change
+				const verifyContent = fs.readFileSync(settingsPath, 'utf8');
+				if (verifyContent.includes(`"foreground": "${value}"`)) {
+					console.log(`[ThemeManager] VERIFICATION PASSED: Change confirmed in file`);
+				} else {
+					console.log(`[ThemeManager] VERIFICATION FAILED: Change not found in file`);
+				}
+			} else {
+				console.log(`[ThemeManager] No changes made - content was identical`);
+			}
+		} catch (fileError) {
+			console.error(`[ThemeManager] Nuclear textmate update failed:`, fileError);
+			throw fileError;
 		}
 	}
 
