@@ -1,4 +1,5 @@
 import * as path from 'path';
+// @ts-ignore: no type declarations for this module
 import { runTests } from '@vscode/test-electron';
 
 async function main() {
