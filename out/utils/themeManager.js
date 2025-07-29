@@ -164,6 +164,12 @@ class ThemeManager {
       * Get empty theme with #ffffff and #ffffff00 values
       */
     getEmptyTheme() {
+        console.log('[ThemeManager] Generating empty theme...');
+        console.log('[ThemeManager] Template theme status:', {
+            colors: Object.keys(this.templateTheme.colors || {}).length,
+            semanticTokenColors: Object.keys(this.templateTheme.semanticTokenColors || {}).length,
+            tokenColors: (this.templateTheme.tokenColors || []).length
+        });
         const emptyTheme = {
             name: "Empty Theme",
             type: "light",
@@ -171,6 +177,55 @@ class ThemeManager {
             semanticTokenColors: {},
             tokenColors: [],
         };
+        // Try to load from the empty-theme.json file as fallback
+        const hasTemplateData = this.templateTheme.colors && Object.keys(this.templateTheme.colors).length > 0;
+        if (!hasTemplateData) {
+            console.log('[ThemeManager] Template theme is empty, using fallback structure');
+            try {
+                const emptyThemePath = path.join(this.context.extensionPath, 'themes', 'empty-theme.json');
+                if (fs.existsSync(emptyThemePath)) {
+                    const fallbackContent = fs.readFileSync(emptyThemePath, 'utf8');
+                    const fallbackTheme = JSON.parse(fallbackContent);
+                    console.log('[ThemeManager] Using empty-theme.json fallback');
+                    return fallbackTheme;
+                }
+            }
+            catch (error) {
+                console.warn('[ThemeManager] Could not load empty-theme.json fallback:', error);
+            }
+            // Ultimate fallback - create a basic structure manually
+            emptyTheme.colors = {
+                "editor.background": "#ffffff",
+                "editor.foreground": "#ffffff",
+                "activityBar.background": "#ffffff00",
+                "sideBar.background": "#ffffff00",
+                "panel.background": "#ffffff00",
+                "statusBar.background": "#ffffff00"
+            };
+            emptyTheme.semanticTokenColors = {
+                "class": "#ffffff",
+                "function": "#ffffff",
+                "variable": "#ffffff",
+                "keyword": "#ffffff",
+                "comment": "#ffffff"
+            };
+            emptyTheme.tokenColors = [
+                {
+                    scope: ["comment"],
+                    settings: { foreground: "#ffffff" }
+                },
+                {
+                    scope: ["keyword"],
+                    settings: { foreground: "#ffffff" }
+                },
+                {
+                    scope: ["string"],
+                    settings: { foreground: "#ffffff" }
+                }
+            ];
+            console.log('[ThemeManager] Using manual fallback structure');
+            return emptyTheme;
+        }
         // Populate with template structure but empty values
         if (this.templateTheme.colors) {
             emptyTheme.colors = {};
@@ -180,12 +235,14 @@ class ThemeManager {
                         ? "#ffffff00"
                         : "#ffffff";
             });
+            console.log(`[ThemeManager] Generated ${Object.keys(emptyTheme.colors).length} color entries`);
         }
         if (this.templateTheme.semanticTokenColors) {
             emptyTheme.semanticTokenColors = {};
             Object.keys(this.templateTheme.semanticTokenColors).forEach((key) => {
                 emptyTheme.semanticTokenColors[key] = "#ffffff";
             });
+            console.log(`[ThemeManager] Generated ${Object.keys(emptyTheme.semanticTokenColors).length} semantic token entries`);
         }
         if (this.templateTheme.tokenColors) {
             emptyTheme.tokenColors = this.templateTheme.tokenColors.map(token => ({
@@ -196,7 +253,9 @@ class ThemeManager {
                     fontStyle: token.settings?.fontStyle
                 }
             }));
+            console.log(`[ThemeManager] Generated ${emptyTheme.tokenColors.length} TextMate token entries`);
         }
+        console.log('[ThemeManager] Empty theme generation complete');
         return emptyTheme;
     }
     /**

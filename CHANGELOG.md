@@ -5,6 +5,23 @@ All notable changes to the Theme Editor Live extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.6] - 2025-07-29
+
+### Fixed
+- **🔧 Empty Theme Loading**: Fixed "Load Empty Theme" functionality that was not working properly
+  - Resolved issue where `refreshTheme` message was sent without theme data to webview
+  - Added robust fallback mechanism when template theme is not properly loaded
+  - Created standalone `empty-theme.json` file for independent empty theme structure  
+  - Added comprehensive debug logging for troubleshooting empty theme generation
+  - Improved error handling and multiple fallback strategies for theme loading
+  - Empty theme now properly applies white colors (`#ffffff`) and transparent backgrounds (`#ffffff00`)
+
+### Added
+- **📁 Empty Theme File**: Created `themes/empty-theme.json` with complete empty theme structure
+  - Provides fallback when template-based generation fails
+  - Includes essential workbench colors, semantic tokens, and TextMate token colors
+  - Ensures empty theme functionality works independently of template system
+
 ## [2.6.5] - 2025-07-29
 
 ### Fixed

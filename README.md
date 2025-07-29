@@ -68,7 +68,7 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 
 ### 📁 Theme Management
 - **Load Current Theme**: Import your existing VS Code theme settings
-- **Load Empty Theme**: Start with clean white theme using `#ffffff` and `#ffffff00` (transparent) values
+- **Load Empty Theme**: ✅ **Now Working!** Start with clean white theme using `#ffffff` and `#ffffff00` (transparent) values
 - **Export Custom Themes**: Save your themes as JSON files for sharing or backup
 - **Reset to Default**: Clear all customizations and restore original settings
 - **Legacy Settings Cleanup**: Automatic cleanup of duplicate or incorrectly placed theme settings
@@ -314,6 +314,24 @@ Fine-grained syntax highlighting control with complete scope coverage:
 - **Settings Integration**: Direct VS Code configuration API with legacy cleanup support
 
 ## 🐛 Known Issues Fixed
+
+### v2.6.6 Fixes (Latest)
+- ✅ **Empty Theme Loading**: Fixed "Load Empty Theme" functionality that was completely broken
+- ✅ **Webview Refresh**: Resolved issue where theme data wasn't being sent to webview for visual updates
+- ✅ **Fallback System**: Added robust fallback mechanism when template theme fails to load properly
+- ✅ **Independent Structure**: Created standalone `empty-theme.json` for reliable empty theme generation
+- ✅ **Debug Logging**: Added comprehensive logging to troubleshoot empty theme issues
+- ✅ **Multiple Strategies**: Implemented template-based, file-based, and manual fallback approaches
+
+### v2.6.5 Fixes
+- ✅ **Map Iteration Fix**: Fixed TypeScript compilation error with Map iteration in ThemeEditorPanel
+- ✅ **ES2020 Compatibility**: Replaced `for...of` syntax with `.forEach()` method for better compatibility
+- ✅ **Build System**: Resolved `--downlevelIteration` flag requirement error
+
+### v2.6.4 Fixes
+- ✅ **Opacity Boxes Removed**: Completely removed the top-left opacity indicator boxes from all color items
+- ✅ **Interface Cleanup**: Eliminated `opacity-required` status badges and associated CSS/JavaScript
+- ✅ **Build System Repair**: Fixed spontaneous file deletions and restored missing ThemeManager functionality
 
 ### v2.6.3 Fixes
 - ✅ **Preview Boxes Removed**: Eliminated non-functional preview boxes that didn't meet user expectations

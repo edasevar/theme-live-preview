@@ -323,16 +323,26 @@ class ThemeEditorPanel {
     }
     async handleLoadEmptyTheme() {
         try {
+            console.log('[ThemeEditorPanel] Starting empty theme load...');
             const emptyTheme = this.themeManager.getEmptyTheme();
+            // Debug: Check what we got from getEmptyTheme
+            console.log('[ThemeEditorPanel] Empty theme structure:', {
+                colors: Object.keys(emptyTheme.colors || {}).length,
+                semanticTokenColors: Object.keys(emptyTheme.semanticTokenColors || {}).length,
+                tokenColors: (emptyTheme.tokenColors || []).length
+            });
             // Apply empty theme workbench colors
+            console.log('[ThemeEditorPanel] Applying workbench colors...');
             for (const [key, value] of Object.entries(emptyTheme.colors || {})) {
                 await this.themeManager.applyLiveColor(key, value);
             }
             // Apply empty theme semantic tokens
+            console.log('[ThemeEditorPanel] Applying semantic tokens...');
             for (const [key, value] of Object.entries(emptyTheme.semanticTokenColors || {})) {
                 await this.themeManager.applyLiveColor(`semantic_${key}`, typeof value === 'string' ? value : value.foreground || '#ffffff');
             }
             // Apply empty theme TextMate tokens
+            console.log('[ThemeEditorPanel] Applying TextMate tokens...');
             for (const token of emptyTheme.tokenColors || []) {
                 if (token.scope && token.settings) {
                     const scopes = Array.isArray(token.scope) ? token.scope : [token.scope];
@@ -344,12 +354,17 @@ class ThemeEditorPanel {
                 }
             }
             this.update(); // Refresh the UI
+            console.log('[ThemeEditorPanel] Empty theme load complete');
             vscode.window.showInformationMessage('Empty theme loaded successfully');
-            // Notify webview and refresh all CSS variables
-            this.sendMessageToWebview({ type: 'refreshTheme' });
+            // Notify webview and refresh all CSS variables with the actual theme data
+            this.sendMessageToWebview({
+                type: 'refreshTheme',
+                theme: emptyTheme
+            });
             this.sendMessageToWebview({ type: 'themeLoaded' });
         }
         catch (error) {
+            console.error('[ThemeEditorPanel] Empty theme load failed:', error);
             vscode.window.showErrorMessage(`Failed to load empty theme: ${error}`);
         }
     }

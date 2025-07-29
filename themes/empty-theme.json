@@ -1,0 +1,139 @@
+{
+	"$schema": "vscode://schemas/color-theme",
+	"type": "light",
+	"name": "Empty Theme",
+	"colors": {
+		"activityBar.background": "#ffffff00",
+		"activityBar.foreground": "#ffffff",
+		"activityBar.border": "#ffffff",
+		"activityBarBadge.background": "#ffffff",
+		"activityBarBadge.foreground": "#ffffff",
+		"badge.background": "#ffffff",
+		"badge.foreground": "#ffffff",
+		"button.background": "#ffffff",
+		"button.foreground": "#ffffff",
+		"button.hoverBackground": "#ffffff",
+		"debugToolBar.background": "#ffffff00",
+		"dropdown.background": "#ffffff00",
+		"dropdown.border": "#ffffff",
+		"dropdown.foreground": "#ffffff",
+		"editor.background": "#ffffff",
+		"editor.foreground": "#ffffff",
+		"editor.lineHighlightBackground": "#ffffff00",
+		"editor.selectionBackground": "#ffffff00",
+		"editorGroup.border": "#ffffff",
+		"editorGroupHeader.tabsBackground": "#ffffff00",
+		"editorLineNumber.foreground": "#ffffff",
+		"editorLineNumber.activeForeground": "#ffffff",
+		"input.background": "#ffffff00",
+		"input.border": "#ffffff",
+		"input.foreground": "#ffffff",
+		"list.activeSelectionBackground": "#ffffff00",
+		"list.activeSelectionForeground": "#ffffff",
+		"list.hoverBackground": "#ffffff00",
+		"panel.background": "#ffffff00",
+		"panel.border": "#ffffff",
+		"panelTitle.activeForeground": "#ffffff",
+		"peekView.border": "#ffffff",
+		"scrollbar.shadow": "#ffffff00",
+		"sideBar.background": "#ffffff00",
+		"sideBar.border": "#ffffff",
+		"sideBar.foreground": "#ffffff",
+		"sideBarSectionHeader.background": "#ffffff00",
+		"statusBar.background": "#ffffff00",
+		"statusBar.foreground": "#ffffff",
+		"statusBar.border": "#ffffff",
+		"tab.activeBackground": "#ffffff00",
+		"tab.activeForeground": "#ffffff",
+		"tab.border": "#ffffff",
+		"tab.inactiveBackground": "#ffffff00",
+		"tab.inactiveForeground": "#ffffff",
+		"titleBar.activeBackground": "#ffffff00",
+		"titleBar.activeForeground": "#ffffff",
+		"titleBar.border": "#ffffff"
+	},
+	"semanticTokenColors": {
+		"class": "#ffffff",
+		"interface": "#ffffff",
+		"enum": "#ffffff",
+		"struct": "#ffffff",
+		"type": "#ffffff",
+		"typeParameter": "#ffffff",
+		"variable": "#ffffff",
+		"parameter": "#ffffff",
+		"property": "#ffffff",
+		"enumMember": "#ffffff",
+		"function": "#ffffff",
+		"method": "#ffffff",
+		"keyword": "#ffffff",
+		"modifier": "#ffffff",
+		"namespace": "#ffffff",
+		"comment": "#ffffff"
+	},
+	"tokenColors": [
+		{
+			"scope": [
+				"comment"
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": [
+				"keyword"
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": [
+				"string"
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": [
+				"constant.numeric"
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": [
+				"variable"
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": [
+				"entity.name.function"
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": [
+				"entity.name.type"
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		{
+			"scope": [
+				"entity.name.tag"
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		}
+	]
+}
