@@ -531,8 +531,71 @@ body {
   gap: 20px;
 }
 
-.color-item::before {
-  content: '';
+/* Conditional visibility states */
+.color-item.requires-setting {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(0.8);
+  position: relative;
+}
+
+.color-item.requires-setting::after {
+  content: '⚙️ Setting Required';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, var(--warning-color), #ff7043);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-small);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-light);
+  z-index: 2;
+}
+
+.color-item.requires-setting.setting-enabled {
+  opacity: 1;
+  pointer-events: auto;
+  filter: none;
+}
+
+.color-item.requires-setting.setting-enabled::after {
+  content: '⚙️ Enabled';
+  background: linear-gradient(135deg, var(--success-color), #4caf50);
+}
+
+/* Opacity requirement indicators */
+.color-item.requires-opacity {
+  position: relative;
+}
+
+.color-item.requires-opacity::before {
+  content: '👁️ Opacity';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, var(--info-color), #42a5f5);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-small);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-light);
+  z-index: 2;
+}
+
+.color-item.requires-opacity.requires-setting::before {
+  left: 8px;
+  top: 36px;
+}
+
+/* Left border indicator - using a span element instead of ::before */
+.color-item .border-indicator {
   position: absolute;
   left: 0;
   top: 0;
@@ -549,8 +612,105 @@ body {
   border-color: var(--accent-color);
 }
 
-.color-item:hover::before {
+.color-item:hover .border-indicator {
   transform: scaleY(1);
+}
+
+.color-item.requires-setting:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border-light);
+}
+
+.color-item.requires-setting.setting-enabled:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-light);
+  border-color: var(--success-color);
+}
+
+.color-item[data-depends-on]:not(.dependency-satisfied):hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Enhanced visual feedback for different states */
+.color-item.requires-opacity .color-picker {
+  position: relative;
+  overflow: visible;
+}
+
+.color-item.requires-opacity .color-picker::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, var(--info-color), var(--accent-color));
+  border-radius: 50%;
+  border: 2px solid var(--bg-secondary);
+  box-shadow: var(--shadow-light);
+}
+
+.color-item.setting-enabled .color-picker::before {
+  content: '✓';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 16px;
+  height: 16px;
+  background: var(--success-color);
+  border-radius: 50%;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  box-shadow: var(--shadow-medium);
+}
+
+/* Status badges using span elements */
+.status-badge {
+  position: absolute;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-small);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-light);
+  z-index: 2;
+  color: white;
+}
+
+.status-badge.setting-required {
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, var(--warning-color), #ff7043);
+}
+
+.status-badge.setting-enabled {
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, var(--success-color), #4caf50);
+}
+
+.status-badge.opacity-required {
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, var(--info-color), #42a5f5);
+}
+
+.status-badge.opacity-required.with-setting {
+  top: 36px;
+}
+
+.status-badge.textmate-readonly {
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, var(--text-secondary), #666);
 }
 
 .color-item:last-child {
@@ -571,6 +731,90 @@ body {
 
 .color-item.textmate-readonly {
   opacity: 0.6;
+  position: relative;
+}
+
+.color-item.textmate-readonly::after {
+  content: '📝 TextMate';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, var(--text-secondary), #666);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-small);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-light);
+  z-index: 2;
+}
+
+/* Dependency indicators */
+.color-item[data-depends-on] {
+  position: relative;
+}
+
+.color-item[data-depends-on]:not(.dependency-satisfied) {
+  opacity: 0.35;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+.color-item[data-depends-on]:not(.dependency-satisfied)::before {
+  content: '🔗 Requires: ' attr(data-depends-on);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: var(--border-radius);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: var(--shadow-heavy);
+}
+
+/* Override for requires-opacity items to avoid conflicts */
+.color-item[data-depends-on]:not(.dependency-satisfied).requires-opacity::before {
+  content: '🔗 Requires: ' attr(data-depends-on);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: var(--border-radius);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: var(--shadow-heavy);
+}
+
+/* Category-specific styling */
+.color-item.category-workbench {
+  border-left: 4px solid var(--info-color);
+}
+
+.color-item.category-editor {
+  border-left: 4px solid var(--success-color);
+}
+
+.color-item.category-syntax {
+  border-left: 4px solid var(--warning-color);
+}
+
+.color-item.category-ui {
+  border-left: 4px solid var(--accent-color);
+}
+
+.color-item.category-terminal {
+  border-left: 4px solid var(--error-color);
 }
 
 .color-info {
@@ -608,6 +852,17 @@ body {
   gap: 12px;
   flex-shrink: 0;
   min-width: 200px;
+  transition: all var(--transition-fast);
+}
+
+.color-item.requires-setting .color-controls {
+  opacity: 0.5;
+  filter: blur(1px);
+}
+
+.color-item.requires-setting.setting-enabled .color-controls {
+  opacity: 1;
+  filter: none;
 }
 
 .color-inputs-row {
@@ -875,6 +1130,32 @@ mark {
   
   .color-slider-row {
     margin-top: 8px;
+  }
+  
+  /* Adjust indicators for mobile */
+  .color-item .status-badge {
+    position: static;
+    display: inline-block;
+    margin: 4px;
+    text-align: center;
+  }
+  
+  .color-item .status-badge.setting-required,
+  .color-item .status-badge.setting-enabled,
+  .color-item .status-badge.textmate-readonly {
+    display: block;
+    margin-top: 8px;
+    width: 100%;
+  }
+  
+  .color-item .status-badge.opacity-required {
+    display: block;
+    margin-bottom: 8px;
+    width: 100%;
+  }
+  
+  .color-item .status-badge.opacity-required.with-setting {
+    margin-top: 4px;
   }
 }
 
@@ -1152,6 +1433,13 @@ mark {
   cursor: pointer;
 }
 
+.color-slider.opacity-slider {
+  background: linear-gradient(to right, 
+    rgba(255, 255, 255, 0) 0%, 
+    var(--accent-color) 100%);
+  border: 1px solid var(--border-light);
+}
+
 .color-slider::-webkit-slider-thumb {
   appearance: none;
   width: 22px;
@@ -1162,6 +1450,11 @@ mark {
   cursor: pointer;
   box-shadow: var(--shadow-medium);
   transition: all var(--transition-fast);
+}
+
+.color-slider.opacity-slider::-webkit-slider-thumb {
+  background: linear-gradient(135deg, var(--info-color), var(--accent-color));
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .color-slider::-webkit-slider-thumb:hover {
@@ -1185,6 +1478,17 @@ mark {
   min-width: 40px;
   text-align: center;
   font-family: var(--vscode-editor-font-family, 'Consolas', monospace);
+}
+
+.slider-value.opacity-value {
+  background: linear-gradient(135deg, var(--info-color), var(--accent-color));
+  color: white;
+  font-weight: 700;
+}
+
+.slider-value.opacity-value::after {
+  content: '%';
+  opacity: 0.8;
 }
 
 /* Responsive Design */

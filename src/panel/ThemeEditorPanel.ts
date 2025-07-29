@@ -760,17 +760,40 @@ export class ThemeEditorPanel {
 				const alphaPercent = safeValue.length === 9
 					? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
 					: 100;
-				html += `<div class="color-item" data-search="${key.toLowerCase()} ${description.toLowerCase()}">
-					<div class="color-info">
+				
+				// Determine special classes and indicators
+				const requiresOpacity = safeValue.length === 9 || key.includes('opacity') || key.includes('alpha') || description.toLowerCase().includes('opacity');
+				const requiresSetting = key.includes('tab') || key.includes('panel') || key.includes('minimap');
+				const itemClasses = ['color-item'];
+				if (requiresOpacity) itemClasses.push('requires-opacity');
+				if (requiresSetting) itemClasses.push('requires-setting');
+				
+				html += `<div class="${itemClasses.join(' ')}" data-search="${key.toLowerCase()} ${description.toLowerCase()}">
+					<span class="border-indicator"></span>`;
+				
+				// Add status badges
+				if (requiresSetting) {
+					html += `<span class="status-badge setting-required">⚙️ Setting Required</span>`;
+				}
+				if (requiresOpacity) {
+					const opacityClass = requiresSetting ? 'opacity-required with-setting' : 'opacity-required';
+					html += `<span class="status-badge ${opacityClass}">👁️ Opacity</span>`;
+				}
+				
+				html += `<div class="color-info">
 						<label class="color-label">${key}</label>
 						<p class="color-description">${description}</p>
 					</div>
 					<div class="color-controls">
-						<input type="color" class="color-picker" name="${key}" value="${pickerValue}" title="Color picker">
-						<input type="text" class="hex-input" name="${key}" value="${safeValue}" 
-							   pattern="^#[0-9a-fA-F]{6,8}$" title="Hex color value">
-					   <input type="range" class="alpha-slider" min="0" max="100" value="${alphaPercent}" name="alpha_${key}" title="Opacity (%)">
-					   <input type="number" class="alpha-input" min="0" max="100" value="${alphaPercent}" name="alpha_${key}" title="Opacity (%)">
+						<div class="color-inputs-row">
+							<input type="color" class="color-picker" name="${key}" value="${pickerValue}" title="Color picker">
+							<input type="text" class="hex-input" name="${key}" value="${safeValue}" 
+								   pattern="^#[0-9a-fA-F]{6,8}$" title="Hex color value">
+						</div>
+						<div class="color-slider-row">
+							<input type="range" class="color-slider${requiresOpacity ? ' opacity-slider' : ''}" min="0" max="100" value="${alphaPercent}" name="alpha_${key}" title="Opacity (%)">
+							<span class="slider-value${requiresOpacity ? ' opacity-value' : ''}">${alphaPercent}</span>
+						</div>
 					</div>
 				</div>`;
 			});
@@ -887,16 +910,32 @@ export class ThemeEditorPanel {
 				const alphaPercent = safeValue.length === 9
 					? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
 					: 100;
-				html += `<div class="color-item" data-search="${key}">
-							<div class="color-info">
+				
+				// Determine special classes for semantic tokens
+				const requiresOpacity = safeValue.length === 9 || description.toLowerCase().includes('opacity');
+				const itemClasses = ['color-item'];
+				if (requiresOpacity) itemClasses.push('requires-opacity');
+				
+				html += `<div class="${itemClasses.join(' ')}" data-search="${key}">
+							<span class="border-indicator"></span>`;
+				
+				// Add status badges for semantic tokens
+				if (requiresOpacity) {
+					html += `<span class="status-badge opacity-required">👁️ Opacity</span>`;
+				}
+				
+				html += `<div class="color-info">
 								<label class="color-label">${key}</label>
 								<p class="color-description">${description}</p>
 							</div>
 							<div class="color-controls">
-								<input type="color" class="color-picker" name="semantic_${key}" value="${semPicker}" />
-								<input type="text" class="hex-input" name="semantic_${key}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />
-								<input type="range" class="alpha-slider" min="0" max="100" value="${alphaPercent}" name="alpha_semantic_${key}" title="Alpha (%)" />
-								<input type="number" class="alpha-input" min="0" max="100" value="${alphaPercent}" name="alpha_semantic_${key}" title="Alpha (%)" />`;
+								<div class="color-inputs-row">
+									<input type="color" class="color-picker" name="semantic_${key}" value="${semPicker}" />
+									<input type="text" class="hex-input" name="semantic_${key}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />
+								</div>
+								<div class="color-slider-row">
+									<input type="range" class="color-slider${requiresOpacity ? ' opacity-slider' : ''}" min="0" max="100" value="${alphaPercent}" name="alpha_semantic_${key}" title="Alpha (%)" />
+									<span class="slider-value${requiresOpacity ? ' opacity-value' : ''}">${alphaPercent}</span>`;
 				if (isObj) {
 					html += `<select name="semantic_${key}_fontStyle">
 								<option value=""${!fontStyle ? ' selected' : ''}>normal</option>
@@ -905,7 +944,8 @@ export class ThemeEditorPanel {
 								<option value="underline"${fontStyle === 'underline' ? ' selected' : ''}>underline</option>
 							</select>`;
 				}
-				html += `      </div>
+				html += `      		</div>
+							</div>
 						</div>`;
 			});
 
@@ -1149,15 +1189,41 @@ export class ThemeEditorPanel {
 				const alphaPercent = safeValue.length === 9
 					? Math.round(parseInt(safeValue.slice(7, 9), 16) / 255 * 100)
 					: 100;
-				html += `<div class="color-item" data-search="${scope}">` +
-					`<div class="color-info"><label class="color-label">${scope}</label>` +
-					`<p class="color-description">${description}</p></div>` +
-					`<div class="color-controls">` +
-					`<input type="color" class="color-picker" name="textmate_${scope}" value="${tmPicker}" />` +
-					`<input type="text" class="hex-input" name="textmate_${scope}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />` +
-					`<input type="range" class="alpha-slider" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />` +
-					`<input type="number" class="alpha-input" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />` +
-					`</div></div>`;
+				
+				// Determine special classes for TextMate tokens
+				const requiresOpacity = safeValue.length === 9 || description.toLowerCase().includes('opacity');
+				const isReadonly = !tokenSettings; // Mark as readonly if no token settings found
+				const itemClasses = ['color-item'];
+				if (requiresOpacity) itemClasses.push('requires-opacity');
+				if (isReadonly) itemClasses.push('textmate-readonly');
+				
+				html += `<div class="${itemClasses.join(' ')}" data-search="${scope}">
+							<span class="border-indicator"></span>`;
+				
+				// Add status badges for TextMate tokens
+				if (isReadonly) {
+					html += `<span class="status-badge textmate-readonly">📝 TextMate</span>`;
+				}
+				if (requiresOpacity) {
+					const opacityClass = isReadonly ? 'opacity-required with-setting' : 'opacity-required';
+					html += `<span class="status-badge ${opacityClass}">👁️ Opacity</span>`;
+				}
+				
+				html += `<div class="color-info">
+							<label class="color-label">${scope}</label>
+							<p class="color-description">${description}</p>
+						</div>
+						<div class="color-controls">
+							<div class="color-inputs-row">
+								<input type="color" class="color-picker" name="textmate_${scope}" value="${tmPicker}" />
+								<input type="text" class="hex-input" name="textmate_${scope}" value="${safeValue}" pattern="^#[0-9a-fA-F]{6,8}$" />
+							</div>
+							<div class="color-slider-row">
+								<input type="range" class="color-slider${requiresOpacity ? ' opacity-slider' : ''}" min="0" max="100" value="${alphaPercent}" name="alpha_textmate_${scope}" title="Alpha (%)" />
+								<span class="slider-value${requiresOpacity ? ' opacity-value' : ''}">${alphaPercent}</span>
+							</div>
+						</div>  
+					</div>`;
 			});
 			html += `</div></div>`;
 		}
