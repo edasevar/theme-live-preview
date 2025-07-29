@@ -234,9 +234,9 @@ class ThemeEditorPanel {
         this.isUpdating = true;
         try {
             const changes = [];
-            for (const [key, value] of this.pendingUpdates) {
+            this.pendingUpdates.forEach((value, key) => {
                 changes.push({ key, value });
-            }
+            });
             this.pendingUpdates.clear();
             if (changes.length === 1) {
                 // Single update

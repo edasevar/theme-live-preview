@@ -5,6 +5,14 @@ All notable changes to the Theme Editor Live extension will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.5] - 2025-07-29
+
+### Fixed
+- **🔧 Map Iteration Fix**: Fixed TypeScript compilation error with Map iteration in ThemeEditorPanel
+  - Replaced ES2015+ `for...of` syntax with `.forEach()` method for better ES2020 compatibility
+  - Ensures proper compilation across different TypeScript versions and configurations
+  - Resolved `--downlevelIteration` flag requirement error
+
 ## [2.6.4] - 2025-07-29
 
 ### Removed

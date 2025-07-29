@@ -224,9 +224,9 @@ export class ThemeEditorPanel {
 		this.isUpdating = true;
 		try {
 			const changes: Array<{ key: string, value: string }> = [];
-			for (const [key, value] of this.pendingUpdates) {
+			this.pendingUpdates.forEach((value, key) => {
 				changes.push({ key, value });
-			}
+			});
 			this.pendingUpdates.clear();
 
 			if (changes.length === 1) {
