@@ -1,7 +1,7 @@
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
+const typescriptEslint = require('@typescript-eslint/eslint-plugin');
+const tsParser = require('@typescript-eslint/parser');
 
-export default [
+module.exports = [
     {
         files: ['src/**/*.ts'],
         languageOptions: {
@@ -30,7 +30,7 @@ export default [
         files: ['**/*.js'],
         languageOptions: {
             ecmaVersion: 2020,
-            sourceType: 'module'
+            sourceType: 'commonjs'
         }
     }
 ];

@@ -1051,22 +1051,24 @@
 	// TOKEN COLORS (TEXTMATE)
 	// =================================================
 	"tokenColors": [
-		// ---Base Structure---
+		// --- Source & Base Structure ---
 		{
 			"scope": [
 				"source", // Base source code text
-				"support.type.property-name.css" // CSS property names like "color", "margin"
+				"text.html.basic", // HTML text content
+				"text.xml", // XML text content
+				"text.tex", // TeX/LaTeX content
+				"text.log" // Log file content
 			],
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Punctuation---
+		
+		// --- Basic Punctuation & Delimiters ---
 		{
 			"scope": [
-				"punctuation", // Generic punctuation marks
 				"punctuation.terminator", // Statement terminators like semicolons
-				"punctuation.definition.tag", // HTML/XML tag punctuation < >
 				"punctuation.separator", // Separators like commas, periods
 				"punctuation.definition.string", // String quote marks " '
 				"punctuation.section.block" // Block delimiters like { } [ ]
@@ -1075,6 +1077,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Advanced Punctuation & Operators ---
 		{
 			"scope": [
 				"punctuation.accessor", // Dot access (.)
@@ -1083,8 +1087,6 @@
 				"punctuation.definition.block", // {} blocks
 				"punctuation.definition.arguments", // () parens
 				"punctuation.definition.array", // [] brackets
-				"punctuation.definition.tag.begin.jsx", // JSX <
-				"punctuation.definition.tag.end.jsx", // JSX />
 				"punctuation.section.embedded.begin", // Start of embedded block (e.g. {{)
 				"punctuation.section.embedded.end" // End of embedded block
 			],
@@ -1092,10 +1094,47 @@
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Operators & Keywords---
+		
+		// --- Language Keywords ---
 		{
 			"scope": [
-				"keyword", // Language keywords: if, else, for, while, return, class, function
+				"keyword.control.flow", // Flow control: if, for, while, return, etc.
+				"keyword.control.loop", // for, while loops
+				"keyword.control.resume", // continue keyword
+				"keyword.control.return", // return keyword
+				"keyword.control.yield" // yield keyword
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		
+		// --- Import & Module Keywords ---
+		{
+			"scope": [
+				"keyword.control.import", // Import statements: import, from, require
+				"keyword.control.from", // 'from' in import statements
+				"keyword.import" // Import-related keywords
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		
+		// --- Exception Handling Keywords ---
+		{
+			"scope": [
+				"keyword.control.exception", // Exception handling: try, catch, finally, throw
+				"keyword.control.trycatch" // Try-catch block keywords
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		
+		// --- Operators ---
+		{
+			"scope": [
 				"keyword.operator", // Operators (+, -, =)
 				"keyword.operator.assignment", // =
 				"keyword.operator.comparison", // ==, !=
@@ -1110,30 +1149,8 @@
 				"foreground": "#ffffff"
 			}
 		},
-		{
-			"scope": [
-				"keyword.control.import", // Import statements: import, from, require
-				"keyword.control.from", // 'from' in import statements
-				"keyword.import" // Import-related keywords
-			],
-			"settings": {
-				"foreground": "#ffffff"
-			}
-		},
-		{
-			"scope": [
-				"keyword.control.exception", // Exception handling: try, catch, finally, throw
-				"keyword.control.trycatch", // Try-catch block keywords
-				"keyword.control.flow", // Flow control: if, for, while, return, etc.
-				"keyword.control.loop", // for, while loops
-				"keyword.control.resume", // continue keyword
-				"keyword.control.return", // return keyword
-				"keyword.control.yield" // yield keyword
-			],
-			"settings": {
-				"foreground": "#ffffff"
-			}
-		},
+		
+		// --- Storage & Modifiers ---
 		{
 			"scope": [
 				"storage.modifier", // Access modifiers: public, private, protected, static
@@ -1144,10 +1161,10 @@
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Strings & Literals---
+		
+		// --- String Literals ---
 		{
 			"scope": [
-				"string", // String literals: "text", 'text', `template`
 				"string.other.link", // URL strings and link text
 				"markup.inline.raw.string.markdown" // Inline code strings in markdown
 			],
@@ -1155,6 +1172,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- String Components ---
 		{
 			"scope": [
 				"constant.character.escape", // Escape sequences: \n, \t, \", \\
@@ -1164,6 +1183,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Numeric Literals ---
 		{
 			"scope": [
 				"constant.numeric", // Numbers: 42, 3.14, 0xFF, 1e5, -100
@@ -1173,35 +1194,38 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Boolean & Language Constants ---
 		{
 			"scope": [
-				"constant.language.boolean", // Boolean values: true, false
-				"constant.language.json" // JSON constants: null, true, false
+				"constant.language", // Boolean values: true, false
 			],
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Support Constants ---
 		{
 			"scope": [
-				"support.constant.color.w3c-standard-color-name.css", // CSS colors: red, blue
-				"support.constant.font-name.css", // Font names
-				"support.constant.property-value.css" // CSS values: block, none, inline
+				"support.constant", // Built-in constants: null, undefined, NaN
 			],
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Comments---
+		
+		// --- Standard Comments ---
 		{
 			"scope": [
-				"comment", // All comment types: //, /* */, #, <!-- -->
 				"punctuation.definition.comment" // Comment delimiters and symbols
 			],
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Documentation Comments ---
 		{
 			"scope": [
 				"comment.documentation", // Documentation comments: /** JSDoc */, /// XML docs
@@ -1211,18 +1235,32 @@
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Variables & Properties---
+		
+		// --- General Variables ---
 		{
 			"scope": [
-				"variable", // Variable names: let userName, const config
 				"meta.variable", // Variable declarations and references
-				"variable.other.object.property", // Object properties: user.name, obj.value
 				"variable.other.readwrite.alias" // Variable aliases and references
 			],
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Object Properties ---
+		{
+			"scope": [
+				"variable.other.object.property", // Object properties: user.name, obj.value
+				"variable.other.property", // Property access: obj.prop, this.value
+				"meta.property", // Property definitions and references
+				"meta.object-literal.key" // Object literal keys: {name: "value", id: 123}
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		
+		// --- Object Variables ---
 		{
 			"scope": [
 				"variable.other.object" // Object variable references: myObject, userdata
@@ -1231,6 +1269,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Global & Special Variables ---
 		{
 			"scope": [
 				"variable.other.global", // Global variables: window, document, process
@@ -1242,6 +1282,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Local Variables ---
 		{
 			"scope": [
 				"variable.other.local" // Local scope variables within functions/blocks
@@ -1250,6 +1292,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Function Parameters ---
 		{
 			"scope": [
 				"variable.parameter", // Function parameters: function(id, name, options)
@@ -1259,15 +1303,8 @@
 				"foreground": "#ffffff"
 			}
 		},
-		{
-			"scope": [
-				"variable.other.property", // Property access: obj.prop, this.value
-				"meta.property" // Property definitions and references
-			],
-			"settings": {
-				"foreground": "#ffffff"
-			}
-		},
+		
+		// --- Constants & Readonly ---
 		{
 			"scope": [
 				"variable.other.constant", // Constants: const MAX_SIZE, TIMEOUT_VALUE
@@ -1279,15 +1316,8 @@
 				"foreground": "#ffffff"
 			}
 		},
-		{
-			"scope": [
-				"meta.object-literal.key" // Object literal keys: {name: "value", id: 123}
-			],
-			"settings": {
-				"foreground": "#ffffff"
-			}
-		},
-		// ---Functions & Methods---
+		
+		// --- Method Definitions ---
 		{
 			"scope": [
 				"entity.name.function.method", // Method definitions: getName(), calculateTotal()
@@ -1297,6 +1327,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Function Names ---
 		{
 			"scope": [
 				"entity.name.function", // Function names: function processData()
@@ -1307,6 +1339,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Function Variables ---
 		{
 			"scope": [
 				"variable.function" // Function variables: const handler = () => {}
@@ -1315,15 +1349,8 @@
 				"foreground": "#ffffff"
 			}
 		},
-		{
-			"scope": [
-				"entity.name.function.preprocessor", // Preprocessor functions in C/C++
-				"meta.preprocessor" // Preprocessor directives like #define, #include
-			],
-			"settings": {
-				"foreground": "#ffffff"
-			}
-		},
+		
+		// --- Function Meta Information ---
 		{
 			"scope": [
 				"meta.function.parameters", // Function parameter block
@@ -1334,7 +1361,19 @@
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Types & Classes---
+		
+		// --- Preprocessor Functions ---
+		{
+			"scope": [
+				"entity.name.function.preprocessor", // Preprocessor functions in C/C++
+				"meta.preprocessor" // Preprocessor directives like #define, #include
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		
+		// --- Class Definitions ---
 		{
 			"scope": [
 				"entity.name.type.class" // Class definitions: class User, class Component
@@ -1343,6 +1382,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Interface Definitions ---
 		{
 			"scope": [
 				"entity.name.type.interface", // Interface definitions: interface IUser
@@ -1352,6 +1393,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Struct Definitions ---
 		{
 			"scope": [
 				"entity.name.type.struct" // Struct definitions in C#, Rust: struct Point
@@ -1360,6 +1403,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Enum Definitions ---
 		{
 			"scope": [
 				"entity.name.type.enum" // Enum definitions: enum Status, enum Color
@@ -1368,6 +1413,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Built-in Types ---
 		{
 			"scope": [
 				"support.type" // Built-in types like string, number, boolean
@@ -1376,6 +1423,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Type Parameters & Annotations ---
 		{
 			"scope": [
 				"variable.type.parameter", // Parameter types in function signatures
@@ -1387,29 +1436,36 @@
 				"foreground": "#ffffff"
 			}
 		},
-		// ---JSX, HTML, Markup---
+		
+		// --- HTML/XML Tag Names ---
 		{
 			"scope": [
 				"entity.name.tag", // HTML/XML tag names: <div>, <span>, <component>
-				"entity.name.tag.jsx" // JSX tag names
+				"punctuation.definition.tag", // HTML/XML tag punctuation < >
+				"punctuation.definition.tag.begin", // JSX <
+				"punctuation.definition.tag.end" // JSX />
 			],
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
+		
+
+		// --- HTML Attributes ---
 		{
 			"scope": [
 				"entity.other.attribute-name", // HTML attributes: class, id, src, href
-				"entity.other.attribute-name.jsx", // JSX props
 				"meta.attribute" // Attribute definitions and values
 			],
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Markup & Content ---
 		{
 			"scope": [
-				"meta.embedded.block.jsx", // Embedded JSX blocks
+				"meta.embedded.block", // Embedded blocks
 				"markup.bold.markdown", // Bold text in markdown files
 				"markup.underline.link" // Underlined links in markup languages
 			],
@@ -1417,21 +1473,21 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Git Diff & Version Control ---
 		{
 			"scope": [
 				"markup.changed.diff", // Git diff changed lines
 				"markup.inserted.diff", // Git diff inserted lines
 				"markup.deleted.diff", // Git diff deleted lines
-				"text.html.basic", // HTML text content
-				"text.xml", // XML text content
-				"text.tex", // TeX/LaTeX content
-				"text.log" // Log file content
+				"meta.diff.header.from-file" // Git diff headers
 			],
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Meta, Decorators, Annotations---
+		
+		// --- Decorators ---
 		{
 			"scope": [
 				"meta.decorator", // Decorators: @Component, @Injectable, @Override
@@ -1442,6 +1498,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Annotations & Meta ---
 		{
 			"scope": [
 				"meta.annotation", // Java/Kotlin annotations
@@ -1453,7 +1511,8 @@
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Namespaces and Modules---
+		
+		// --- Namespaces ---
 		{
 			"scope": [
 				"entity.name.namespace", // Namespace declarations: namespace MyApp, using System
@@ -1463,6 +1522,8 @@
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Modules ---
 		{
 			"scope": [
 				"entity.name.module", // Module names: module App, export module Utils
@@ -1472,48 +1533,65 @@
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Debugging Tokens---
+		
+		// --- Labels ---
+		{
+			"scope": [
+				"entity.name.label", // Labels in switch/goto statements: case:, default:
+				"punctuation.definition.label" // Label punctuation and separators
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		
+		// --- Component Classes ---
+		{
+			"scope": [
+				"support.class.component" // Component class names in frameworks like React, Vue
+			],
+			"settings": {
+				"foreground": "#ffffff"
+			}
+		},
+		
+		// --- Information Tokens ---
 		{
 			"scope": "token.info-token", // Information messages in debug/log output
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Warning Tokens ---
 		{
 			"scope": "token.warn-token", // Warning messages in debug/log output
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Error Tokens ---
 		{
 			"scope": "token.error-token", // Error messages in debug/log output
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
+		
+		// --- Debug Tokens ---
 		{
 			"scope": "token.debug-token", // Debug-specific messages and output
 			"settings": {
 				"foreground": "#ffffff"
 			}
 		},
-		// ---Invalid or Deprecated Tokens---
+		
+		// --- Invalid & Deprecated ---
 		{
 			"scope": [
 				"invalid.illegal", // Syntax errors
-				"invalid.deprecated", // Deprecated usage
-				"meta.diff.header.from-file" // Git diff headers
-			],
-			"settings": {
-				"foreground": "#ffffff"
-			}
-		},
-		// ---Support Classes & Components---
-		{
-			"scope": [
-				"support.class.component", // Component class names in frameworks like React, Vue
-				"entity.name.label", // Labels in switch/goto statements: case:, default:
-				"punctuation.definition.label" // Label punctuation and separators
+				"invalid.deprecated" // Deprecated usage
 			],
 			"settings": {
 				"foreground": "#ffffff"

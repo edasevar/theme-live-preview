@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(require("path"));
+// @ts-ignore: no type declarations for this module
 const test_electron_1 = require("@vscode/test-electron");
 async function main() {
     try {

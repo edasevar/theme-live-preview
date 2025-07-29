@@ -81,13 +81,30 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	// Refresh webview command
+	const refreshWebviewCommand = vscode.commands.registerCommand('themeEditor.refreshWebview', () => {
+		console.log('Theme Editor Live: Refreshing webview');
+		try {
+			if (ThemeEditorPanel.currentPanel) {
+				ThemeEditorPanel.currentPanel.refresh();
+				vscode.window.showInformationMessage('Theme Editor webview refreshed successfully');
+			} else {
+				vscode.window.showWarningMessage('Theme Editor is not currently open');
+			}
+		} catch (error) {
+			console.error('Failed to refresh webview:', error);
+			vscode.window.showErrorMessage(`Failed to refresh webview: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	});
+
 	// Register commands
 	context.subscriptions.push(
 		openCommand, 
 		cleanupCommand,
 		reloadTemplateCommand,
 		syncTemplateCommand,
-		templateStatsCommand
+		templateStatsCommand,
+		refreshWebviewCommand
 	);
 	
 	console.log('Theme Editor Live: Commands registered successfully');

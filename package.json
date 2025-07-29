@@ -3,7 +3,6 @@
 	"displayName": "Theme Editor Live",
 	"description": "Visually edit and preview VS Code themes in real time with comprehensive theme management.",
 	"version": "2.0.0",
-	"type": "module",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/edasevar/theme-editor-live"
@@ -24,9 +23,10 @@
 	],
 	"activationEvents": [
 		"onCommand:themeEditor.open",
-		"onCommand:themeEditor.loadTheme",
-		"onCommand:themeEditor.exportTheme",
-		"onCommand:themeEditor.resetTheme",
+		"onCommand:themeEditor.cleanupSettings",
+		"onCommand:themeEditor.reloadTemplate",
+		"onCommand:themeEditor.syncTemplate",
+		"onCommand:themeEditor.templateStats",
 		"onLanguage:json",
 		"onLanguage:jsonc"
 	],
@@ -36,21 +36,6 @@
 			{
 				"command": "themeEditor.open",
 				"title": "Open Theme Editor Live",
-				"category": "Theme Editor"
-			},
-			{
-				"command": "themeEditor.loadTheme",
-				"title": "Load Theme File",
-				"category": "Theme Editor"
-			},
-			{
-				"command": "themeEditor.exportTheme",
-				"title": "Export Current Theme",
-				"category": "Theme Editor"
-			},
-			{
-				"command": "themeEditor.resetTheme",
-				"title": "Reset Theme to Default",
 				"category": "Theme Editor"
 			},
 			{
@@ -72,6 +57,11 @@
 				"command": "themeEditor.templateStats",
 				"title": "Show Template Statistics",
 				"category": "Theme Editor"
+			},
+			{
+				"command": "themeEditor.refreshWebview",
+				"title": "Refresh Editor Webview",
+				"category": "Theme Editor"
 			}
 		],
 		"menus": {
@@ -80,13 +70,7 @@
 					"command": "themeEditor.open"
 				},
 				{
-					"command": "themeEditor.loadTheme"
-				},
-				{
-					"command": "themeEditor.exportTheme"
-				},
-				{
-					"command": "themeEditor.resetTheme"
+					"command": "themeEditor.cleanupSettings"
 				},
 				{
 					"command": "themeEditor.reloadTemplate"
@@ -96,6 +80,9 @@
 				},
 				{
 					"command": "themeEditor.templateStats"
+				},
+				{
+					"command": "themeEditor.refreshWebview"
 				}
 			]
 		}
@@ -109,12 +96,13 @@
 		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.102.0",
-		"@types/node": "24.1.0",
+		"@types/jest": "^30.0.0",
 		"@types/mocha": "^10.0.10",
-		"@vscode/test-electron": "^2.5.2",
+		"@types/node": "24.1.0",
+		"@types/vscode": "^1.102.0",
 		"@typescript-eslint/eslint-plugin": "^8.38.0",
 		"@typescript-eslint/parser": "^8.38.0",
+		"@vscode/test-electron": "^2.0.1",
 		"eslint": "^9.32.0",
 		"mocha": "^11.7.1",
 		"typescript": "^5.8.3"

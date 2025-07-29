@@ -33,6 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+require("mocha");
 const assert = __importStar(require("assert"));
 const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));

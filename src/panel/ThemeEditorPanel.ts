@@ -659,91 +659,83 @@ export class ThemeEditorPanel {
 		 </html>`;
 	}
 
+	private parseTemplateCategoriesFromFile(): Record<string, string[]> {
+		const categories: Record<string, string[]> = {};
+		
+		try {
+			const templatePath = path.join(this.extensionUri.fsPath, 'TEMPLATE.jsonc');
+			const templateContent = fs.readFileSync(templatePath, 'utf8');
+			const lines = templateContent.split(/\r?\n/);
+			
+			let currentCategory = '';
+			let inColorsSection = false;
+			
+			for (const line of lines) {
+				// Check if we're entering the colors section
+				if (/"colors"\s*:\s*\{/.test(line)) {
+					inColorsSection = true;
+					continue;
+				}
+				
+				// Check if we're leaving the colors section
+				if (inColorsSection && /^\s*\},?\s*$/.test(line) && !line.includes('"')) {
+					inColorsSection = false;
+					break;
+				}
+				
+				if (!inColorsSection) continue;
+				
+				// Look for category headers like "// --- Base Colors ---"
+				const categoryMatch = line.match(/^\s*\/\/\s*---\s*(.+?)\s*---/);
+				if (categoryMatch) {
+					currentCategory = categoryMatch[1].trim();
+					if (!categories[currentCategory]) {
+						categories[currentCategory] = [];
+					}
+					continue;
+				}
+				
+				// Look for color property definitions
+				const colorMatch = line.match(/^\s*"([^"]+)"\s*:/);
+				if (colorMatch && currentCategory) {
+					const colorKey = colorMatch[1];
+					if (!categories[currentCategory].includes(colorKey)) {
+						categories[currentCategory].push(colorKey);
+					}
+				}
+			}
+			
+			console.log('Parsed template categories:', Object.keys(categories));
+			console.log('Total color properties:', Object.values(categories).flat().length);
+			
+		} catch (error) {
+			console.error('Error parsing template categories:', error);
+		}
+		
+		return categories;
+	}
+
 	private generateWorkbenchColorsSection (currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
 		// Merge template keys with current theme values so all colors show
 		const colors = { ...templateTheme.colors, ...currentTheme.colors };
 
-		// Group colors by category
-		const categories: Record<string, string[]> = {
-			'Editor Core': [
-				'editor', 'editor.background', 'editor.foreground', 'editor.lineHighlightBackground', 'editor.lineHighlightBorder', 'editor.selectionBackground', 'editor.selectionHighlightBackground', 'editor.inactiveSelectionBackground', 'editor.wordHighlightBackground', 'editor.wordHighlightStrongBackground', 'editor.wordHighlightTextBackground', 'editor.rangeHighlightBackground', 'editor.hoverHighlightBackground', 'editor.findMatchBackground', 'editor.findMatchHighlightBackground', 'editor.findRangeHighlightBackground', 'editor.foldBackground', 'editorCursor.foreground', 'editorLink.activeForeground', 'editorWhitespace.foreground', 'editorIndentGuide.background1', 'editorIndentGuide.activeBackground1', 'editorRuler.foreground', 'editorBracketMatch.background', 'editorBracketMatch.border', 'editorBracketHighlight.foreground1', 'editorBracketHighlight.foreground2', 'editorBracketHighlight.foreground3', 'editorOverviewRuler.border'
-			],
-			'Editor Widgets': [
-				'editorWidget.background', 'editorWidget.border', 'editorSuggestWidget.background', 'editorSuggestWidget.border', 'editorSuggestWidget.foreground', 'editorSuggestWidget.highlightForeground', 'editorSuggestWidget.selectedBackground', 'editorHoverWidget.background', 'editorHoverWidget.border', 'editorGhostText.foreground', 'editorHint.foreground', 'editorInfo.foreground', 'editorWarning.foreground', 'editorError.foreground'
-			],
-			'Editor Gutter': [
-				'editorGutter.background', 'editorGutter.addedBackground', 'editorGutter.modifiedBackground', 'editorGutter.deletedBackground', 'editorGutter.foldingControlForeground', 'editorLineNumber.foreground', 'editorLineNumber.activeForeground'
-			],
-			'Editor Inlay Hints': [
-				'editorInlayHint.background', 'editorInlayHint.foreground', 'editorInlayHint.typeBackground', 'editorInlayHint.typeForeground', 'editorInlayHint.parameterBackground', 'editorInlayHint.parameterForeground'
-			],
-			'Editor Groups & Tabs': [
-				'editorGroup.border', 'editorGroup.dropBackground', 'editorGroupHeader.tabsBackground', 'editorGroupHeader.noTabsBackground', 'tab.activeBackground', 'tab.activeForeground', 'tab.activeModifiedBorder', 'tab.inactiveBackground', 'tab.inactiveForeground', 'tab.inactiveModifiedBorder', 'tab.border', 'tab.hoverBackground', 'tab.unfocusedActiveModifiedBorder', 'tab.unfocusedHoverBackground', 'tab.unfocusedInactiveModifiedBorder', 'tab.lastPinnedBorder'
-			],
-			'Activity Bar': [
-				'activityBar.background', 'activityBar.foreground', 'activityBar.inactiveForeground', 'activityBar.border', 'activityBar.activeBorder', 'activityBarBadge.background', 'activityBarBadge.foreground', 'activityBar.dropBorder', 'activityErrorBadge.background', 'activityErrorBadge.foreground', 'activityWarningBadge.background', 'activityWarningBadge.foreground',
-			],
-			'Sidebar': [
-				'sideBar.background', 'sideBar.foreground', 'sideBar.border', 'sideBarTitle.foreground', 'sideBarSectionHeader.background', 'sideBarSectionHeader.foreground', 'sideBarSectionHeader.border', 'sideBar.dropBackground'
-			],
-			'Status Bar': [
-				'statusBar.background', 'statusBar.foreground', 'statusBar.border', 'statusBar.debuggingBackground', 'statusBar.debuggingForeground', 'statusBar.noFolderBackground', 'statusBar.noFolderForeground', 'statusBarItem.activeBackground', 'statusBarItem.hoverBackground', 'statusBarItem.remoteBackground', 'statusBarItem.remoteForeground', 'statusBarItem.errorBackground', 'statusBarItem.errorForeground'
-			],
-			'Title Bar': [
-				'titleBar.activeBackground', 'titleBar.activeForeground', 'titleBar.inactiveBackground', 'titleBar.inactiveForeground', 'titleBar.border',
-			],
-			'Panel': [
-				'panel.background', 'panel.border', 'panel.dropBorder', 'panelTitle.activeBorder', 'panelTitle.activeForeground', 'panelTitle.inactiveForeground', 'panelInput.border',
-			],
-			'Terminal': [
-				'terminal.background', 'terminal.foreground', 'terminal.border', 'terminalCursor.background', 'terminalCursor.foreground', 'terminal.ansiBlack', 'terminal.ansiBlue', 'terminal.ansiCyan', 'terminal.ansiGreen', 'terminal.ansiMagenta', 'terminal.ansiRed', 'terminal.ansiWhite', 'terminal.ansiYellow', 'terminal.ansiBrightBlack', 'terminal.ansiBrightBlue', 'terminal.ansiBrightCyan', 'terminal.ansiBrightGreen', 'terminal.ansiBrightMagenta', 'terminal.ansiBrightRed', 'terminal.ansiBrightWhite', 'terminal.ansiBrightYellow', 'terminal.selectionBackground',
-			],
-			'Lists & Trees': [
-				'list.activeSelectionBackground', 'list.activeSelectionForeground', 'list.inactiveSelectionBackground', 'list.inactiveSelectionForeground', 'list.hoverBackground', 'list.hoverForeground', 'list.focusOutline', 'list.inactiveFocusOutline', 'list.errorForeground', 'list.warningForeground', 'list.filterMatchBackground', 'list.highlightForeground'
-			],
-			'Input Controls': [
-				'input.background', 'input.foreground', 'input.border', 'input.placeholderForeground', 'inputOption.activeBackground', 'inputOption.activeBorder', 'inputOption.activeForeground', 'inputOption.hoverBackground'
-			],
-			'Buttons & Badges': [
-				'button.background', 'button.foreground', 'button.hoverBackground', 'button.secondaryBackground', 'button.secondaryForeground', 'button.secondaryHoverBackground', 'badge.background', 'badge.foreground'
-			],
-			'Dropdown': [
-				'dropdown.background', 'dropdown.foreground', 'dropdown.border', 'dropdown.listBackground'
-			],
-			'Peek View': [
-				'peekView.border', 'peekViewTitle.background', 'peekViewTitleDescription.foreground', 'peekViewTitleLabel.foreground', 'peekViewEditor.background', 'peekViewEditor.matchHighlightBackground', 'peekViewResult.background', 'peekViewResult.fileForeground', 'peekViewResult.lineForeground', 'peekViewResult.matchHighlightBackground', 'peekViewResult.selectionBackground', 'peekViewResult.selectionForeground'
-			],
-			'Merge Conflicts': [
-				'merge.border', 'merge.commonContentBackground', 'merge.commonHeaderBackground', 'merge.currentContentBackground', 'merge.currentHeaderBackground', 'merge.incomingContentBackground', 'merge.incomingHeaderBackground'
-			],
-			'Notifications & Settings': [
-				'notifications.background', 'notifications.border', 'notifications.foreground', 'notificationLink.foreground', 'notificationsErrorIcon.foreground', 'notificationsInfoIcon.foreground', 'notificationsWarningIcon.foreground', 'settings.headerForeground', 'settings.textInputForeground', 'settings.modifiedItemIndicator'
-			],
-			'Git Decorations': [
-				'gitDecoration.addedResourceForeground', 'gitDecoration.modifiedResourceForeground', 'gitDecoration.deletedResourceForeground', 'gitDecoration.untrackedResourceForeground', 'gitDecoration.ignoredResourceForeground', 'gitDecoration.conflictingResourceForeground', 'gitDecoration.submoduleResourceForeground'
-			],
-			'Text Links': [
-				'textLink.foreground', 'textLink.activeForeground', 'descriptionForeground'
-			],
-			'Debug': [
-				'debugToolBar.background', 'debugIcon.breakpointForeground', 'debugIcon.startForeground', 'debugIcon.pauseForeground', 'debugIcon.stopForeground', 'debugIcon.disconnectForeground', 'debugIcon.restartForeground', 'debugIcon.stepOverForeground', 'debugIcon.stepIntoForeground', 'debugIcon.stepOutForeground', 'debugIcon.continueForeground'
-			],
-			'Charts': [
-				'charts.foreground', 'charts.lines', 'charts.red', 'charts.blue', 'charts.yellow', 'charts.orange', 'charts.green', 'charts.purple'
-			],
-			'Extensions & Welcome Page': [
-				'extensionButton.prominentBackground', 'extensionButton.prominentForeground', 'extensionButton.prominentHoverBackground', 'extensionBadge.remoteBackground', 'extensionBadge.remoteForeground', 'welcomePage.progress.background', 'welcomePage.progress.foreground', 'welcomePage.tileBackground', 'welcomePage.tileBorder', 'welcomePage.tileHoverBackground'
-			],
-			'Other UI Elements': []
-		};
+		// Parse categories from TEMPLATE.jsonc dynamically
+		const categories = this.parseTemplateCategoriesFromFile();
 
-		// Add uncategorized colors
+		// If parsing failed, fall back to basic categories
+		if (Object.keys(categories).length === 0) {
+			categories['Base Colors'] = Object.keys(colors);
+		}
+
+		// Add uncategorized colors to "Other UI Elements"
 		const categorizedKeys = new Set(Object.values(categories).flat());
-		Object.keys(colors).forEach(key => {
-			if (!categorizedKeys.has(key)) {
-				categories['Other UI Elements'].push(key);
+		const uncategorizedKeys = Object.keys(colors).filter(key => !categorizedKeys.has(key));
+		if (uncategorizedKeys.length > 0) {
+			if (!categories['Other UI Elements']) {
+				categories['Other UI Elements'] = [];
 			}
-		});
+			categories['Other UI Elements'].push(...uncategorizedKeys);
+		}
 
 		let html = '';
 		for (const [categoryName, keys] of Object.entries(categories)) {
@@ -757,7 +749,7 @@ export class ThemeEditorPanel {
 				</h3>
 				<div class="category-content">`;
 
-			keys.forEach(key => {
+			keys.forEach((key: string) => {
 				const value = colors[key] || '#ffffff';
 				const safeValue = this.ensureValidHexColor(value);
 				const description = this.getColorDescription(key);
@@ -789,20 +781,90 @@ export class ThemeEditorPanel {
 		return html;
 	}
 
+	private parseSemanticCategoriesFromFile(): Record<string, string[]> {
+		const categories: Record<string, string[]> = {};
+		
+		try {
+			const templatePath = path.join(this.extensionUri.fsPath, 'TEMPLATE.jsonc');
+			const templateContent = fs.readFileSync(templatePath, 'utf8');
+			const lines = templateContent.split(/\r?\n/);
+			
+			let currentCategory = '';
+			let inSemanticSection = false;
+			
+			for (const line of lines) {
+				// Check if we're entering the semanticTokenColors section
+				if (/"semanticTokenColors"\s*:\s*\{/.test(line)) {
+					inSemanticSection = true;
+					continue;
+				}
+				
+				// Check if we're leaving the semanticTokenColors section
+				if (inSemanticSection && /^\s*\},?\s*$/.test(line) && !line.includes('"')) {
+					inSemanticSection = false;
+					break;
+				}
+				
+				if (!inSemanticSection) continue;
+				
+				// Look for category headers like "// --- Types ---"
+				const categoryMatch = line.match(/^\s*\/\/\s*---\s*(.+?)\s*---/);
+				if (categoryMatch) {
+					currentCategory = categoryMatch[1].trim();
+					if (!categories[currentCategory]) {
+						categories[currentCategory] = [];
+					}
+					continue;
+				}
+				
+				// Look for semantic token property definitions
+				const tokenMatch = line.match(/^\s*"([^"]+)"\s*:/);
+				if (tokenMatch && currentCategory) {
+					const tokenKey = tokenMatch[1];
+					// Skip internal properties that start with dots
+					if (!tokenKey.startsWith('.') && !categories[currentCategory].includes(tokenKey)) {
+						categories[currentCategory].push(tokenKey);
+					}
+				}
+			}
+			
+			console.log('Parsed semantic token categories:', Object.keys(categories));
+			console.log('Total semantic tokens:', Object.values(categories).flat().length);
+			
+		} catch (error) {
+			console.error('Error parsing semantic token categories:', error);
+		}
+		
+		return categories;
+	}
+
 	private generateSemanticTokensSection (currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
 		// Merge template semantic tokens with current theme values
 		const semanticColors = { ...templateTheme.semanticTokenColors, ...currentTheme.semanticTokenColors };
 
-		// Define semantic groups matching TEMPLATE.jsonc comments
-		const semanticGroups: Record<string, string[]> = {
-			'Types': ['class', 'interface', 'enum', 'struct', 'type', 'typeParameter'],
-			'Variables': ['variable', 'parameter', 'property', 'enumMember'],
-			'Values & Literals': ['string', 'number', 'boolean', 'regexp'],
-			'Functions': ['function', 'method'],
-			'Keywords': ['keyword', 'modifier', 'namespace'],
-			'Comments': ['comment'],
-			'Special Modifiers': ['*.static', '*.readonly', '*.decorator', '*.abstract']
-		};
+		// Parse semantic groups from TEMPLATE.jsonc dynamically
+		const semanticGroups = this.parseSemanticCategoriesFromFile();
+
+		// If parsing failed, fall back to basic categories
+		if (Object.keys(semanticGroups).length === 0) {
+			semanticGroups['Types'] = ['class', 'interface', 'enum', 'struct', 'type', 'typeParameter'];
+			semanticGroups['Variables'] = ['variable', 'parameter', 'property', 'enumMember'];
+			semanticGroups['Values & Literals'] = ['string', 'number', 'boolean', 'regexp'];
+			semanticGroups['Functions'] = ['function', 'method'];
+			semanticGroups['Keywords'] = ['keyword', 'modifier', 'namespace'];
+			semanticGroups['Comments'] = ['comment'];
+			semanticGroups['Special Modifiers'] = ['*.static', '*.readonly', '*.decorator', '*.abstract'];
+		}
+
+		// Add uncategorized semantic tokens
+		const categorizedKeys = new Set(Object.values(semanticGroups).flat());
+		const uncategorizedKeys = Object.keys(semanticColors).filter(key => !categorizedKeys.has(key));
+		if (uncategorizedKeys.length > 0) {
+			if (!semanticGroups['Other Semantic Tokens']) {
+				semanticGroups['Other Semantic Tokens'] = [];
+			}
+			semanticGroups['Other Semantic Tokens'].push(...uncategorizedKeys);
+		}
 
 		let html = '';
 		// Render each semantic group
@@ -853,6 +915,124 @@ export class ThemeEditorPanel {
 		return html;
 	}
 
+	private parseTextMateCategoriesFromFile(): Record<string, string[]> {
+		const categories: Record<string, string[]> = {};
+		
+		try {
+			const templatePath = path.join(this.extensionUri.fsPath, 'TEMPLATE.jsonc');
+			const templateContent = fs.readFileSync(templatePath, 'utf8');
+			const lines = templateContent.split(/\r?\n/);
+			
+			let currentCategory = '';
+			let inTokenColorsSection = false;
+			let inScopeArray = false;
+			let inCurrentTokenEntry = false;
+			
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i];
+				
+				// Check if we're entering the tokenColors section
+				if (/"tokenColors"\s*:\s*\[/.test(line)) {
+					inTokenColorsSection = true;
+					continue;
+				}
+				
+				// Check if we're leaving the tokenColors section (looking for closing bracket of the array)
+				if (inTokenColorsSection && /^\s*\]\s*$/.test(line)) {
+					inTokenColorsSection = false;
+					break;
+				}
+				
+				if (!inTokenColorsSection) continue;
+				
+				// Look for category headers like "// --- Source & Base Structure ---"
+				const categoryMatch = line.match(/^\s*\/\/\s*---\s*(.+?)\s*---/);
+				if (categoryMatch) {
+					currentCategory = categoryMatch[1].trim();
+					if (!categories[currentCategory]) {
+						categories[currentCategory] = [];
+					}
+					continue;
+				}
+				
+				// Look for token entry start
+				if (/^\s*\{/.test(line)) {
+					inCurrentTokenEntry = true;
+					inScopeArray = false;
+					continue;
+				}
+				
+				// Look for token entry end
+				if (/^\s*\}/.test(line)) {
+					inCurrentTokenEntry = false;
+					inScopeArray = false;
+					continue;
+				}
+				
+				// Skip if not in a token entry or no current category
+				if (!inCurrentTokenEntry || !currentCategory) continue;
+				
+				// Look for scope arrays (both single line and multiline)
+				if (/"scope"\s*:\s*\[/.test(line)) {
+					inScopeArray = true;
+					
+					// Check if it's a single-line scope array
+					const singleLineMatch = line.match(/"scope"\s*:\s*\[([^\]]+)\]/);
+					if (singleLineMatch) {
+						const scopesText = singleLineMatch[1];
+						const scopeMatches = scopesText.match(/"([^"]+)"/g);
+						if (scopeMatches) {
+							scopeMatches.forEach(match => {
+								const scope = match.replace(/"/g, '');
+								if (!categories[currentCategory].includes(scope)) {
+									categories[currentCategory].push(scope);
+								}
+							});
+						}
+						inScopeArray = false;
+					}
+					continue;
+				}
+				
+				// Handle single scope (not in array)
+				if (!inScopeArray && /"scope"\s*:\s*"([^"]+)"/.test(line)) {
+					const singleScopeMatch = line.match(/"scope"\s*:\s*"([^"]+)"/);
+					if (singleScopeMatch) {
+						const scope = singleScopeMatch[1];
+						if (!categories[currentCategory].includes(scope)) {
+							categories[currentCategory].push(scope);
+						}
+					}
+					continue;
+				}
+				
+				// If we're in a multiline scope array, collect the scopes
+				if (inScopeArray) {
+					// Look for individual scope strings
+					const scopeMatch = line.match(/^\s*"([^"]+)"/);
+					if (scopeMatch) {
+						const scope = scopeMatch[1];
+						if (!categories[currentCategory].includes(scope)) {
+							categories[currentCategory].push(scope);
+						}
+					}
+					
+					// Check if we're ending the scope array
+					if (/^\s*\]/.test(line)) {
+						inScopeArray = false;
+					}
+				}
+			}
+			
+			console.log(`[TextMate] Parsed ${Object.keys(categories).length} categories with ${Object.values(categories).flat().length} total tokens`);
+			
+		} catch (error) {
+			console.error('Error parsing TextMate token categories:', error);
+		}
+		
+		return categories;
+	}
+
 	private generateTextMateTokensSection (currentTheme: ThemeDefinition, templateTheme: ThemeDefinition): string {
 		// Render TextMate tokens by grouping each defined scope under its category
 		const tokenColors = (currentTheme.tokenColors && currentTheme.tokenColors.length > 0)
@@ -875,52 +1055,73 @@ export class ThemeEditorPanel {
 		console.log(`[TextMate] Loaded ${tokenMap.size} token mappings`);
 		console.log(`[TextMate] token.debug-token value:`, tokenMap.get('token.debug-token'));
 		
-		const textmateGroups: Record<string, string[]> = {
-			'Base Text & Structure': ['source', 'support.type.property-name.css'],
-			'Punctuation & Delimiters': ['punctuation', 'punctuation.terminator', 'punctuation.definition.tag', 'punctuation.separator', 'punctuation.definition.string', 'punctuation.section.block'],
-			'Class Definitions': ['entity.name.type.class'],
-			'Interface Definitions': ['entity.name.type.interface', 'entity.name.type'],
-			'Struct Definitions': ['entity.name.type.struct'],
-			'Enum Definitions': ['entity.name.type.enum'],
-			'Built-in Types': ['support.type'],
-			'Parameter Types': ['variable.type.parameter', 'variable.parameter.type'],
-			'Method Definitions': ['entity.name.function.method', 'meta.function.method'],
-			'Function Names': ['entity.name.function', 'support.function', 'meta.function-call.generic'],
-			'Function Variables': ['variable.function'],
-			'Preprocessor Functions': ['entity.name.function.preprocessor', 'meta.preprocessor'],
-			'Additional Preprocessor': ['meta.preprocessor'],
-			'Decorators': ['meta.decorator', 'punctuation.decorator', 'entity.name.function.decorator'],
-			'Variable Names': ['variable', 'meta.variable', 'variable.other.object.property', 'variable.other.readwrite.alias'],
-			'Object Variables': ['variable.other.object'],
-			'Global Variables': ['variable.other.global', 'variable.language.this'],
-			'Local Variables': ['variable.other.local'],
-			'Function Parameters': ['variable.parameter', 'meta.parameter'],
-			'Property Access': ['variable.other.property', 'meta.property'],
-			'Constants & Readonly': ['variable.other.constant', 'variable.readonly'],
-			'Object Literal Keys': ['meta.object-literal.key'],
-			'Language Keywords': ['keyword'],
-			'Import Keywords': ['keyword.control.import', 'keyword.control.from', 'keyword.import'],
-			'Exception Keywords': ['keyword.control.exception', 'keyword.control.trycatch'],
-			'Modifiers & Types': ['storage.modifier', 'keyword.modifier', 'storage.type'],
-			'Operators': ['keyword.operator'],
-			'String Literals': ['string', 'string.other.link', 'markup.inline.raw.string.markdown'],
-			'Escape Sequences & Placeholders': ['constant.character.escape', 'constant.other.placeholder'],
-			'Numeric Literals': ['constant.numeric'],
-			'Boolean & JSON Constants': ['constant.language.boolean', 'constant.language.json'],
-			'Labels': ['entity.name.label', 'punctuation.definition.label'],
-			'Comments': ['comment', 'punctuation.definition.comment'],
-			'Documentation Comments': ['comment.documentation', 'comment.line.documentation'],
-			'Namespaces': ['entity.name.namespace', 'storage.modifier.namespace', 'markup.bold.markdown'],
-			'Modules': ['entity.name.module', 'storage.modifier.module'],
-			'Underlined Links': ['markup.underline.link'],
-			'HTML/XML Tag Names': ['entity.name.tag'],
-			'Component Class Names': ['support.class.component'],
-			'HTML Attributes & Values': ['entity.other.attribute-name', 'meta.attribute'],
-			'Information Tokens': ['token.info-token'],
-			'Warning Tokens': ['token.warn-token'],
-			'Error Tokens': ['token.error-token'],
-			'Debug Output Tokens': ['token.debug-token']
-		};
+		// Parse TextMate groups from TEMPLATE.jsonc dynamically
+		const textmateGroups = this.parseTextMateCategoriesFromFile();
+		
+		console.log(`[TextMate] Successfully parsed ${Object.keys(textmateGroups).length} categories with ${Object.values(textmateGroups).flat().length} total tokens`);
+
+		// If parsing failed, fall back to basic categories
+		if (Object.keys(textmateGroups).length === 0) {
+			textmateGroups['Base Text & Structure'] = ['source', 'support.type.property-name.css'];
+			textmateGroups['Punctuation & Delimiters'] = ['punctuation', 'punctuation.terminator', 'punctuation.definition.tag', 'punctuation.separator', 'punctuation.definition.string', 'punctuation.section.block'];
+			textmateGroups['Class Definitions'] = ['entity.name.type.class'];
+			textmateGroups['Interface Definitions'] = ['entity.name.type.interface', 'entity.name.type'];
+			textmateGroups['Struct Definitions'] = ['entity.name.type.struct'];
+			textmateGroups['Enum Definitions'] = ['entity.name.type.enum'];
+			textmateGroups['Built-in Types'] = ['support.type'];
+			textmateGroups['Parameter Types'] = ['variable.type.parameter', 'variable.parameter.type'];
+			textmateGroups['Method Definitions'] = ['entity.name.function.method', 'meta.function.method'];
+			textmateGroups['Function Names'] = ['entity.name.function', 'support.function', 'meta.function-call.generic'];
+			textmateGroups['Function Variables'] = ['variable.function'];
+			textmateGroups['Preprocessor Functions'] = ['entity.name.function.preprocessor', 'meta.preprocessor'];
+			textmateGroups['Additional Preprocessor'] = ['meta.preprocessor'];
+			textmateGroups['Decorators'] = ['meta.decorator', 'punctuation.decorator', 'entity.name.function.decorator'];
+			textmateGroups['Variable Names'] = ['variable', 'meta.variable', 'variable.other.object.property', 'variable.other.readwrite.alias'];
+			textmateGroups['Object Variables'] = ['variable.other.object'];
+			textmateGroups['Global Variables'] = ['variable.other.global', 'variable.language.this'];
+			textmateGroups['Local Variables'] = ['variable.other.local'];
+			textmateGroups['Function Parameters'] = ['variable.parameter', 'meta.parameter'];
+			textmateGroups['Property Access'] = ['variable.other.property', 'meta.property'];
+			textmateGroups['Constants & Readonly'] = ['variable.other.constant', 'variable.readonly'];
+			textmateGroups['Object Literal Keys'] = ['meta.object-literal.key'];
+			textmateGroups['Language Keywords'] = ['keyword'];
+			textmateGroups['Import Keywords'] = ['keyword.control.import', 'keyword.control.from', 'keyword.import'];
+			textmateGroups['Exception Keywords'] = ['keyword.control.exception', 'keyword.control.trycatch'];
+			textmateGroups['Modifiers & Types'] = ['storage.modifier', 'keyword.modifier', 'storage.type'];
+			textmateGroups['Operators'] = ['keyword.operator'];
+			textmateGroups['String Literals'] = ['string', 'string.other.link', 'markup.inline.raw.string.markdown'];
+			textmateGroups['Escape Sequences & Placeholders'] = ['constant.character.escape', 'constant.other.placeholder'];
+			textmateGroups['Numeric Literals'] = ['constant.numeric'];
+			textmateGroups['Boolean & JSON Constants'] = ['constant.language.boolean', 'constant.language.json'];
+			textmateGroups['Labels'] = ['entity.name.label', 'punctuation.definition.label'];
+			textmateGroups['Comments'] = ['comment', 'punctuation.definition.comment'];
+			textmateGroups['Documentation Comments'] = ['comment.documentation', 'comment.line.documentation'];
+			textmateGroups['Namespaces'] = ['entity.name.namespace', 'storage.modifier.namespace', 'markup.bold.markdown'];
+			textmateGroups['Modules'] = ['entity.name.module', 'storage.modifier.module'];
+			textmateGroups['Underlined Links'] = ['markup.underline.link'];
+			textmateGroups['HTML/XML Tag Names'] = ['entity.name.tag'];
+			textmateGroups['Component Class Names'] = ['support.class.component'];
+			textmateGroups['HTML Attributes & Values'] = ['entity.other.attribute-name', 'meta.attribute'];
+			textmateGroups['Information Tokens'] = ['token.info-token'];
+			textmateGroups['Warning Tokens'] = ['token.warn-token'];
+			textmateGroups['Error Tokens'] = ['token.error-token'];
+			textmateGroups['Debug Output Tokens'] = ['token.debug-token'];
+		}
+
+		// Add uncategorized TextMate tokens
+		const categorizedScopes = new Set(Object.values(textmateGroups).flat());
+		const uncategorizedScopes: string[] = [];
+		tokenMap.forEach((_, scope) => {
+			if (!categorizedScopes.has(scope)) {
+				uncategorizedScopes.push(scope);
+			}
+		});
+		if (uncategorizedScopes.length > 0) {
+			if (!textmateGroups['Other TextMate Tokens']) {
+				textmateGroups['Other TextMate Tokens'] = [];
+			}
+			textmateGroups['Other TextMate Tokens'].push(...uncategorizedScopes);
+		}
 		let html = '';
 		for (const [groupName, scopes] of Object.entries(textmateGroups)) {
 			html += `<div class="color-category"><h3 class="category-title">${groupName}</h3><div class="category-content">`;
