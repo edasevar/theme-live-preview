@@ -1,37 +1,453 @@
 /* global acquireVsCodeApi */
 const vscode = acquireVsCodeApi();
 
-// Semantic token mapping for live preview
+// Enhanced semantic token mapping for comprehensive live preview
 const semanticMap = {
+  // Language constructs
   "keyword": "--token-keyword",
+  "keyword.control": "--token-keyword-control",
+  "keyword.operator": "--token-keyword-operator",
+  "keyword.other": "--token-keyword-other",
+  
+  // Functions and methods
   "function": "--token-function",
-  "parameter": "--token-parameter",
-  "string": "--token-string",
-  "comment": "--token-comment",
-  "type": "--token-type",
-  "property": "--token-property",
-  "class": "--token-class",
+  "function.declaration": "--token-function-declaration",
+  "function.call": "--token-function-call",
+  "method": "--token-method",
+  "method.declaration": "--token-method-declaration",
+  "method.call": "--token-method-call",
+  
+  // Variables and parameters
   "variable": "--token-variable",
+  "variable.declaration": "--token-variable-declaration",
+  "variable.readonly": "--token-variable-readonly",
+  "variable.parameter": "--token-parameter",
+  "parameter": "--token-parameter",
+  "parameter.declaration": "--token-parameter-declaration",
+  
+  // Types and classes
+  "type": "--token-type",
+  "type.declaration": "--token-type-declaration",
+  "class": "--token-class",
+  "class.declaration": "--token-class-declaration",
+  "interface": "--token-interface",
+  "interface.declaration": "--token-interface-declaration",
+  "struct": "--token-struct",
+  "enum": "--token-enum",
+  "enumMember": "--token-enum-member",
+  
+  // Properties and members
+  "property": "--token-property",
+  "property.declaration": "--token-property-declaration",
+  "property.readonly": "--token-property-readonly",
+  "member": "--token-member",
+  "field": "--token-field",
+  
+  // Literals and constants
+  "string": "--token-string",
+  "string.escape": "--token-string-escape",
   "number": "--token-number",
+  "boolean": "--token-boolean",
+  "regexp": "--token-regexp",
+  "constant": "--token-constant",
+  
+  // Comments and documentation
+  "comment": "--token-comment",
+  "comment.line": "--token-comment-line",
+  "comment.block": "--token-comment-block",
+  "comment.documentation": "--token-comment-documentation",
+  
+  // Operators and punctuation
   "operator": "--token-operator",
-  "punctuation": "--token-punctuation"
+  "operator.arithmetic": "--token-operator-arithmetic",
+  "operator.logical": "--token-operator-logical",
+  "operator.comparison": "--token-operator-comparison",
+  "punctuation": "--token-punctuation",
+  "punctuation.bracket": "--token-punctuation-bracket",
+  "punctuation.delimiter": "--token-punctuation-delimiter",
+  
+  // Namespaces and modules
+  "namespace": "--token-namespace",
+  "module": "--token-module",
+  "package": "--token-package",
+  
+  // Labels and decorators
+  "label": "--token-label",
+  "decorator": "--token-decorator",
+  "annotation": "--token-annotation",
+  
+  // Markup and special tokens
+  "tag": "--token-tag",
+  "attribute": "--token-attribute",
+  "macro": "--token-macro",
+  "generic": "--token-generic",
+  "lifetime": "--token-lifetime",
+  
+  // Modifiers
+  "modifier": "--token-modifier",
+  "modifier.async": "--token-modifier-async",
+  "modifier.static": "--token-modifier-static",
+  "modifier.readonly": "--token-modifier-readonly"
 };
 
-// UI color mapping to CSS variables
+// Comprehensive UI color mapping to CSS variables for complete theming
 const uiMap = {
+  // Core Editor Colors
   'editor.background': '--bg-primary',
   'editor.foreground': '--text-primary',
+  'editor.selectionBackground': '--selection-bg',
+  'editor.selectionForeground': '--selection-fg',
+  'editor.inactiveSelectionBackground': '--selection-inactive-bg',
+  'editor.selectionHighlightBackground': '--selection-highlight-bg',
+  'editor.findMatchBackground': '--find-match-bg',
+  'editor.findMatchHighlightBackground': '--find-match-highlight-bg',
+  'editor.currentLineBackground': '--current-line-bg',
+  'editor.lineHighlightBorder': '--line-highlight-border',
+  'editor.rangeHighlightBackground': '--range-highlight-bg',
+  'editor.wordHighlightBackground': '--word-highlight-bg',
+  'editor.wordHighlightStrongBackground': '--word-highlight-strong-bg',
+  
+  // Sidebar and Explorer
   'sideBar.background': '--bg-secondary',
   'sideBar.foreground': '--text-primary',
   'sideBar.border': '--border-color',
+  'sideBar.dropBackground': '--sidebar-drop-bg',
+  'sideBarTitle.foreground': '--sidebar-title-fg',
+  'sideBarSectionHeader.background': '--sidebar-section-header-bg',
+  'sideBarSectionHeader.foreground': '--sidebar-section-header-fg',
+  'sideBarSectionHeader.border': '--sidebar-section-header-border',
+  
+  // Activity Bar
+  'activityBar.background': '--activity-bar-bg',
+  'activityBar.foreground': '--activity-bar-fg',
+  'activityBar.inactiveForeground': '--activity-bar-inactive-fg',
+  'activityBar.border': '--activity-bar-border',
+  'activityBar.activeBorder': '--activity-bar-active-border',
+  'activityBar.activeBackground': '--activity-bar-active-bg',
+  'activityBar.activeFocusBorder': '--activity-bar-active-focus-border',
+  'activityBarBadge.background': '--activity-bar-badge-bg',
+  'activityBarBadge.foreground': '--activity-bar-badge-fg',
+  
+  // Panel (Terminal, Output, etc.)
   'panel.background': '--bg-secondary',
   'panel.border': '--border-color',
+  'panel.dropBorder': '--panel-drop-border',
+  'panelTitle.activeBorder': '--panel-title-active-border',
+  'panelTitle.activeForeground': '--panel-title-active-fg',
+  'panelTitle.inactiveForeground': '--panel-title-inactive-fg',
   'panelInput.border': '--border-color',
-  'descriptionForeground': '--text-secondary',
-  'focusBorder': '--accent-color',
+  'panelSection.border': '--panel-section-border',
+  'panelSection.dropBackground': '--panel-section-drop-bg',
+  'panelSectionHeader.background': '--panel-section-header-bg',
+  'panelSectionHeader.foreground': '--panel-section-header-fg',
+  'panelSectionHeader.border': '--panel-section-header-border',
+  
+  // Status Bar
+  'statusBar.background': '--status-bar-bg',
+  'statusBar.foreground': '--status-bar-fg',
+  'statusBar.border': '--status-bar-border',
+  'statusBar.debuggingBackground': '--status-bar-debugging-bg',
+  'statusBar.debuggingForeground': '--status-bar-debugging-fg',
+  'statusBar.noFolderBackground': '--status-bar-no-folder-bg',
+  'statusBar.noFolderForeground': '--status-bar-no-folder-fg',
+  'statusBarItem.activeBackground': '--status-bar-item-active-bg',
+  'statusBarItem.hoverBackground': '--status-bar-item-hover-bg',
+  'statusBarItem.prominentBackground': '--status-bar-item-prominent-bg',
+  'statusBarItem.prominentForeground': '--status-bar-item-prominent-fg',
+  'statusBarItem.prominentHoverBackground': '--status-bar-item-prominent-hover-bg',
+  
+  // Tabs and Editor Groups
+  'tab.activeBackground': '--tab-active-bg',
+  'tab.activeForeground': '--tab-active-fg',
+  'tab.activeBorder': '--tab-active-border',
+  'tab.activeBorderTop': '--tab-active-border-top',
+  'tab.inactiveBackground': '--tab-inactive-bg',
+  'tab.inactiveForeground': '--tab-inactive-fg',
+  'tab.unfocusedActiveForeground': '--tab-unfocused-active-fg',
+  'tab.unfocusedInactiveForeground': '--tab-unfocused-inactive-fg',
+  'tab.border': '--tab-border',
+  'tab.hoverBackground': '--tab-hover-bg',
+  'tab.hoverBorder': '--tab-hover-border',
+  'tab.hoverForeground': '--tab-hover-fg',
+  'editorGroup.border': '--editor-group-border',
+  'editorGroup.dropBackground': '--editor-group-drop-bg',
+  'editorGroupHeader.tabsBackground': '--editor-group-header-tabs-bg',
+  'editorGroupHeader.tabsBorder': '--editor-group-header-tabs-border',
+  'editorGroupHeader.noTabsBackground': '--editor-group-header-no-tabs-bg',
+  
+  // Input Controls
   'input.background': '--bg-primary',
   'input.foreground': '--text-primary',
-  'input.border': '--border-color'
+  'input.border': '--border-color',
+  'input.activeBorder': '--input-active-border',
+  'input.placeholderForeground': '--input-placeholder-fg',
+  'inputOption.activeBorder': '--input-option-active-border',
+  'inputOption.activeBackground': '--input-option-active-bg',
+  'inputOption.activeForeground': '--input-option-active-fg',
+  'inputValidation.errorBackground': '--input-validation-error-bg',
+  'inputValidation.errorForeground': '--input-validation-error-fg',
+  'inputValidation.errorBorder': '--input-validation-error-border',
+  'inputValidation.infoBackground': '--input-validation-info-bg',
+  'inputValidation.infoForeground': '--input-validation-info-fg',
+  'inputValidation.infoBorder': '--input-validation-info-border',
+  'inputValidation.warningBackground': '--input-validation-warning-bg',
+  'inputValidation.warningForeground': '--input-validation-warning-fg',
+  'inputValidation.warningBorder': '--input-validation-warning-border',
+  
+  // Dropdown and Lists
+  'dropdown.background': '--dropdown-bg',
+  'dropdown.foreground': '--dropdown-fg',
+  'dropdown.border': '--dropdown-border',
+  'dropdown.listBackground': '--dropdown-list-bg',
+  'list.activeSelectionBackground': '--list-active-selection-bg',
+  'list.activeSelectionForeground': '--list-active-selection-fg',
+  'list.inactiveSelectionBackground': '--list-inactive-selection-bg',
+  'list.inactiveSelectionForeground': '--list-inactive-selection-fg',
+  'list.hoverBackground': '--list-hover-bg',
+  'list.hoverForeground': '--list-hover-fg',
+  'list.focusBackground': '--list-focus-bg',
+  'list.focusForeground': '--list-focus-fg',
+  'list.highlightForeground': '--list-highlight-fg',
+  'list.dropBackground': '--list-drop-bg',
+  'list.errorForeground': '--list-error-fg',
+  'list.warningForeground': '--list-warning-fg',
+  
+  // Buttons
+  'button.background': '--button-bg',
+  'button.foreground': '--button-fg',
+  'button.hoverBackground': '--button-hover-bg',
+  'button.secondaryBackground': '--button-secondary-bg',
+  'button.secondaryForeground': '--button-secondary-fg',
+  'button.secondaryHoverBackground': '--button-secondary-hover-bg',
+  
+  // Global UI Elements
+  'foreground': '--text-primary',
+  'descriptionForeground': '--text-secondary',
+  'errorForeground': '--error-fg',
+  'focusBorder': '--accent-color',
+  'contrastActiveBorder': '--contrast-active-border',
+  'contrastBorder': '--contrast-border',
+  'selection.background': '--global-selection-bg',
+  'widget.shadow': '--widget-shadow',
+  'icon.foreground': '--icon-fg',
+  
+  // Scrollbars
+  'scrollbar.shadow': '--scrollbar-shadow',
+  'scrollbarSlider.background': '--scrollbar-slider-bg',
+  'scrollbarSlider.hoverBackground': '--scrollbar-slider-hover-bg',
+  'scrollbarSlider.activeBackground': '--scrollbar-slider-active-bg',
+  
+  // Badge
+  'badge.background': '--badge-bg',
+  'badge.foreground': '--badge-fg',
+  
+  // Progress Bar
+  'progressBar.background': '--progress-bar-bg',
+  
+  // Breadcrumbs
+  'breadcrumb.foreground': '--breadcrumb-fg',
+  'breadcrumb.background': '--breadcrumb-bg',
+  'breadcrumb.focusForeground': '--breadcrumb-focus-fg',
+  'breadcrumb.activeSelectionForeground': '--breadcrumb-active-selection-fg',
+  'breadcrumbPicker.background': '--breadcrumb-picker-bg',
+  
+  // Title Bar
+  'titleBar.activeBackground': '--title-bar-active-bg',
+  'titleBar.activeForeground': '--title-bar-active-fg',
+  'titleBar.inactiveBackground': '--title-bar-inactive-bg',
+  'titleBar.inactiveForeground': '--title-bar-inactive-fg',
+  'titleBar.border': '--title-bar-border',
+  
+  // Menu Bar
+  'menubar.selectionForeground': '--menubar-selection-fg',
+  'menubar.selectionBackground': '--menubar-selection-bg',
+  'menubar.selectionBorder': '--menubar-selection-border',
+  'menu.foreground': '--menu-fg',
+  'menu.background': '--menu-bg',
+  'menu.selectionForeground': '--menu-selection-fg',
+  'menu.selectionBackground': '--menu-selection-bg',
+  'menu.selectionBorder': '--menu-selection-border',
+  'menu.separatorBackground': '--menu-separator-bg',
+  'menu.border': '--menu-border',
+  
+  // Notifications
+  'notificationCenter.border': '--notification-center-border',
+  'notificationCenterHeader.foreground': '--notification-center-header-fg',
+  'notificationCenterHeader.background': '--notification-center-header-bg',
+  'notificationToast.border': '--notification-toast-border',
+  'notifications.foreground': '--notifications-fg',
+  'notifications.background': '--notifications-bg',
+  'notifications.border': '--notifications-border',
+  'notificationLink.foreground': '--notification-link-fg',
+  
+  // Git Decorations
+  'gitDecoration.addedResourceForeground': '--git-added-fg',
+  'gitDecoration.modifiedResourceForeground': '--git-modified-fg',
+  'gitDecoration.deletedResourceForeground': '--git-deleted-fg',
+  'gitDecoration.untrackedResourceForeground': '--git-untracked-fg',
+  'gitDecoration.ignoredResourceForeground': '--git-ignored-fg',
+  'gitDecoration.conflictingResourceForeground': '--git-conflicting-fg',
+  'gitDecoration.submoduleResourceForeground': '--git-submodule-fg'
+};
+
+// TextMate token scope mapping for enhanced preview support
+const textMateMap = {
+  // Language constructs
+  'entity.name.function': '--textmate-entity-name-function',
+  'entity.name.type': '--textmate-entity-name-type',
+  'entity.name.class': '--textmate-entity-name-class',
+  'entity.name.interface': '--textmate-entity-name-interface',
+  'entity.name.namespace': '--textmate-entity-name-namespace',
+  'entity.name.label': '--textmate-entity-name-label',
+  'entity.name.tag': '--textmate-entity-name-tag',
+  'entity.name.section': '--textmate-entity-name-section',
+  
+  // Support tokens
+  'support.type': '--textmate-support-type',
+  'support.class': '--textmate-support-class',
+  'support.function': '--textmate-support-function',
+  'support.method': '--textmate-support-method',
+  'support.property': '--textmate-support-property',
+  'support.constant': '--textmate-support-constant',
+  'support.variable': '--textmate-support-variable',
+  'support.other': '--textmate-support-other',
+  
+  // Variable scopes
+  'variable': '--textmate-variable',
+  'variable.language': '--textmate-variable-language',
+  'variable.parameter': '--textmate-variable-parameter',
+  'variable.function': '--textmate-variable-function',
+  'variable.other': '--textmate-variable-other',
+  'variable.other.constant': '--textmate-variable-other-constant',
+  'variable.other.member': '--textmate-variable-other-member',
+  'variable.other.property': '--textmate-variable-other-property',
+  'variable.other.readwrite': '--textmate-variable-other-readwrite',
+  'variable.other.enummember': '--textmate-variable-other-enummember',
+  
+  // Keywords
+  'keyword': '--textmate-keyword',
+  'keyword.control': '--textmate-keyword-control',
+  'keyword.operator': '--textmate-keyword-operator',
+  'keyword.other': '--textmate-keyword-other',
+  'keyword.control.conditional': '--textmate-keyword-control-conditional',
+  'keyword.control.loop': '--textmate-keyword-control-loop',
+  'keyword.control.import': '--textmate-keyword-control-import',
+  'keyword.control.export': '--textmate-keyword-control-export',
+  
+  // Storage (modifiers, types)
+  'storage': '--textmate-storage',
+  'storage.type': '--textmate-storage-type',
+  'storage.modifier': '--textmate-storage-modifier',
+  'storage.type.class': '--textmate-storage-type-class',
+  'storage.type.function': '--textmate-storage-type-function',
+  'storage.type.interface': '--textmate-storage-type-interface',
+  'storage.type.enum': '--textmate-storage-type-enum',
+  
+  // Constants
+  'constant': '--textmate-constant',
+  'constant.numeric': '--textmate-constant-numeric',
+  'constant.language': '--textmate-constant-language',
+  'constant.character': '--textmate-constant-character',
+  'constant.character.escape': '--textmate-constant-character-escape',
+  'constant.other': '--textmate-constant-other',
+  'constant.other.color': '--textmate-constant-other-color',
+  'constant.other.symbol': '--textmate-constant-other-symbol',
+  'constant.other.placeholder': '--textmate-constant-other-placeholder',
+  
+  // Strings
+  'string': '--textmate-string',
+  'string.quoted': '--textmate-string-quoted',
+  'string.quoted.single': '--textmate-string-quoted-single',
+  'string.quoted.double': '--textmate-string-quoted-double',
+  'string.quoted.triple': '--textmate-string-quoted-triple',
+  'string.unquoted': '--textmate-string-unquoted',
+  'string.interpolated': '--textmate-string-interpolated',
+  'string.template': '--textmate-string-template',
+  'string.regexp': '--textmate-string-regexp',
+  'string.other': '--textmate-string-other',
+  
+  // Comments
+  'comment': '--textmate-comment',
+  'comment.line': '--textmate-comment-line',
+  'comment.block': '--textmate-comment-block',
+  'comment.block.documentation': '--textmate-comment-block-documentation',
+  
+  // Punctuation
+  'punctuation': '--textmate-punctuation',
+  'punctuation.definition': '--textmate-punctuation-definition',
+  'punctuation.separator': '--textmate-punctuation-separator',
+  'punctuation.terminator': '--textmate-punctuation-terminator',
+  'punctuation.accessor': '--textmate-punctuation-accessor',
+  'punctuation.definition.string': '--textmate-punctuation-definition-string',
+  'punctuation.definition.comment': '--textmate-punctuation-definition-comment',
+  'punctuation.definition.parameters': '--textmate-punctuation-definition-parameters',
+  'punctuation.definition.array': '--textmate-punctuation-definition-array',
+  'punctuation.definition.block': '--textmate-punctuation-definition-block',
+  'punctuation.section.embedded': '--textmate-punctuation-section-embedded',
+  
+  // Meta scopes
+  'meta': '--textmate-meta',
+  'meta.class': '--textmate-meta-class',
+  'meta.function': '--textmate-meta-function',
+  'meta.function-call': '--textmate-meta-function-call',
+  'meta.method': '--textmate-meta-method',
+  'meta.method-call': '--textmate-meta-method-call',
+  'meta.interface': '--textmate-meta-interface',
+  'meta.type': '--textmate-meta-type',
+  'meta.object-literal': '--textmate-meta-object-literal',
+  'meta.object-literal.key': '--textmate-meta-object-literal-key',
+  'meta.array': '--textmate-meta-array',
+  'meta.block': '--textmate-meta-block',
+  'meta.brace': '--textmate-meta-brace',
+  'meta.bracket': '--textmate-meta-bracket',
+  'meta.parameters': '--textmate-meta-parameters',
+  'meta.definition': '--textmate-meta-definition',
+  'meta.declaration': '--textmate-meta-declaration',
+  'meta.import': '--textmate-meta-import',
+  'meta.export': '--textmate-meta-export',
+  
+  // Markup (HTML, Markdown, etc.)
+  'markup': '--textmate-markup',
+  'markup.heading': '--textmate-markup-heading',
+  'markup.bold': '--textmate-markup-bold',
+  'markup.italic': '--textmate-markup-italic',
+  'markup.underline': '--textmate-markup-underline',
+  'markup.strikethrough': '--textmate-markup-strikethrough',
+  'markup.quote': '--textmate-markup-quote',
+  'markup.raw': '--textmate-markup-raw',
+  'markup.other': '--textmate-markup-other',
+  'markup.list': '--textmate-markup-list',
+  'markup.list.numbered': '--textmate-markup-list-numbered',
+  'markup.list.unnumbered': '--textmate-markup-list-unnumbered',
+  'markup.inserted': '--textmate-markup-inserted',
+  'markup.deleted': '--textmate-markup-deleted',
+  'markup.changed': '--textmate-markup-changed',
+  
+  // Invalid
+  'invalid': '--textmate-invalid',
+  'invalid.illegal': '--textmate-invalid-illegal',
+  'invalid.deprecated': '--textmate-invalid-deprecated',
+  
+  // Source language specific
+  'source': '--textmate-source',
+  'text': '--textmate-text',
+  'text.html': '--textmate-text-html',
+  'text.xml': '--textmate-text-xml',
+  'source.js': '--textmate-source-js',
+  'source.ts': '--textmate-source-ts',
+  'source.python': '--textmate-source-python',
+  'source.java': '--textmate-source-java',
+  'source.css': '--textmate-source-css',
+  'source.json': '--textmate-source-json',
+  'source.yaml': '--textmate-source-yaml',
+  
+  // Other commonly used scopes
+  'entity.other': '--textmate-entity-other',
+  'entity.other.attribute-name': '--textmate-entity-other-attribute-name',
+  'entity.other.inherited-class': '--textmate-entity-other-inherited-class',
+  'source.parameter': '--textmate-source-parameter',
+  'beginning.punctuation': '--textmate-beginning-punctuation',
+  'ending.punctuation': '--textmate-ending-punctuation'
 };
 
 // Global state
@@ -257,10 +673,26 @@ function updatePreviewColors(key, value) {
     return;
   }
 
+  // Handle TextMate token colors for preview with enhanced mapping
+  if (key.startsWith('textmate_')) {
+    const scope = key.replace('textmate_', '');
+    
+    // Try exact match first
+    if (textMateMap[scope]) {
+      document.documentElement.style.setProperty(textMateMap[scope], value);
+      return;
+    }
+    
+    // Fallback to generic CSS variable for unmapped scopes
+    const cssVar = `--textmate-${scope.replace(/\./g, '-').replace(/:/g, '-')}`;
+    document.documentElement.style.setProperty(cssVar, value);
+    return;
+  }
+
   // Handle UI workbench color changes by mapping to CSS variables
   if (uiMap[key]) {
     document.documentElement.style.setProperty(uiMap[key], value);
-  } else if (!key.startsWith('semantic_') && !key.startsWith('token_')) {
+  } else if (!key.startsWith('semantic_') && !key.startsWith('textmate_') && !key.startsWith('token_')) {
     // Generic mapping for any other workbench color key to VSCode CSS var
     const varName = `--vscode-${key.replace(/\./g, '-')}`;
     document.documentElement.style.setProperty(varName, value);
