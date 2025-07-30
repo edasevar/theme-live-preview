@@ -147,51 +147,43 @@ function activate(context) {
             let currentValue;
             // Get current color value based on type
             if (colorType === 'workbench') {
-                currentValue = currentConfig.get(`workbench.colorCustomizations.${colorKey}`);
+                const workbenchConfig = currentConfig.get('workbench.colorCustomizations');
+                currentValue = workbenchConfig?.[colorKey];
             }
-            else if (colorType === 'semantic') {
-                const semanticConfig = currentConfig.get('editor.semanticTokenColorCustomizations.rules');
-                const rule = semanticConfig?.find((r) => r.token === colorKey);
-                currentValue = rule?.foreground;
+            else if (colorType === 'syntax') {
+                const tokenConfig = currentConfig.get('editor.tokenColorCustomizations');
+                const rule = tokenConfig?.textMateRules?.find(r => {
+                    const scopes = Array.isArray(r.scope) ? r.scope : [r.scope];
+                    return scopes.includes(colorKey);
+                });
+                currentValue = rule?.settings.foreground;
             }
             // Show input box for color editing
             const newColor = await vscode.window.showInputBox({
-                prompt: `Enter color for ${colorKey}`,
-                placeHolder: 'e.g., #ff0000, #ff000080 (with alpha), or color name',
-                value: currentValue || '#ffffff',
+                prompt: `Enter new color for ${colorKey}`,
+                value: currentValue || '',
+                placeHolder: 'e.g., #ff0000 or #ff000080 for transparency',
                 validateInput: (value) => {
-                    // Basic hex color validation
-                    if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(value)) {
-                        return 'Please enter a valid hex color (e.g., #ff0000)';
+                    if (!/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) {
+                        return 'Please enter a valid 6 or 8-digit hex color (e.g., #ff0000 or #ff000080)';
                     }
-                    return undefined;
+                    return null;
                 }
             });
             if (newColor) {
-                // Apply the color change
                 if (colorType === 'workbench') {
-                    const workbenchConfig = currentConfig.get('workbench.colorCustomizations') || {};
-                    workbenchConfig[colorKey] = newColor;
-                    await currentConfig.update('workbench.colorCustomizations', workbenchConfig, vscode.ConfigurationTarget.Global);
+                    await themeManager.applyLiveColor(colorKey, newColor);
                 }
-                else if (colorType === 'semantic') {
-                    const semanticConfig = currentConfig.get('editor.semanticTokenColorCustomizations.rules') || [];
-                    const existingIndex = semanticConfig.findIndex((r) => r.token === colorKey);
-                    if (existingIndex >= 0) {
-                        semanticConfig[existingIndex].foreground = newColor;
-                    }
-                    else {
-                        semanticConfig.push({ token: colorKey, foreground: newColor });
-                    }
-                    await currentConfig.update('editor.semanticTokenColorCustomizations', { rules: semanticConfig }, vscode.ConfigurationTarget.Global);
+                else if (colorType === 'syntax') {
+                    await themeManager.applyLiveColor(`textmate_${colorKey}`, newColor);
                 }
                 vscode.window.showInformationMessage(`Updated ${colorKey} to ${newColor}`);
-                // Refresh tree to show changes
+                // Refresh the tree to show the new color
                 treeProvider.refresh();
             }
         }
         catch (error) {
-            console.error('Failed to edit color:', error);
+            console.error(`Failed to edit color ${colorKey}:`, error);
             vscode.window.showErrorMessage(`Failed to edit color: ${error instanceof Error ? error.message : String(error)}`);
         }
     });

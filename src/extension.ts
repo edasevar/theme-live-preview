@@ -116,56 +116,45 @@ export function activate(context: vscode.ExtensionContext) {
 		try {
 			const currentConfig = vscode.workspace.getConfiguration();
 			let currentValue: string | undefined;
-			
+
 			// Get current color value based on type
 			if (colorType === 'workbench') {
-				currentValue = currentConfig.get(`workbench.colorCustomizations.${colorKey}`);
-			} else if (colorType === 'semantic') {
-				const semanticConfig = currentConfig.get('editor.semanticTokenColorCustomizations.rules') as Array<{token: string, foreground: string}>;
-				const rule = semanticConfig?.find((r: {token: string, foreground: string}) => r.token === colorKey);
-				currentValue = rule?.foreground;
+				const workbenchConfig = currentConfig.get('workbench.colorCustomizations') as Record<string, string> | undefined;
+				currentValue = workbenchConfig?.[colorKey];
+			} else if (colorType === 'syntax') {
+				const tokenConfig = currentConfig.get('editor.tokenColorCustomizations') as { textMateRules?: Array<{ scope: string | string[], settings: { foreground: string } }> } | undefined;
+				const rule = tokenConfig?.textMateRules?.find(r => {
+					const scopes = Array.isArray(r.scope) ? r.scope : [r.scope];
+					return scopes.includes(colorKey);
+				});
+				currentValue = rule?.settings.foreground;
 			}
 
 			// Show input box for color editing
 			const newColor = await vscode.window.showInputBox({
-				prompt: `Enter color for ${colorKey}`,
-				placeHolder: 'e.g., #ff0000, #ff000080 (with alpha), or color name',
-				value: currentValue || '#ffffff',
+				prompt: `Enter new color for ${colorKey}`,
+				value: currentValue || '',
+				placeHolder: 'e.g., #ff0000 or #ff000080 for transparency',
 				validateInput: (value: string) => {
-					// Basic hex color validation
-					if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(value)) {
-						return 'Please enter a valid hex color (e.g., #ff0000)';
+					if (!/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value)) {
+						return 'Please enter a valid 6 or 8-digit hex color (e.g., #ff0000 or #ff000080)';
 					}
-					return undefined;
+					return null;
 				}
 			});
 
 			if (newColor) {
-				// Apply the color change
 				if (colorType === 'workbench') {
-					const workbenchConfig = currentConfig.get('workbench.colorCustomizations') as Record<string, string> || {};
-					workbenchConfig[colorKey] = newColor;
-					await currentConfig.update('workbench.colorCustomizations', workbenchConfig, vscode.ConfigurationTarget.Global);
-				} else if (colorType === 'semantic') {
-					const semanticConfig = currentConfig.get('editor.semanticTokenColorCustomizations.rules') as Array<{token: string, foreground: string}> || [];
-					const existingIndex = semanticConfig.findIndex((r: {token: string, foreground: string}) => r.token === colorKey);
-					
-					if (existingIndex >= 0) {
-						semanticConfig[existingIndex].foreground = newColor;
-					} else {
-						semanticConfig.push({ token: colorKey, foreground: newColor });
-					}
-					
-					await currentConfig.update('editor.semanticTokenColorCustomizations', { rules: semanticConfig }, vscode.ConfigurationTarget.Global);
+					await themeManager.applyLiveColor(colorKey, newColor);
+				} else if (colorType === 'syntax') {
+					await themeManager.applyLiveColor(`textmate_${colorKey}`, newColor);
 				}
-
 				vscode.window.showInformationMessage(`Updated ${colorKey} to ${newColor}`);
-				
-				// Refresh tree to show changes
+				// Refresh the tree to show the new color
 				treeProvider.refresh();
 			}
 		} catch (error) {
-			console.error('Failed to edit color:', error);
+			console.error(`Failed to edit color ${colorKey}:`, error);
 			vscode.window.showErrorMessage(`Failed to edit color: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	});

@@ -4,24 +4,15 @@ A comprehensive VS Code extension for creating and editing themes with real-time
 
 ## ✨ Features
 
-### 🎨 **NEW: Attractive Sidebar Integration (v3.0.0)**
-- **📍 Activity Bar Icon**: Dedicated Theme Editor Live icon in the activity bar with professional color palette design
-- **🏗️ Organized Sidebar**: Custom sidebar panel with intuitive tree structure and categorized actions
-- **🚀 Quick Access**: One-click access to all theme editing features directly from the sidebar
-- **🎨 Direct Color Editing**: Edit colors instantly from sidebar without opening the main editor:
-  - **🎨 Quick Colors**: Instantly edit errors (🔴), warnings (⚠️), info messages (ℹ️), focus borders (🎯), links (🔗), and success indicators (✅)
-  - **🔤 Syntax Colors**: Modify code highlighting for comments (💬), keywords (🔤), strings (📝), numbers (🔢), variables (🏷️), and functions (⚡)
-  - **⚡ One-Click Editing**: Click any color item to open VS Code's color picker for immediate changes
-  - **🔄 Real-time Updates**: See changes applied instantly to your VS Code interface
-- **📋 Smart Organization**: Grouped functionality into logical categories:
-  - **🎨 Main Editor**: Launch the visual theme editor with real-time preview
-  - **📁 Template Management**: Reload and sync theme templates with comprehensive controls
-  - **⚙️ Settings & Tools**: Theme cleanup, maintenance, and webview refresh options
-  - **📊 Statistics**: Quick access to theme information and detailed statistics
-  - **⚡ Quick Actions**: Frequently used operations for faster workflow
-- **📖 Welcome Screen**: Rich welcome content with feature highlights and direct action buttons
-- **🎯 Contextual Icons**: Professional VS Code theme icons for each action (paintbrush, tools, rocket, etc.)
-- **📱 Collapsible Structure**: Expandable categories for organized access and clean interface
+### 🎨 **NEW: Direct Sidebar Editing (v3.2.0)**
+- **📍 Activity Bar Icon**: Dedicated Theme Editor Live icon in the activity bar for one-click access.
+- **🏗️ Organized Sidebar**: Custom sidebar panel with an intuitive tree structure and categorized actions.
+- **🎨 Direct Color Editing**: Edit colors instantly from the sidebar without opening the main editor:
+  - **🎨 Quick Colors**: Instantly edit errors (🔴), warnings (⚠️), info messages (ℹ️), focus borders (🎯), links (🔗), and success indicators (✅).
+  - **🔤 Syntax Colors**: Modify code highlighting for comments (💬), keywords (🔤), strings (📝), numbers (🔢), variables (🏷️), and functions (⚡).
+- **⚡ One-Click Color Picker**: Click any color item to open VS Code's native color picker for immediate changes.
+- **🔄 Real-time Updates**: See changes applied instantly to your VS Code interface.
+- **�️ Reliable Saving**: Uses a robust "nuclear" update mechanism to ensure all color changes, including those with transparency, are reliably saved to your `settings.json`.
 
 ### 🚀 Enhanced Live Editing Capabilities
 - **Throttled Updates**: Color changes are batched and throttled (150ms) to prevent overwhelming VS Code

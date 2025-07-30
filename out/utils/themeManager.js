@@ -126,6 +126,7 @@ class ThemeManager {
     async cleanupLegacySettings() {
         try {
             const config = vscode.workspace.getConfiguration();
+            // use the proper interface and drop the stray diff marker
             const tokenCustomizations = config.get("editor.tokenColorCustomizations") || {};
             // If there's a legacy semanticTokenColors section in tokenColorCustomizations, remove it
             if (tokenCustomizations.semanticTokenColors) {
@@ -209,31 +210,31 @@ class ThemeManager {
             console.log('[ThemeManager] Using manual fallback structure...');
             emptyTheme.colors = {
                 "editor.background": "#ffffff",
-                "editor.foreground": "#ffffff",
+                "editor.foreground": "#000000",
                 "activityBar.background": "#ffffff00",
                 "sideBar.background": "#ffffff00",
                 "panel.background": "#ffffff00",
                 "statusBar.background": "#ffffff00"
             };
             emptyTheme.semanticTokenColors = {
-                "class": "#ffffff",
-                "function": "#ffffff",
-                "variable": "#ffffff",
-                "keyword": "#ffffff",
-                "comment": "#ffffff"
+                "class": "#000000",
+                "function": "#000000",
+                "variable": "#000000",
+                "keyword": "#000000",
+                "comment": "#888888"
             };
             emptyTheme.tokenColors = [
                 {
                     scope: ["comment"],
-                    settings: { foreground: "#ffffff" }
+                    settings: { foreground: "#888888" }
                 },
                 {
                     scope: ["keyword"],
-                    settings: { foreground: "#ffffff" }
+                    settings: { foreground: "#000000" }
                 },
                 {
                     scope: ["string"],
-                    settings: { foreground: "#ffffff" }
+                    settings: { foreground: "#000000" }
                 }
             ];
             console.log('[ThemeManager] Manual fallback complete with:', {
@@ -247,11 +248,16 @@ class ThemeManager {
         console.log('[ThemeManager] Using template-based generation...');
         if (this.templateTheme.colors) {
             emptyTheme.colors = {};
+            const transparentBackgrounds = [
+                'activityBar.background',
+                'sideBar.background',
+                'panel.background',
+                'statusBar.background'
+            ];
             Object.keys(this.templateTheme.colors).forEach((key) => {
-                emptyTheme.colors[key] =
-                    key.includes("Background") && key !== "editor.background"
-                        ? "#ffffff00"
-                        : "#ffffff";
+                emptyTheme.colors[key] = transparentBackgrounds.includes(key)
+                    ? "#ffffff00"
+                    : "#ffffff";
             });
             console.log(`[ThemeManager] Generated ${Object.keys(emptyTheme.colors).length} color entries from template`);
         }
@@ -368,12 +374,12 @@ class ThemeManager {
         // Add VS Code settings textMateRules
         if (tokenColorCustomizations.textMateRules && Array.isArray(tokenColorCustomizations.textMateRules)) {
             console.log(`[ThemeManager] Loading ${tokenColorCustomizations.textMateRules.length} TextMate rules from VS Code settings`);
-            const vscodeTokens = tokenColorCustomizations.textMateRules.map((rule) => ({
+            const vscodeTokens = tokenColorCustomizations.textMateRules.map(rule => ({
                 scope: rule.scope,
                 settings: rule.settings // Use settings object directly
             }));
             // Debug specific token
-            const debugToken = vscodeTokens.find((t) => {
+            const debugToken = vscodeTokens.find(t => {
                 const scopes = Array.isArray(t.scope) ? t.scope : [t.scope];
                 return scopes.includes('token.debug-token');
             });
@@ -463,6 +469,7 @@ class ThemeManager {
             console.log(`[ThemeManager] Applying TextMate color: ${scope} = ${value}`);
             // First, try the VS Code API approach
             const config = vscode.workspace.getConfiguration();
+            // Use strongly-typed EditorTokenColorCustomizations instead of any
             const currentTokenColors = config.get("editor.tokenColorCustomizations") || {};
             console.log(`[ThemeManager] Current textMateRules:`, JSON.stringify(currentTokenColors.textMateRules || [], null, 2));
             if (!currentTokenColors.textMateRules) {
@@ -490,8 +497,8 @@ class ThemeManager {
                 // Update existing rule - preserve the original scope format and other scopes
                 const existingRule = currentTokenColors.textMateRules[existingRuleIndex];
                 const existingScopes = Array.isArray(existingRule.scope)
-                    ? existingRule.scope
-                    : [existingRule.scope];
+                    ? existingRule.scope.filter((s) => s !== undefined)
+                    : existingRule.scope ? [existingRule.scope] : [];
                 // If this rule only contains our scope, update it directly
                 if (existingScopes.length === 1 && existingScopes[0] === scope) {
                     currentTokenColors.textMateRules[existingRuleIndex] = {
@@ -563,8 +570,10 @@ class ThemeManager {
             vscode.window.showInformationMessage(`Theme Editor: Updated ${scope} to ${value}`);
         }
         catch (err) {
+            // Now err is unknown; narrow to Error if possible
             console.error(`[ThemeManager] Error applying TextMate color:`, err);
-            vscode.window.showErrorMessage(`Theme Editor: Failed to update ${scope}: ${err?.message || err}`);
+            const message = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage(`Theme Editor: Failed to update ${scope}: ${message}`);
         }
     }
     /**
@@ -698,7 +707,7 @@ class ThemeManager {
                 }
             }
             // Method 2: Nuclear regex replacement for this specific scope
-            const debugTokenRegex = new RegExp(`("scope":\\s*"${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[\\s\\S]*?"foreground":\\s*)"#[a-fA-F0-9]{6}"`, 'g');
+            const debugTokenRegex = new RegExp(`("scope":\\s*"${scope.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"[\\s\\S]*?"foreground":\\s*)"#[a-fA-F0-9]{6,8}"`, 'g');
             updatedContent = updatedContent.replace(debugTokenRegex, `$1"${value}"`);
             if (updatedContent !== settingsContent) {
                 fs.writeFileSync(settingsPath, updatedContent, 'utf8');
@@ -884,19 +893,20 @@ class ThemeManager {
                 // TextMate tokens go to editor.tokenColorCustomizations
                 const scope = key.replace("textmate_", "");
                 // Find existing rule or create new one
-                const existingRuleIndex = tokenCustomizations.textMateRules.findIndex((rule) => {
+                const existingRule = tokenCustomizations.textMateRules.find((rule) => {
                     const ruleScopes = Array.isArray(rule.scope) ? rule.scope : [rule.scope];
                     return ruleScopes.includes(scope);
                 });
-                const newRule = {
-                    scope: [scope], // Use array format for consistency
-                    settings: { foreground: value }
-                };
-                if (existingRuleIndex >= 0) {
-                    tokenCustomizations.textMateRules[existingRuleIndex] = newRule;
+                if (existingRule) {
+                    existingRule.settings = { foreground: value };
                 }
                 else {
-                    tokenCustomizations.textMateRules.push(newRule);
+                    tokenCustomizations.textMateRules.push({
+                        scope: [scope], // Use array format for consistency
+                        settings: {
+                            foreground: value
+                        }
+                    });
                 }
                 hasTokenChanges = true;
                 // Update internal theme state
@@ -1061,12 +1071,18 @@ class ThemeManager {
                         return scopes.includes(key);
                     });
                     if (existingIndex >= 0) {
-                        this.templateTheme.tokenColors[existingIndex].settings = value;
+                        // Check if value is a string and convert it to the proper settings object
+                        if (typeof value === 'string') {
+                            this.templateTheme.tokenColors[existingIndex].settings = { foreground: value };
+                        }
+                        else {
+                            this.templateTheme.tokenColors[existingIndex].settings = value;
+                        }
                     }
                     else {
                         this.templateTheme.tokenColors.push({
                             scope: key,
-                            settings: value
+                            settings: typeof value === 'string' ? { foreground: value } : value
                         });
                     }
                     break;
@@ -1076,10 +1092,17 @@ class ThemeManager {
                 this.log('debug', `Applying template element immediately: ${category}.${key}`);
                 switch (category) {
                     case 'colors':
-                        await this.applyLiveColor(key, value);
+                        if (typeof value === 'string') {
+                            await this.applyLiveColor(key, value);
+                        }
                         break;
                     case 'semanticTokenColors':
-                        await this.applyLiveColor(`semantic_${key}`, value);
+                        if (typeof value === 'string') {
+                            await this.applyLiveColor(`semantic_${key}`, value);
+                        }
+                        else if (value.foreground) {
+                            await this.applyLiveColor(`semantic_${key}`, value.foreground);
+                        }
                         break;
                     case 'tokenColors':
                         const colorValue = typeof value === 'object' ? value.foreground : value;
@@ -1186,9 +1209,9 @@ class ThemeManager {
      * Get total count of template elements
      */
     getTemplateElementCount(template) {
-        return Object.keys(template.colors || {}).length +
-            Object.keys(template.semanticTokenColors || {}).length +
-            (template.tokenColors || []).length;
+        return Object.keys(template.colors || {}).length
+            + Object.keys(template.semanticTokenColors || {}).length
+            + (template.tokenColors || []).length;
     }
 }
 exports.ThemeManager = ThemeManager;

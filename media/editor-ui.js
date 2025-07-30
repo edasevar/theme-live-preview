@@ -8,7 +8,7 @@ const semanticMap = {
   "keyword.control": "--token-keyword-control",
   "keyword.operator": "--token-keyword-operator",
   "keyword.other": "--token-keyword-other",
-  
+
   // Functions and methods
   "function": "--token-function",
   "function.declaration": "--token-function-declaration",
@@ -16,7 +16,7 @@ const semanticMap = {
   "method": "--token-method",
   "method.declaration": "--token-method-declaration",
   "method.call": "--token-method-call",
-  
+
   // Variables and parameters
   "variable": "--token-variable",
   "variable.declaration": "--token-variable-declaration",
@@ -24,7 +24,7 @@ const semanticMap = {
   "variable.parameter": "--token-parameter",
   "parameter": "--token-parameter",
   "parameter.declaration": "--token-parameter-declaration",
-  
+
   // Types and classes
   "type": "--token-type",
   "type.declaration": "--token-type-declaration",
@@ -35,14 +35,14 @@ const semanticMap = {
   "struct": "--token-struct",
   "enum": "--token-enum",
   "enumMember": "--token-enum-member",
-  
+
   // Properties and members
   "property": "--token-property",
   "property.declaration": "--token-property-declaration",
   "property.readonly": "--token-property-readonly",
   "member": "--token-member",
   "field": "--token-field",
-  
+
   // Literals and constants
   "string": "--token-string",
   "string.escape": "--token-string-escape",
@@ -50,13 +50,13 @@ const semanticMap = {
   "boolean": "--token-boolean",
   "regexp": "--token-regexp",
   "constant": "--token-constant",
-  
+
   // Comments and documentation
   "comment": "--token-comment",
   "comment.line": "--token-comment-line",
   "comment.block": "--token-comment-block",
   "comment.documentation": "--token-comment-documentation",
-  
+
   // Operators and punctuation
   "operator": "--token-operator",
   "operator.arithmetic": "--token-operator-arithmetic",
@@ -65,24 +65,24 @@ const semanticMap = {
   "punctuation": "--token-punctuation",
   "punctuation.bracket": "--token-punctuation-bracket",
   "punctuation.delimiter": "--token-punctuation-delimiter",
-  
+
   // Namespaces and modules
   "namespace": "--token-namespace",
   "module": "--token-module",
   "package": "--token-package",
-  
+
   // Labels and decorators
   "label": "--token-label",
   "decorator": "--token-decorator",
   "annotation": "--token-annotation",
-  
+
   // Markup and special tokens
   "tag": "--token-tag",
   "attribute": "--token-attribute",
   "macro": "--token-macro",
   "generic": "--token-generic",
   "lifetime": "--token-lifetime",
-  
+
   // Modifiers
   "modifier": "--token-modifier",
   "modifier.async": "--token-modifier-async",
@@ -106,7 +106,7 @@ const uiMap = {
   'editor.rangeHighlightBackground': '--range-highlight-bg',
   'editor.wordHighlightBackground': '--word-highlight-bg',
   'editor.wordHighlightStrongBackground': '--word-highlight-strong-bg',
-  
+
   // Sidebar and Explorer
   'sideBar.background': '--bg-secondary',
   'sideBar.foreground': '--text-primary',
@@ -116,7 +116,7 @@ const uiMap = {
   'sideBarSectionHeader.background': '--sidebar-section-header-bg',
   'sideBarSectionHeader.foreground': '--sidebar-section-header-fg',
   'sideBarSectionHeader.border': '--sidebar-section-header-border',
-  
+
   // Activity Bar
   'activityBar.background': '--activity-bar-bg',
   'activityBar.foreground': '--activity-bar-fg',
@@ -127,7 +127,7 @@ const uiMap = {
   'activityBar.activeFocusBorder': '--activity-bar-active-focus-border',
   'activityBarBadge.background': '--activity-bar-badge-bg',
   'activityBarBadge.foreground': '--activity-bar-badge-fg',
-  
+
   // Panel (Terminal, Output, etc.)
   'panel.background': '--bg-secondary',
   'panel.border': '--border-color',
@@ -141,7 +141,7 @@ const uiMap = {
   'panelSectionHeader.background': '--panel-section-header-bg',
   'panelSectionHeader.foreground': '--panel-section-header-fg',
   'panelSectionHeader.border': '--panel-section-header-border',
-  
+
   // Status Bar
   'statusBar.background': '--status-bar-bg',
   'statusBar.foreground': '--status-bar-fg',
@@ -155,7 +155,7 @@ const uiMap = {
   'statusBarItem.prominentBackground': '--status-bar-item-prominent-bg',
   'statusBarItem.prominentForeground': '--status-bar-item-prominent-fg',
   'statusBarItem.prominentHoverBackground': '--status-bar-item-prominent-hover-bg',
-  
+
   // Tabs and Editor Groups
   'tab.activeBackground': '--tab-active-bg',
   'tab.activeForeground': '--tab-active-fg',
@@ -174,7 +174,7 @@ const uiMap = {
   'editorGroupHeader.tabsBackground': '--editor-group-header-tabs-bg',
   'editorGroupHeader.tabsBorder': '--editor-group-header-tabs-border',
   'editorGroupHeader.noTabsBackground': '--editor-group-header-no-tabs-bg',
-  
+
   // Input Controls
   'input.background': '--bg-primary',
   'input.foreground': '--text-primary',
@@ -193,7 +193,7 @@ const uiMap = {
   'inputValidation.warningBackground': '--input-validation-warning-bg',
   'inputValidation.warningForeground': '--input-validation-warning-fg',
   'inputValidation.warningBorder': '--input-validation-warning-border',
-  
+
   // Dropdown and Lists
   'dropdown.background': '--dropdown-bg',
   'dropdown.foreground': '--dropdown-fg',
@@ -211,7 +211,7 @@ const uiMap = {
   'list.dropBackground': '--list-drop-bg',
   'list.errorForeground': '--list-error-fg',
   'list.warningForeground': '--list-warning-fg',
-  
+
   // Buttons
   'button.background': '--button-bg',
   'button.foreground': '--button-fg',
@@ -219,7 +219,7 @@ const uiMap = {
   'button.secondaryBackground': '--button-secondary-bg',
   'button.secondaryForeground': '--button-secondary-fg',
   'button.secondaryHoverBackground': '--button-secondary-hover-bg',
-  
+
   // Global UI Elements
   'foreground': '--text-primary',
   'descriptionForeground': '--text-secondary',
@@ -230,34 +230,34 @@ const uiMap = {
   'selection.background': '--global-selection-bg',
   'widget.shadow': '--widget-shadow',
   'icon.foreground': '--icon-fg',
-  
+
   // Scrollbars
   'scrollbar.shadow': '--scrollbar-shadow',
   'scrollbarSlider.background': '--scrollbar-slider-bg',
   'scrollbarSlider.hoverBackground': '--scrollbar-slider-hover-bg',
   'scrollbarSlider.activeBackground': '--scrollbar-slider-active-bg',
-  
+
   // Badge
   'badge.background': '--badge-bg',
   'badge.foreground': '--badge-fg',
-  
+
   // Progress Bar
   'progressBar.background': '--progress-bar-bg',
-  
+
   // Breadcrumbs
   'breadcrumb.foreground': '--breadcrumb-fg',
   'breadcrumb.background': '--breadcrumb-bg',
   'breadcrumb.focusForeground': '--breadcrumb-focus-fg',
   'breadcrumb.activeSelectionForeground': '--breadcrumb-active-selection-fg',
   'breadcrumbPicker.background': '--breadcrumb-picker-bg',
-  
+
   // Title Bar
   'titleBar.activeBackground': '--title-bar-active-bg',
   'titleBar.activeForeground': '--title-bar-active-fg',
   'titleBar.inactiveBackground': '--title-bar-inactive-bg',
   'titleBar.inactiveForeground': '--title-bar-inactive-fg',
   'titleBar.border': '--title-bar-border',
-  
+
   // Menu Bar
   'menubar.selectionForeground': '--menubar-selection-fg',
   'menubar.selectionBackground': '--menubar-selection-bg',
@@ -269,7 +269,7 @@ const uiMap = {
   'menu.selectionBorder': '--menu-selection-border',
   'menu.separatorBackground': '--menu-separator-bg',
   'menu.border': '--menu-border',
-  
+
   // Notifications
   'notificationCenter.border': '--notification-center-border',
   'notificationCenterHeader.foreground': '--notification-center-header-fg',
@@ -279,7 +279,7 @@ const uiMap = {
   'notifications.background': '--notifications-bg',
   'notifications.border': '--notifications-border',
   'notificationLink.foreground': '--notification-link-fg',
-  
+
   // Git Decorations
   'gitDecoration.addedResourceForeground': '--git-added-fg',
   'gitDecoration.modifiedResourceForeground': '--git-modified-fg',
@@ -301,7 +301,7 @@ const textMateMap = {
   'entity.name.label': '--textmate-entity-name-label',
   'entity.name.tag': '--textmate-entity-name-tag',
   'entity.name.section': '--textmate-entity-name-section',
-  
+
   // Support tokens
   'support.type': '--textmate-support-type',
   'support.class': '--textmate-support-class',
@@ -311,7 +311,7 @@ const textMateMap = {
   'support.constant': '--textmate-support-constant',
   'support.variable': '--textmate-support-variable',
   'support.other': '--textmate-support-other',
-  
+
   // Variable scopes
   'variable': '--textmate-variable',
   'variable.language': '--textmate-variable-language',
@@ -323,7 +323,7 @@ const textMateMap = {
   'variable.other.property': '--textmate-variable-other-property',
   'variable.other.readwrite': '--textmate-variable-other-readwrite',
   'variable.other.enummember': '--textmate-variable-other-enummember',
-  
+
   // Keywords
   'keyword': '--textmate-keyword',
   'keyword.control': '--textmate-keyword-control',
@@ -333,7 +333,7 @@ const textMateMap = {
   'keyword.control.loop': '--textmate-keyword-control-loop',
   'keyword.control.import': '--textmate-keyword-control-import',
   'keyword.control.export': '--textmate-keyword-control-export',
-  
+
   // Storage (modifiers, types)
   'storage': '--textmate-storage',
   'storage.type': '--textmate-storage-type',
@@ -342,7 +342,7 @@ const textMateMap = {
   'storage.type.function': '--textmate-storage-type-function',
   'storage.type.interface': '--textmate-storage-type-interface',
   'storage.type.enum': '--textmate-storage-type-enum',
-  
+
   // Constants
   'constant': '--textmate-constant',
   'constant.numeric': '--textmate-constant-numeric',
@@ -353,7 +353,7 @@ const textMateMap = {
   'constant.other.color': '--textmate-constant-other-color',
   'constant.other.symbol': '--textmate-constant-other-symbol',
   'constant.other.placeholder': '--textmate-constant-other-placeholder',
-  
+
   // Strings
   'string': '--textmate-string',
   'string.quoted': '--textmate-string-quoted',
@@ -365,13 +365,13 @@ const textMateMap = {
   'string.template': '--textmate-string-template',
   'string.regexp': '--textmate-string-regexp',
   'string.other': '--textmate-string-other',
-  
+
   // Comments
   'comment': '--textmate-comment',
   'comment.line': '--textmate-comment-line',
   'comment.block': '--textmate-comment-block',
   'comment.block.documentation': '--textmate-comment-block-documentation',
-  
+
   // Punctuation
   'punctuation': '--textmate-punctuation',
   'punctuation.definition': '--textmate-punctuation-definition',
@@ -384,7 +384,7 @@ const textMateMap = {
   'punctuation.definition.array': '--textmate-punctuation-definition-array',
   'punctuation.definition.block': '--textmate-punctuation-definition-block',
   'punctuation.section.embedded': '--textmate-punctuation-section-embedded',
-  
+
   // Meta scopes
   'meta': '--textmate-meta',
   'meta.class': '--textmate-meta-class',
@@ -405,7 +405,7 @@ const textMateMap = {
   'meta.declaration': '--textmate-meta-declaration',
   'meta.import': '--textmate-meta-import',
   'meta.export': '--textmate-meta-export',
-  
+
   // Markup (HTML, Markdown, etc.)
   'markup': '--textmate-markup',
   'markup.heading': '--textmate-markup-heading',
@@ -422,12 +422,12 @@ const textMateMap = {
   'markup.inserted': '--textmate-markup-inserted',
   'markup.deleted': '--textmate-markup-deleted',
   'markup.changed': '--textmate-markup-changed',
-  
+
   // Invalid
   'invalid': '--textmate-invalid',
   'invalid.illegal': '--textmate-invalid-illegal',
   'invalid.deprecated': '--textmate-invalid-deprecated',
-  
+
   // Source language specific
   'source': '--textmate-source',
   'text': '--textmate-text',
@@ -440,7 +440,7 @@ const textMateMap = {
   'source.css': '--textmate-source-css',
   'source.json': '--textmate-source-json',
   'source.yaml': '--textmate-source-yaml',
-  
+
   // Other commonly used scopes
   'entity.other': '--textmate-entity-other',
   'entity.other.attribute-name': '--textmate-entity-other-attribute-name',
@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeNavigationHelpers();
   initializeSettingNavigation();
   updateVisibleItems();
-  
+
   // Show the main content and hide loading indicator after everything is initialized
   setTimeout(() => {
     const loadingIndicator = document.getElementById('loading-indicator');
@@ -557,9 +557,11 @@ function handleColorInput(e) {
     const hexInput = document.querySelector(`input.hex-input[name="${baseName}"]`);
     const colorPicker = document.querySelector(`input.color-picker[name="${baseName}"]`);
     if (hexInput && colorPicker) {
-      const baseHex = colorPicker.value; // '#RRGGBB'
+      const baseHex = hexInput.value.slice(0, 7); // Use hex input for full #RRGGBBAA value
       const newHex = baseHex + alphaHex;
       hexInput.value = newHex;
+      // Also update the color picker, which only takes #RRGGBB
+      colorPicker.value = baseHex;
       // Notify extension and preview update
       applyLiveUpdate(baseName, newHex);
     }
@@ -595,18 +597,25 @@ function handleColorInput(e) {
     }
   });
   // Update alpha inputs based on hex value
-  // Determine hex string length
   let alphaPercent = 100;
   if (target.classList.contains('hex-input')) {
     const hexVal = value;
     if (/^#[0-9a-fA-F]{8}$/.test(hexVal)) {
       const a = parseInt(hexVal.slice(7, 9), 16);
-      alphaPercent = Math.round(a / 255 * 100);
+      alphaPercent = Math.round((a / 255) * 100);
+    } else if (/^#[0-9a-fA-F]{6}$/.test(hexVal)) {
+      alphaPercent = 100;
     }
     // Sync alpha controls
     const alphaName = `alpha_${name}`;
     document.querySelectorAll(`input.alpha-slider[name="${alphaName}"], input.alpha-input[name="${alphaName}"]`).forEach(inp => {
       if (inp instanceof HTMLInputElement) inp.value = alphaPercent.toString();
+    });
+  } else if (target.classList.contains('color-picker')) {
+    // When color picker changes, assume full opacity
+    const alphaName = `alpha_${name}`;
+    document.querySelectorAll(`input.alpha-slider[name="${alphaName}"], input.alpha-input[name="${alphaName}"]`).forEach(inp => {
+      if (inp instanceof HTMLInputElement) inp.value = '100';
     });
   }
 
@@ -677,7 +686,7 @@ function previewColor(key, value) {
 
 function updatePreviewColors(key, value) {
   console.log(`[WebView] updatePreviewColors: ${key} = ${value}`);
-  
+
   // Handle semantic token colors for preview
   if (key.startsWith('semantic_')) {
     const semanticKey = key.replace('semantic_', '');
@@ -693,14 +702,14 @@ function updatePreviewColors(key, value) {
   if (key.startsWith('textmate_')) {
     const scope = key.replace('textmate_', '');
     console.log(`[WebView] TextMate: ${scope}`);
-    
+
     // Try exact match first
     if (textMateMap[scope]) {
       console.log(`[WebView] TextMate exact match: ${scope} -> ${textMateMap[scope]}`);
       document.documentElement.style.setProperty(textMateMap[scope], value);
       return;
     }
-    
+
     // Fallback to generic CSS variable for unmapped scopes
     const cssVar = `--textmate-${scope.replace(/\./g, '-').replace(/:/g, '-')}`;
     console.log(`[WebView] TextMate fallback: ${cssVar}`);
@@ -1068,19 +1077,19 @@ window.addEventListener('message', event => {
           semanticTokenColors: Object.keys(theme.semanticTokenColors || {}).length,
           tokenColors: (theme.tokenColors || []).length
         });
-        
+
         // Apply all workbench colors
         Object.entries(theme.colors || {}).forEach(([k, v]) => {
           console.log(`[WebView] Applying color: ${k} = ${v}`);
           updatePreviewColors(k, v);
         });
-        
+
         // Apply semantic tokens
         Object.entries(theme.semanticTokenColors || {}).forEach(([k, v]) => {
           console.log(`[WebView] Applying semantic: semantic_${k} = ${v}`);
           updatePreviewColors(`semantic_${k}`, v);
         });
-        
+
         // Apply TextMate token colors - Fixed to use scope-based keys
         if (Array.isArray(theme.tokenColors)) {
           theme.tokenColors.forEach((token, i) => {
@@ -1203,14 +1212,14 @@ function handleTooltipShow(event) {
 
   const tooltipText = element.getAttribute('data-tooltip');
   const tooltipClass = element.getAttribute('data-tooltip-class') || '';
-  
+
   showTooltip(element, tooltipText, tooltipClass);
 }
 
 function handleTooltipHide(event) {
   const element = event.target;
   if (!element.hasAttribute('data-tooltip')) return;
-  
+
   hideTooltip();
 }
 
@@ -1223,24 +1232,24 @@ function showTooltip(element, text, className = '') {
   const tooltip = document.createElement('div');
   tooltip.className = `tooltip ${className}`;
   tooltip.textContent = text;
-  
+
   document.body.appendChild(tooltip);
   currentTooltip = tooltip;
 
   // Position tooltip
   const rect = element.getBoundingClientRect();
   const tooltipRect = tooltip.getBoundingClientRect();
-  
+
   // Default to bottom positioning
   let top = rect.bottom + 8;
   let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-  
+
   // Check if tooltip would go off screen and adjust
   if (left < 8) left = 8;
   if (left + tooltipRect.width > window.innerWidth - 8) {
     left = window.innerWidth - tooltipRect.width - 8;
   }
-  
+
   // If tooltip would go below viewport, show above element
   if (top + tooltipRect.height > window.innerHeight - 8) {
     top = rect.top - tooltipRect.height - 8;
@@ -1248,10 +1257,10 @@ function showTooltip(element, text, className = '') {
   } else {
     tooltip.classList.add('tooltip-bottom');
   }
-  
+
   tooltip.style.top = `${top}px`;
   tooltip.style.left = `${left}px`;
-  
+
   // Show with animation
   requestAnimationFrame(() => {
     tooltip.classList.add('show');
@@ -1277,7 +1286,7 @@ function hideTooltip() {
 function initializeNavigationHelpers() {
   // Add event listeners for navigation buttons
   document.addEventListener('click', handleNavigationClick);
-  
+
   // Initialize legend popup
   initializeLegendPopup();
 }
@@ -1285,20 +1294,20 @@ function initializeNavigationHelpers() {
 function initializeLegendPopup() {
   const legendTrigger = document.getElementById('legendTrigger');
   const legend = document.querySelector('.ui-legend');
-  
+
   if (legendTrigger && legend) {
     legendTrigger.addEventListener('click', function(e) {
       e.stopPropagation();
       legend.classList.toggle('show');
     });
-    
+
     // Close legend when clicking outside
     document.addEventListener('click', function(e) {
       if (!legend.contains(e.target) && !legendTrigger.contains(e.target)) {
         legend.classList.remove('show');
       }
     });
-    
+
     // Close legend on escape key
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape' && legend.classList.contains('show')) {
@@ -1311,10 +1320,10 @@ function initializeLegendPopup() {
 function handleNavigationClick(event) {
   const navBtn = event.target.closest('.navigate-btn');
   if (!navBtn) return;
-  
+
   event.preventDefault();
   const target = navBtn.getAttribute('data-navigate-to');
-  
+
   if (target) {
     navigateToSetting(target);
   }
@@ -1326,7 +1335,7 @@ function navigateToSetting(settingKey) {
     type: 'navigateToSetting',
     setting: settingKey
   });
-  
+
   // Show feedback
   showNotification(`Navigating to ${settingKey} setting...`, 'info');
 }
@@ -1393,16 +1402,16 @@ function getTooltipContent(element, type) {
     case 'setting-required':
       const setting = element.getAttribute('data-setting');
       return `Requires "${setting}" setting to be enabled in VS Code preferences`;
-      
+
     // Removed 'opacity-required' case - no longer needed
-      
+
     case 'textmate-readonly':
       return 'TextMate syntax token - controlled by language grammar rules and theme token mappings';
-      
+
     case 'navigate':
       const target = element.getAttribute('data-navigate-to');
       return `Click to open ${target} in VS Code settings`;
-      
+
     default:
       return element.getAttribute('data-tooltip') || '';
   }
@@ -1417,7 +1426,7 @@ function initializeSettingNavigation() {
       if (settingName) {
         // Highlight the setting name visually
         highlightSettingUsage(settingName);
-        
+
         // Send message to VS Code to open the setting
         vscode.postMessage({
           type: 'openSetting',
@@ -1434,14 +1443,14 @@ function highlightSettingUsage(settingName) {
   document.querySelectorAll('.color-item.highlight-target').forEach(item => {
     item.classList.remove('highlight-target');
   });
-  
+
   // Find and highlight all items with this setting
   const matchingBadges = document.querySelectorAll(`[data-setting="${settingName}"]`);
   matchingBadges.forEach(badge => {
     const colorItem = badge.closest('.color-item');
     if (colorItem) {
       colorItem.classList.add('highlight-target');
-      
+
       // Scroll to first highlighted item
       if (matchingBadges[0] === badge) {
         colorItem.scrollIntoView({
@@ -1451,7 +1460,7 @@ function highlightSettingUsage(settingName) {
       }
     }
   });
-  
+
   // Remove highlights after 3 seconds
   setTimeout(() => {
     document.querySelectorAll('.color-item.highlight-target').forEach(item => {
